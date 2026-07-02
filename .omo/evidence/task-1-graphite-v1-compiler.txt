@@ -1,0 +1,20 @@
+Task 1: Scaffold Rust workspace and core data model
+===================================================
+Status: PASSED
+
+Verification:
+- cargo build: success (all 3 crates compile, musl target)
+- cargo test: 3/3 passed (test_node_serde_roundtrip, test_diagnostic_serialization, test_severity_enum)
+- cargo clippy: zero warnings
+- Binary runs: "./target/x86_64-unknown-linux-musl/debug/graphite-cli" prints "graphite CLI"
+
+Files created:
+- /home/marian/graphite/Cargo.toml (workspace)
+- /home/marian/graphite/.cargo/config.toml (musl build target)
+- /home/marian/graphite/graphite-core/Cargo.toml
+- /home/marian/graphite/graphite-core/src/lib.rs (EdgeKind, Severity, Diagnostic, Schema, KindDef, EdgeDef, Index, Node, Graph)
+- /home/marian/graphite/graphite-core/tests/data_model.rs (3 tests)
+- /home/marian/graphite/graphite-cli/Cargo.toml
+- /home/marian/graphite/graphite-cli/src/main.rs (stub)
+- /home/marian/graphite/graphite-render/Cargo.toml
+- /home/marian/graphite/graphite-render/src/lib.rs (stub)

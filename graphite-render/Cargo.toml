@@ -1,0 +1,8 @@
+[package]
+name = "graphite-render"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+graphite-core = { path = "../graphite-core" }
+pulldown-cmark = "0.13"
