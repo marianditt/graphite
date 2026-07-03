@@ -13,7 +13,8 @@ code { background: #f0f0f0; padding: 0.1em 0.3em; }
 </style>
 </head>
 <body>
-<p class="node-meta"><strong>adr</strong> · <a href="/kind/adr.html">↑ adr</a></p>
+<p class="node-meta"><strong>ADR-003</strong> · <a href="index.html">↑ adr</a></p>
+<h3>Compiler Pipeline</h3>
 <p>The compiler pipeline has four stages:</p>
 <ol>
 <li><strong>Parse</strong>: Read .node files into a Graph via the schema and node parsers</li>
@@ -21,10 +22,10 @@ code { background: #f0f0f0; padding: 0.1em 0.3em; }
 <li><strong>Resolve</strong>: Match evidence anchors to source file locations via the scanner and sidecar resolvers</li>
 <li><strong>Render</strong>: Generate static HTML with heading depth derivation and hyperlinked edge references</li>
 </ol>
-<p>See <a href="/service/compiler.html">compiler</a> for the implementation. The stages are designed per <a href="/adr/edge-narrative.html">edge-narrative</a> (narrative consistency), <a href="/adr/heading-depth.html">heading-depth</a> (heading derivation), <a href="/adr/anchor-syntax.html">anchor-syntax</a> (evidence resolution), and <a href="/adr/schema-design.html">schema-design</a> (type system).</p>
+<p>See <a href="../service/compiler.html">SVC-002</a> for the implementation. The stages are designed per <a href="edge-narrative.html">ADR-004</a> (narrative consistency), <a href="heading-depth.html">ADR-005</a> (heading derivation), <a href="anchor-syntax.html">ADR-002</a> (evidence resolution), and <a href="schema-design.html">ADR-008</a> (type system).</p>
 
 
-<div class="backlinks"><h3>Referenced by</h3><ul><li><a href="/index/adr.html">adr</a></li>
-<li><a href="/service/compiler.html">compiler</a></li></ul></div>
+<div class="backlinks"><h3>Referenced by</h3><ul><li><a href="../index/adr.html">??-000</a></li>
+<li><a href="../service/compiler.html">SVC-002</a></li></ul></div>
 </body>
 </html>

@@ -13,13 +13,14 @@ code { background: #f0f0f0; padding: 0.1em 0.3em; }
 </style>
 </head>
 <body>
-<p class="node-meta"><strong>adr</strong> · <a href="/kind/adr.html">↑ adr</a></p>
+<p class="node-meta"><strong>ADR-007</strong> · <a href="index.html">↑ adr</a></p>
+<h3>Rendering</h3>
 <p>Static HTML generation: a table of contents from DFS containment order, one page per node with heading depth offset, edge-reference patterns replaced with hyperlinks, backlinks from incoming edges, and evidence sections for <code>verified_by</code> targets.</p>
-<p>No JavaScript, no server, no build step beyond the CLI. Cosmetic display IDs (REQ-1, ADR-2) are assigned in DFS order and may shift on insertion — permanent references use stable IDs. See <a href="/service/compiler.html">compiler</a> for the pipeline and <a href="/adr/heading-depth.html">heading-depth</a> for heading derivation.</p>
+<p>No JavaScript, no server, no build step beyond the CLI. Cosmetic display IDs (REQ-1, ADR-2) are assigned in DFS order and may shift on insertion — permanent references use stable IDs. See <a href="../service/compiler.html">SVC-002</a> for the pipeline and <a href="heading-depth.html">ADR-005</a> for heading derivation.</p>
 
 
-<div class="backlinks"><h3>Referenced by</h3><ul><li><a href="/index/adr.html">adr</a></li>
-<li><a href="/adr/heading-depth.html">heading-depth</a></li>
-<li><a href="/service/compiler.html">compiler</a></li></ul></div>
+<div class="backlinks"><h3>Referenced by</h3><ul><li><a href="heading-depth.html">ADR-005</a></li>
+<li><a href="../index/adr.html">??-000</a></li>
+<li><a href="../service/compiler.html">SVC-002</a></li></ul></div>
 </body>
 </html>

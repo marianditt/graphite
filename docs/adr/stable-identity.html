@@ -13,12 +13,13 @@ code { background: #f0f0f0; padding: 0.1em 0.3em; }
 </style>
 </head>
 <body>
-<p class="node-meta"><strong>adr</strong> · <a href="/kind/adr.html">↑ adr</a></p>
+<p class="node-meta"><strong>ADR-009</strong> · <a href="index.html">↑ adr</a></p>
+<h3>Stable Identity</h3>
 <p>Every node has a stable ID (<code>compiler-requirement</code>, <code>anchor-syntax</code>) that is independent of filenames and directory layout. Cosmetic display IDs (REQ-1, ADR-2) are computed by the renderer in DFS order and may shift when new nodes are inserted. Permanent references in edge syntax always use the stable ID.</p>
 <p>This means a node can be renamed or moved without breaking cross-references — the stable ID is the canonical identifier.</p>
 
 
-<div class="backlinks"><h3>Referenced by</h3><ul><li><a href="/index/adr.html">adr</a></li>
-<li><a href="/adr/schema-design.html">schema-design</a></li></ul></div>
+<div class="backlinks"><h3>Referenced by</h3><ul><li><a href="schema-design.html">ADR-008</a></li>
+<li><a href="../index/adr.html">??-000</a></li></ul></div>
 </body>
 </html>

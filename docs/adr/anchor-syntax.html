@@ -13,13 +13,14 @@ code { background: #f0f0f0; padding: 0.1em 0.3em; }
 </style>
 </head>
 <body>
-<p class="node-meta"><strong>adr</strong> · <a href="/kind/adr.html">↑ adr</a></p>
+<p class="node-meta"><strong>ADR-002</strong> · <a href="index.html">↑ adr</a></p>
+<h3>Anchor Syntax</h3>
 <p>Evidence anchors use <code>@graphite:evidence &lt;id&gt;</code> in line-comment languages (<code>//</code>, <code>#</code>, <code>&lt;!-- --&gt;</code>). For comment-less formats (JSON, data files), a <code>.graphite</code> sidecar file sits alongside the source and uses JSONPath or regex patterns.</p>
-<p>Sidecar naming: <code>source.ext</code> → <code>source.ext.graphite</code>. Patterns never use line numbers — they resolve by content. See <a href="/service/compiler.html">compiler</a> for implementation details.</p>
+<p>Sidecar naming: <code>source.ext</code> → <code>source.ext.graphite</code>. Patterns never use line numbers — they resolve by content. See <a href="../service/compiler.html">SVC-002</a> for implementation details.</p>
 
 
-<div class="backlinks"><h3>Referenced by</h3><ul><li><a href="/index/adr.html">adr</a></li>
-<li><a href="/service/compiler.html">compiler</a></li>
-<li><a href="/adr/compiler-pipeline.html">compiler-pipeline</a></li></ul></div>
+<div class="backlinks"><h3>Referenced by</h3><ul><li><a href="compiler-pipeline.html">ADR-003</a></li>
+<li><a href="../index/adr.html">??-000</a></li>
+<li><a href="../service/compiler.html">SVC-002</a></li></ul></div>
 </body>
 </html>
