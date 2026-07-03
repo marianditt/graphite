@@ -5,6 +5,8 @@ use std::path::{Path, PathBuf};
 use graphite_core::{Diagnostic, Graph, Node, Schema, Severity};
 use pulldown_cmark::HeadingLevel;
 
+pub mod style;
+
 /// Output of rendering a single node page.
 pub struct RenderedNode {
     pub id: String,
@@ -31,8 +33,9 @@ pub fn render_to_dir(
     evidence: &HashMap<String, Vec<(PathBuf, usize)>>,
     output_dir: &Path,
     repo_url: Option<&str>,
+    css: &str,
 ) -> Result<(), Diagnostic> {
-    let rendered = render_graph(graph, evidence, repo_url)?;
+    let rendered = render_graph(graph, evidence, repo_url, css)?;
     fs::create_dir_all(output_dir).map_err(|e| Diagnostic {
         rule: "render-error".into(),
         severity: Severity::Error,
@@ -75,12 +78,12 @@ pub fn render_to_dir(
         }
         let kind_dir = output_dir.join(&kind);
         fs::create_dir_all(&kind_dir).ok();
-        let index_html = render_kind_index(&kind, &nodes, &rendered.depth_map, graph, schema, &numbering, repo_url);
+        let index_html = render_kind_index(&kind, &nodes, &rendered.depth_map, graph, schema, &numbering, repo_url, css);
         fs::write(kind_dir.join("index.html"), index_html).ok();
     }
 
     // Generate root index
-    let root_html = render_root_index(graph, &rendered.depth_map, schema, &numbering, repo_url);
+    let root_html = render_root_index(graph, &rendered.depth_map, schema, &numbering, repo_url, css);
     fs::write(output_dir.join("index.html"), root_html).ok();
 
     Ok(())
@@ -92,13 +95,14 @@ fn render_graph(
     graph: &Graph,
     evidence: &HashMap<String, Vec<(PathBuf, usize)>>,
     repo_url: Option<&str>,
+    css: &str,
 ) -> Result<RenderedGraph, Diagnostic> {
     let depth_map = compute_depths(graph);
     let numbering = compute_node_numbering(graph);
 
     let mut pages = Vec::new();
     for node in graph.nodes.values() {
-        let html = render_node_page(graph, node, &depth_map, evidence, &numbering, repo_url);
+        let html = render_node_page(graph, node, &depth_map, evidence, &numbering, repo_url, css);
         pages.push(RenderedNode {
             id: node.id.clone(),
             kind: node.kind.clone(),
@@ -241,6 +245,7 @@ fn render_node_page(
     evidence: &HashMap<String, Vec<(PathBuf, usize)>>,
     numbering: &NodeNumbering,
     repo_url: Option<&str>,
+    css: &str,
 ) -> String {
     let current_kind = &node.kind;
     let depth = depths.get(&node.id).copied().unwrap_or(0);
@@ -278,14 +283,7 @@ fn render_node_page(
 <html lang="en">
 <head><meta charset="utf-8"><title>{id} — graphite</title>
 <style>
-body {{ font-family: system-ui, sans-serif; max-width: 800px; margin: 0 auto; padding: 1em; line-height: 1.6; }}
-a {{ color: #0066cc; }}
-a:hover {{ text-decoration: underline; }}
-.evidence {{ background: #f5f5f5; padding: 0.5em 1em; border-radius: 4px; }}
-.backlinks {{ border-top: 1px solid #ddd; margin-top: 1em; padding-top: 0.5em; }}
-.node-meta {{ color: #666; font-size: 0.9em; margin-bottom: 1em; }}
-pre {{ background: #f0f0f0; padding: 0.5em; overflow-x: auto; }}
-code {{ background: #f0f0f0; padding: 0.1em 0.3em; }}
+{css}
 </style>
 </head>
 <body>
@@ -302,6 +300,7 @@ code {{ background: #f0f0f0; padding: 0.1em 0.3em; }}
         body_with_links = body_with_links,
         ev_section = ev_section,
         backlinks = backlinks,
+        css = css,
     )
 }
 
@@ -519,6 +518,7 @@ fn render_kind_index(
     schema: &Schema,
     numbering: &NodeNumbering,
     _repo_url: Option<&str>,
+    css: &str,
 ) -> String {
     let index_body: String = graph
         .nodes
@@ -557,8 +557,7 @@ fn render_kind_index(
 <html lang="en">
 <head><meta charset="utf-8"><title>Table of Contents: {kind} — graphite</title>
 <style>
-body {{ font-family: system-ui, sans-serif; max-width: 800px; margin: 0 auto; padding: 1em; line-height: 1.6; }}
-a {{ color: #0066cc; }}
+{css}
 </style>
 </head>
 <body>
@@ -578,6 +577,7 @@ a {{ color: #0066cc; }}
         toc_items = toc_items,
         index_body = index_body,
         root_link = root_link,
+        css = css,
     )
 }
 
@@ -591,6 +591,7 @@ fn render_root_index(
     schema: &Schema,
     numbering: &NodeNumbering,
     _repo_url: Option<&str>,
+    css: &str,
 ) -> String {
     // The root node is the single index-kind node that is NOT targeted by
     // any `contains` edge (i.e. depth 0, the containment tree root).
@@ -644,26 +645,25 @@ fn render_root_index(
 <html lang="en">
 <head><meta charset="utf-8"><title>Table of Contents — graphite</title>
 <style>
-body {{ font-family: system-ui, sans-serif; max-width: 800px; margin: 0 auto; padding: 1em; line-height: 1.6; }}
-a {{ color: #0066cc; }}
-.index-body {{ margin-top: 1.5em; }}
+{css}
 </style>
 </head>
 <body>
 <h1>Table of Contents</h1>
 
 <ul>
-{}
+{toc}
 </ul>
 
 <div class="index-body">
-{}
+{body}
 </div>
 
 </body>
 </html>"#,
-            toc_items.join("\n"),
-            body_with_links,
+            toc = toc_items.join("\n"),
+            body = body_with_links,
+            css = css,
         )
     } else {
         // Fallback: no root node found
@@ -672,8 +672,7 @@ a {{ color: #0066cc; }}
 <html lang="en">
 <head><meta charset="utf-8"><title>graphite — knowledge graph</title>
 <style>
-body {{ font-family: system-ui, sans-serif; max-width: 800px; margin: 0 auto; padding: 1em; line-height: 1.6; }}
-a {{ color: #0066cc; }}
+{css}
 </style>
 </head>
 <body>
@@ -681,6 +680,7 @@ a {{ color: #0066cc; }}
 <p>A compiled knowledge graph for software engineering.</p>
 </body>
 </html>"#,
+            css = css,
         )
     }
 }
@@ -755,7 +755,8 @@ Body with [edge:root].\n",
     fn renders_without_crashing() {
         let g = sample_graph();
         let evidence = HashMap::new();
-        let rendered = render_graph(&g, &evidence, None).expect("render should succeed");
+        let rendered = render_graph(&g, &evidence, None, style::DEFAULT_CSS)
+            .expect("render should succeed");
         // svc is at depth 2 → heading_base = 3 → offset headings to h3
         let svc_page = rendered.pages.iter().find(|p| p.id == "svc").unwrap();
         assert!(
@@ -775,7 +776,7 @@ Body with [edge:root].\n",
     fn edge_refs_replaced_with_relative_paths() {
         let g = sample_graph();
         let evidence = HashMap::new();
-        let rendered = render_graph(&g, &evidence, None).expect("render");
+        let rendered = render_graph(&g, &evidence, None, style::DEFAULT_CSS).expect("render");
 
         let svc = rendered.pages.iter().find(|p| p.id == "svc").unwrap();
         // [edge:root] should become a relative link from service/svc.html to index/root.html
@@ -804,7 +805,7 @@ See [edge:nonexistent].\n",
         );
 
         let evidence = HashMap::new();
-        let rendered = render_graph(&g, &evidence, None).expect("render");
+        let rendered = render_graph(&g, &evidence, None, style::DEFAULT_CSS).expect("render");
         let page = &rendered.pages[0];
         assert!(
             page.html.contains("nonexistent?"),
@@ -831,7 +832,7 @@ edges:\n  evidence:\n    - ev-auth\n---\n\
         let mut evidence = HashMap::new();
         evidence.insert("ev-auth".into(), vec![(PathBuf::from("src/main.rs"), 42)]);
 
-        let rendered = render_graph(&g, &evidence, None).expect("render");
+        let rendered = render_graph(&g, &evidence, None, style::DEFAULT_CSS).expect("render");
         let page = &rendered.pages[0];
         assert!(
             page.html.contains("Evidence"),
@@ -862,8 +863,13 @@ edges:\n  evidence:\n    - ev-auth\n---\n\
         let mut evidence = HashMap::new();
         evidence.insert("ev-auth".into(), vec![(PathBuf::from("src/main.rs"), 42)]);
 
-        let rendered = render_graph(&g, &evidence, Some("https://github.com/owner/repo"))
-            .expect("render");
+        let rendered = render_graph(
+            &g,
+            &evidence,
+            Some("https://github.com/owner/repo"),
+            style::DEFAULT_CSS,
+        )
+        .expect("render");
         let page = &rendered.pages[0];
         assert!(
             page.html.contains("https://github.com/owner/repo/blob/main/src/main.rs#L42"),
@@ -918,7 +924,7 @@ kind: service\n\
         );
 
         let evidence = HashMap::new();
-        let rendered = render_graph(&g, &evidence, None).expect("render");
+        let rendered = render_graph(&g, &evidence, None, style::DEFAULT_CSS).expect("render");
 
         // Deepest node should have heading clamped at h6
         let deepest = rendered.pages.iter().find(|p| p.id == "r11").unwrap();
@@ -939,7 +945,16 @@ kind: service\n\
         let nodes_by_kind = group_by_kind(&g);
         let service_nodes = nodes_by_kind.get("service").expect("service nodes");
 
-        let html = render_kind_index("service", service_nodes, &depths, &g, schema, &numbering, None);
+        let html = render_kind_index(
+            "service",
+            service_nodes,
+            &depths,
+            &g,
+            schema,
+            &numbering,
+            None,
+            style::DEFAULT_CSS,
+        );
         assert!(
             html.contains("Table of Contents"),
             "kind index should say 'Table of Contents': {}",
@@ -1002,7 +1017,16 @@ kind: service\n\
         let nodes_by_kind = group_by_kind(&g);
         let service_nodes = nodes_by_kind.get("service").expect("service nodes");
 
-        let html = render_kind_index("service", service_nodes, &depths, &g, schema, &numbering, None);
+        let html = render_kind_index(
+            "service",
+            service_nodes,
+            &depths,
+            &g,
+            schema,
+            &numbering,
+            None,
+            style::DEFAULT_CSS,
+        );
         // The index node body should appear after the TOC (the <ul>)
         let ul_pos = html.find("<ul").unwrap();
         let body_pos = html.find("Service Overview").unwrap();
@@ -1046,7 +1070,7 @@ kind: service\n\
         let numbering = compute_node_numbering(&g);
         let schema = &g.schema;
 
-        let html = render_root_index(&g, &depths, schema, &numbering, None);
+        let html = render_root_index(&g, &depths, schema, &numbering, None, style::DEFAULT_CSS);
         // Should say "Table of Contents"
         assert!(
             html.contains("Table of Contents"),
@@ -1158,7 +1182,7 @@ kind: service\n\
         );
 
         let evidence = HashMap::new();
-        let rendered = render_graph(&g, &evidence, None).expect("render");
+        let rendered = render_graph(&g, &evidence, None, style::DEFAULT_CSS).expect("render");
 
         // The svc-index node (kind: index, of_kind: service) should have
         // a TOC link pointing to the service kind index page.

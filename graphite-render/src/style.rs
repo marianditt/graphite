@@ -1,8 +1,19 @@
-<!DOCTYPE html>
-<html lang="en">
-<head><meta charset="utf-8"><title>heading-depth — graphite</title>
-<style>
+/// Default minimal style — clean, fast, readable.
+pub const DEFAULT_CSS: &str = r#"
+body { font-family: system-ui, sans-serif; max-width: 800px; margin: 0 auto; padding: 1em; line-height: 1.6; }
+a { color: #0066cc; }
+a:hover { text-decoration: underline; }
+.evidence { background: #f5f5f5; padding: 0.5em 1em; border-radius: 4px; }
+.backlinks { border-top: 1px solid #ddd; margin-top: 1em; padding-top: 0.5em; }
+.node-meta { color: #666; font-size: 0.9em; margin-bottom: 1em; }
+pre { background: #f0f0f0; padding: 0.5em; overflow-x: auto; }
+code { background: #f0f0f0; padding: 0.1em 0.3em; }
+.index-body { margin-top: 1.5em; }
+"#;
 
+/// Sci-fi professional theme for graphite docs — dark background, cyan accents,
+/// terminal-style code blocks, subtle glow effects.
+pub const SCI_FI_CSS: &str = r#"
 :root {
   --bg: #0b1120;
   --surface: #111b2e;
@@ -242,17 +253,4 @@ th {
   color: var(--text);
   font-weight: 600;
 }
-
-</style>
-</head>
-<body>
-<p class="node-meta"><strong>ADR-005</strong> · <a href="index.html">↑ adr</a></p>
-<h3>Heading Depth</h3>
-<p>Heading level is derived from containment depth: root nodes render at h1, children at h2, and so on. The author always uses <code>#</code> (h1) in the body. The renderer offsets all headings by the node's depth, clamping at h6.</p>
-<p>This ensures consistent visual hierarchy regardless of nesting depth. See <a href="rendering.html">ADR-007</a> for the full rendering design.</p>
-
-
-<div class="backlinks"><h3>Referenced by</h3><ul><li><a href="rendering.html">ADR-007</a></li>
-<li><a href="compiler-pipeline.html">ADR-003</a></li></ul></div>
-</body>
-</html>
+"#;

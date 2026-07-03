@@ -10,6 +10,7 @@ use graphite_core::schema::SchemaParser;
 use graphite_core::sidecar::SidecarResolver;
 use graphite_core::validation::ValidationEngine;
 use graphite_core::{Diagnostic, Graph, Severity};
+use graphite_render::style;
 
 #[derive(Parser)]
 #[command(
@@ -66,6 +67,8 @@ enum Commands {
         graph_dir: String,
         #[arg(long, short, default_value = "docs")]
         output: String,
+        #[arg(long, default_value = "sci-fi")]
+        style: String,
     },
 }
 
@@ -95,7 +98,11 @@ fn main() {
         }
         Commands::Plan { id, graph_dir } => cmd_plan(&id, &graph_dir),
         Commands::Diff { from, json } => cmd_diff(&from, json),
-        Commands::Render { graph_dir, output } => cmd_render(&graph_dir, &output, &config),
+        Commands::Render {
+            graph_dir,
+            output,
+            style,
+        } => cmd_render(&graph_dir, &output, &style, &config),
     }
 }
 
@@ -788,7 +795,7 @@ fn cmd_plan(id: &str, graph_dir: &str) {
 // render
 // ---------------------------------------------------------------------------
 
-fn cmd_render(graph_dir: &str, output: &str, config: &Config) {
+fn cmd_render(graph_dir: &str, output: &str, style_arg: &str, config: &Config) {
     let graph = match load_graph(graph_dir) {
         Ok(g) => g,
         Err(errors) => {
@@ -808,8 +815,21 @@ fn cmd_render(graph_dir: &str, output: &str, config: &Config) {
 
     let repo_url = std::env::var("GRAPHITE_REPO_URL").ok();
     let repo_url = repo_url.as_deref();
+    let css = match style_arg {
+        "sci-fi" => style::SCI_FI_CSS.to_string(),
+        "default" => style::DEFAULT_CSS.to_string(),
+        path => match fs::read_to_string(path) {
+            Ok(content) => content,
+            Err(e) => {
+                eprintln!("[error] style-read-error: Cannot read CSS file '{path}': {e}");
+                eprintln!("  fix: pass --style default, --style sci-fi, or a readable CSS file path");
+                std::process::exit(1);
+            }
+        },
+    };
 
-    if let Err(d) = graphite_render::render_to_dir(&graph, &evidence, output_path, repo_url) {
+    if let Err(d) = graphite_render::render_to_dir(&graph, &evidence, output_path, repo_url, &css)
+    {
         let sev = match d.severity {
             Severity::Error => "error",
             Severity::Warning => "warning",
@@ -901,7 +921,13 @@ The compiler must parse and validate [edge:compiler] and [edge:compiler-tests].
         let graph = load_graph(graph_dir.to_str().unwrap()).expect("integration: load graph");
         let evidence = resolve_evidence(&config.scan);
         let output_dir = root.join("html");
-        graphite_render::render_to_dir(&graph, &evidence, &output_dir, None)
+        graphite_render::render_to_dir(
+            &graph,
+            &evidence,
+            &output_dir,
+            None,
+            style::DEFAULT_CSS,
+        )
             .expect("integration: render should succeed");
 
         assert!(
