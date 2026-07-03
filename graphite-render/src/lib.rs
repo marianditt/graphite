@@ -195,15 +195,57 @@ fn compute_node_numbering(graph: &Graph) -> NodeNumbering {
     numbering
 }
 
-/// Build the display label for a node, e.g. "SVC-003".
-fn node_label(schema: &Schema, numbering: &NodeNumbering, kind: &str, node_id: &str) -> String {
+/// Build the numeric key label for a node, e.g. "SVC-3".
+fn node_key_index(schema: &Schema, numbering: &NodeNumbering, kind: &str, node_id: &str) -> String {
     let key = schema.kinds.get(kind).map(|k| k.key.as_str()).unwrap_or("??");
     let num = numbering
         .get(kind)
         .and_then(|m| m.get(node_id))
         .copied()
         .unwrap_or(0);
-    format!("{}-{:03}", key, num)
+    format!("{}-{}", key, num)
+}
+
+fn node_title(node: &Node) -> String {
+    use pulldown_cmark::{Event, Options, Parser, Tag, TagEnd};
+
+    let mut options = Options::empty();
+    options.insert(Options::ENABLE_STRIKETHROUGH);
+    options.insert(Options::ENABLE_TABLES);
+
+    let parser = Parser::new_ext(&node.body, options);
+
+    let mut in_heading = false;
+    let mut title = String::new();
+    for event in parser {
+        match event {
+            Event::Start(Tag::Heading { .. }) if !in_heading && title.is_empty() => {
+                in_heading = true;
+            }
+            Event::End(TagEnd::Heading(_)) if in_heading => {
+                break;
+            }
+            Event::Text(text) | Event::Code(text) if in_heading => {
+                if !title.is_empty() {
+                    title.push(' ');
+                }
+                title.push_str(text.as_ref());
+            }
+            _ => {}
+        }
+    }
+
+    if title.trim().is_empty() {
+        node.id.clone()
+    } else {
+        title.trim().to_string()
+    }
+}
+
+fn node_display_label(schema: &Schema, numbering: &NodeNumbering, node: &Node) -> String {
+    let key_index = node_key_index(schema, numbering, &node.kind, &node.id);
+    let title = node_title(node);
+    format!("{} {}", key_index, title)
 }
 
 // ---------------------------------------------------------------------------
@@ -252,7 +294,8 @@ fn render_node_page(
     let heading_base = (1 + depth).min(6); // clamp at h6
 
     // Build heading-depth-adjusted body
-    let body_html = render_body(node, heading_base);
+    let key_index = node_key_index(&graph.schema, numbering, current_kind, &node.id);
+    let body_html = render_body(node, heading_base, Some(&key_index));
 
     // Replace [edge:<id>] with relative links
     let body_with_links = replace_edge_refs(graph, &body_html, current_kind, numbering);
@@ -276,26 +319,25 @@ fn render_node_page(
         relative_index_link(current_kind, current_kind)
     };
 
-    let label = node_label(&graph.schema, numbering, current_kind, &node.id);
+    let display_label = node_display_label(&graph.schema, numbering, node);
 
     format!(
         r#"<!DOCTYPE html>
 <html lang="en">
-<head><meta charset="utf-8"><title>{id} — graphite</title>
+<head><meta charset="utf-8"><title>{display_label} — graphite</title>
 <style>
 {css}
 </style>
 </head>
 <body>
-<p class="node-meta"><strong>{label}</strong> · <a href="{toc_link}">↑ {kind}</a></p>
+<p class="node-meta"><strong>{display_label}</strong> · <a href="{toc_link}">↑ {kind}</a></p>
 {body_with_links}
 {ev_section}
 {backlinks}
 </body>
 </html>"#,
-        id = node.id,
         kind = node.kind,
-        label = label,
+        display_label = display_label,
         toc_link = toc_link,
         body_with_links = body_with_links,
         ev_section = ev_section,
@@ -308,7 +350,7 @@ fn render_node_page(
 // Markdown → HTML via pulldown-cmark, with heading offset
 // ---------------------------------------------------------------------------
 
-fn render_body(node: &Node, heading_base: usize) -> String {
+fn render_body(node: &Node, heading_base: usize, heading_prefix: Option<&str>) -> String {
     use pulldown_cmark::{Event, Options, Parser, Tag, TagEnd, html};
 
     let mut options = Options::empty();
@@ -324,29 +366,59 @@ fn render_body(node: &Node, heading_base: usize) -> String {
     };
 
     let mut out = String::new();
-    let events = parser.map(|event| match event {
-        Event::Start(Tag::Heading {
-            level,
-            id,
-            classes,
-            attrs,
-        }) => {
-            let new_level = offset_heading(level, offset);
+    let mut transformed = Vec::new();
+    let mut in_first_heading = false;
+    let mut first_heading_seen = false;
+    let mut heading_prefix_injected = false;
+
+    for event in parser {
+        match event {
             Event::Start(Tag::Heading {
-                level: new_level,
+                level,
                 id,
                 classes,
                 attrs,
-            })
+            }) => {
+                let new_level = offset_heading(level, offset);
+                transformed.push(Event::Start(Tag::Heading {
+                    level: new_level,
+                    id,
+                    classes,
+                    attrs,
+                }));
+                if !first_heading_seen {
+                    first_heading_seen = true;
+                    in_first_heading = true;
+                    heading_prefix_injected = false;
+                }
+            }
+            Event::End(TagEnd::Heading(level)) => {
+                let new_level = offset_heading(level, offset);
+                if in_first_heading {
+                    in_first_heading = false;
+                }
+                transformed.push(Event::End(TagEnd::Heading(new_level)));
+            }
+            Event::Text(text) if in_first_heading && !heading_prefix_injected => {
+                if let Some(prefix) = heading_prefix {
+                    transformed.push(Event::Text(format!("{} {}", prefix, text).into()));
+                } else {
+                    transformed.push(Event::Text(text));
+                }
+                heading_prefix_injected = true;
+            }
+            Event::Code(text) if in_first_heading && !heading_prefix_injected => {
+                if let Some(prefix) = heading_prefix {
+                    transformed.push(Event::Text(format!("{} ", prefix).into()));
+                }
+                transformed.push(Event::Code(text));
+                heading_prefix_injected = true;
+            }
+            other => transformed.push(other),
         }
-        Event::End(TagEnd::Heading(level)) => {
-            let new_level = offset_heading(level, offset);
-            Event::End(TagEnd::Heading(new_level))
-        }
-        other => other,
-    });
+    }
 
-    html::push_html(&mut out, events);
+    html::push_html(&mut out, transformed.into_iter());
     out
 }
 
@@ -383,7 +455,7 @@ fn replace_edge_refs(
             let id = html[content_start..content_start + end].trim();
             if let Some(target) = graph.nodes.get(id) {
                 let href = relative_link(current_kind, &target.kind, &target.id);
-                let label = node_label(&graph.schema, numbering, &target.kind, &target.id);
+                let label = node_display_label(&graph.schema, numbering, target);
                 result.push_str(&format!(
                     r#"<a href="{href}">{label}</a>"#,
                     href = href,
@@ -443,7 +515,7 @@ fn render_backlinks(
             let kind = target_node.map(|n| n.kind.as_str()).unwrap_or("unknown");
             let href = relative_link(current_kind, kind, id);
             let label = if let Some(n) = target_node {
-                node_label(&graph.schema, numbering, &n.kind, id)
+                node_display_label(&graph.schema, numbering, n)
             } else {
                 id.to_string()
             };
@@ -528,7 +600,7 @@ fn render_kind_index(
                 && n.metadata.get("of_kind").map(|s| s.as_str()) == Some(kind)
         })
         .map(|idx_node| {
-            let raw = render_body(idx_node, 0);
+            let raw = render_body(idx_node, 0, None);
             replace_edge_refs(graph, &raw, kind, numbering)
         })
         .unwrap_or_default();
@@ -539,7 +611,7 @@ fn render_kind_index(
         .map(|n| {
             let depth = depths.get(&n.id).copied().unwrap_or(0);
             let indent = "  ".repeat(depth);
-            let label = node_label(schema, numbering, kind, &n.id);
+            let label = node_display_label(schema, numbering, n);
             format!(
                 r#"{}<li><a href="{}.html">{}</a></li>"#,
                 indent, n.id, label
@@ -610,6 +682,7 @@ fn render_root_index(
     let mut toc_items: Vec<String> = Vec::new();
     if let Some(root) = root_node {
         if let Some(children) = root.edges.get("contains") {
+            let mut per_kind_index: HashMap<String, usize> = HashMap::new();
             for child_id in children {
                 if let Some(child) = graph.nodes.get(child_id.as_str()) {
                     // Child is an index node with of_kind metadata — use that to
@@ -624,11 +697,17 @@ fn render_root_index(
                         .get(of_kind)
                         .map(|k| k.key.as_str())
                         .unwrap_or("??");
+                    let index = {
+                        let entry = per_kind_index.entry(of_kind.to_string()).or_insert(0);
+                        *entry += 1;
+                        *entry
+                    };
+                    let title = node_title(child);
+                    let label = format!("{}-{} {}", key, index, title);
                     toc_items.push(format!(
-                        r#"<li><a href="{kind}/index.html">{label} ({key})</a></li>"#,
+                        r#"<li><a href="{kind}/index.html">{label}</a></li>"#,
                         kind = of_kind,
-                        label = child_id,
-                        key = key,
+                        label = label,
                     ));
                 }
             }
@@ -636,7 +715,7 @@ fn render_root_index(
         toc_items.sort();
 
         // Root index body — rendered with edge ref resolution.
-        let body_html = render_body(root, 0);
+        let body_html = render_body(root, 0, None);
         let body_with_links =
             replace_edge_refs(graph, &body_html, "index", numbering);
 
@@ -974,8 +1053,48 @@ kind: service\n\
         service_nums.insert("svc".to_string(), 1usize);
         numbering.insert("service".to_string(), service_nums);
 
-        let label = node_label(&schema, &numbering, "service", "svc");
-        assert_eq!(label, "SVC-001", "label should be key + 3-digit number");
+        let label = node_key_index(&schema, &numbering, "service", "svc");
+        assert_eq!(label, "SVC-1", "label should be key-index");
+    }
+
+    #[test]
+    fn node_title_uses_first_heading_text() {
+        let schema = SchemaParser::default_schema();
+        let mut g = Graph::new(schema);
+        let n = NodeParser::parse(
+            "\
+---\n\
+id: audience-requirement\n\
+kind: requirement\n\
+---\n\
+# Audience Requirement\n\n\
+Body\n",
+        )
+        .expect("node");
+        g.add_node(n.clone());
+
+        assert_eq!(node_title(&n), "Audience Requirement");
+    }
+
+    #[test]
+    fn display_label_is_key_index_plus_title() {
+        let schema = SchemaParser::default_schema();
+        let mut g = Graph::new(schema.clone());
+        let node = NodeParser::parse(
+            "\
+---\n\
+id: audience-requirement\n\
+kind: requirement\n\
+---\n\
+# Audience Requirement\n\n\
+Body\n",
+        )
+        .expect("node");
+        g.add_node(node.clone());
+
+        let numbering = compute_node_numbering(&g);
+        let label = node_display_label(&schema, &numbering, &node);
+        assert_eq!(label, "REQ-1 Audience Requirement");
     }
 
     #[test]
@@ -1096,6 +1215,97 @@ kind: service\n\
         assert!(
             html.contains(r#"href="service/index.html""#),
             "root index should link to service/index.html"
+        );
+        assert!(
+            html.contains("SVC-1 Service Index"),
+            "root index toc entries should use KEY-INDEX Title format: {}",
+            html
+        );
+    }
+
+    #[test]
+    fn toc_links_use_key_index_and_title() {
+        let schema = SchemaParser::default_schema();
+        let mut g = Graph::new(schema);
+
+        g.add_node(
+            NodeParser::parse(
+                "\
+---\n\
+id: req-index\n\
+kind: index\n\
+metadata:\n  of_kind: requirement\n\
+---\n\
+# Requirement Index\n",
+            )
+            .expect("req-index"),
+        );
+
+        g.add_node(
+            NodeParser::parse(
+                "\
+---\n\
+id: audience-requirement\n\
+kind: requirement\n\
+---\n\
+# Audience Requirement\n\n\
+Body\n",
+            )
+            .expect("audience-requirement"),
+        );
+
+        let depths = compute_depths(&g);
+        let numbering = compute_node_numbering(&g);
+        let schema = &g.schema;
+        let nodes_by_kind = group_by_kind(&g);
+        let req_nodes = nodes_by_kind.get("requirement").expect("requirement nodes");
+        let html = render_kind_index(
+            "requirement",
+            req_nodes,
+            &depths,
+            &g,
+            schema,
+            &numbering,
+            None,
+            style::DEFAULT_CSS,
+        );
+
+        assert!(
+            html.contains("REQ-1 Audience Requirement"),
+            "toc label should include key-index and title: {}",
+            html
+        );
+    }
+
+    #[test]
+    fn node_page_heading_has_key_index_and_title() {
+        let schema = SchemaParser::default_schema();
+        let mut g = Graph::new(schema);
+        g.add_node(
+            NodeParser::parse(
+                "\
+---\n\
+id: audience-requirement\n\
+kind: requirement\n\
+---\n\
+# Audience Requirement\n\n\
+Body\n",
+            )
+            .expect("audience-requirement"),
+        );
+
+        let evidence = HashMap::new();
+        let rendered = render_graph(&g, &evidence, None, style::DEFAULT_CSS).expect("render");
+        let page = rendered
+            .pages
+            .iter()
+            .find(|p| p.id == "audience-requirement")
+            .expect("audience page");
+
+        assert!(
+            page.html.contains("REQ-1 Audience Requirement"),
+            "node title/label should include key-index + title: {}",
+            page.html
         );
     }
 
