@@ -5,4 +5,10 @@ edition = "2024"
 
 [dependencies]
 clap = { version = "4", features = ["derive"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
 graphite-core = { path = "../graphite-core" }
+graphite-render = { path = "../graphite-render" }
+
+[dev-dependencies]
+tempfile = "3"
