@@ -1,0 +1,12 @@
+---
+id: compatibility-analysis
+kind: compliance
+edges:
+  references:
+    - schema-design
+  evidence:
+    - compatibility-analysis-def
+---
+# Compatibility Analysis
+
+Installed graphite 0.1.0 can lag schema features, especially evidence edges. The CLI exposes compatibility diagnostics for that drift, tied to [edge:schema-design].

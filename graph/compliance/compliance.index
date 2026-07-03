@@ -1,0 +1,11 @@
+---
+id: compliance
+kind: index
+edges:
+  contains:
+    - traceability-policy
+    - compatibility-analysis
+metadata:
+  of_kind: compliance
+---
+# Compliance Index

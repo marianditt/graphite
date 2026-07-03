@@ -6,15 +6,26 @@ use clap::{Parser, Subcommand};
 use graphite_core::anchor_scanner::AnchorScanner;
 use graphite_core::config::Config;
 use graphite_core::node_parser::NodeParser;
-use graphite_core::schema::SchemaParser;
+use graphite_core::schema::{DEFAULT_SCHEMA_YAML, SchemaParser};
 use graphite_core::sidecar::SidecarResolver;
 use graphite_core::validation::ValidationEngine;
 use graphite_core::{Diagnostic, Graph, Severity};
 use graphite_render::style;
 
+// @graphite:evidence cli-service-def
+// @graphite:evidence audience-requirement-def
+// @graphite:evidence self-hosting-requirement-def
+// @graphite:evidence compiler-tests-def
+// @graphite:evidence compatibility-analysis-def
+// @graphite:evidence effectiveness-measurement-def
+// @graphite:evidence runbook-validation-def
+// @graphite:evidence infra-distribution-def
+// @graphite:evidence compliance-traceability-def
+
 #[derive(Parser)]
 #[command(
     name = "graphite",
+    version,
     about = "A compiled knowledge graph for software engineering"
 )]
 struct Cli {
@@ -38,7 +49,11 @@ enum Commands {
         #[arg(long)]
         first: bool,
         #[arg(long)]
+        strict: bool,
+        #[arg(long)]
         json: bool,
+        #[arg(long)]
+        compat: Option<String>,
     },
     /// Show context for a node (slice relevant for a specific phase)
     Context {
@@ -58,6 +73,12 @@ enum Commands {
     Diff {
         #[arg(long, default_value = "HEAD")]
         from: String,
+        #[arg(long)]
+        json: bool,
+    },
+    Stats {
+        #[arg(default_value = "graph")]
+        graph_dir: String,
         #[arg(long)]
         json: bool,
     },
@@ -83,9 +104,19 @@ fn main() {
             path,
             focus,
             first,
+            strict,
             json,
+            compat,
         } => {
-            if !cmd_validate(&path, focus.as_deref(), first, json, &config) {
+            if !cmd_validate(
+                &path,
+                focus.as_deref(),
+                first,
+                strict,
+                json,
+                compat.as_deref(),
+                &config,
+            ) {
                 std::process::exit(1);
             }
         }
@@ -98,6 +129,7 @@ fn main() {
         }
         Commands::Plan { id, graph_dir } => cmd_plan(&id, &graph_dir),
         Commands::Diff { from, json } => cmd_diff(&from, json),
+        Commands::Stats { graph_dir, json } => cmd_stats(&graph_dir, json, &config),
         Commands::Render {
             graph_dir,
             output,
@@ -111,7 +143,10 @@ fn main() {
 // ---------------------------------------------------------------------------
 
 fn load_graph(graph_dir: &str) -> Result<Graph, Vec<Diagnostic>> {
-    let schema = SchemaParser::default_schema();
+    let schema = match load_schema_for_graph_dir(graph_dir) {
+        Ok(schema) => schema,
+        Err(diag) => return Err(vec![diag]),
+    };
     let mut graph = Graph::new(schema);
     let mut errors = Vec::new();
 
@@ -157,6 +192,33 @@ fn load_graph(graph_dir: &str) -> Result<Graph, Vec<Diagnostic>> {
     } else {
         Err(errors)
     }
+}
+
+#[allow(clippy::result_large_err)]
+fn load_schema_for_graph_dir(graph_dir: &str) -> Result<graphite_core::Schema, Diagnostic> {
+    let graph_path = Path::new(graph_dir);
+    let project_root = graph_path.parent().unwrap_or_else(|| Path::new("."));
+    let schema_path = project_root.join("graph.schema");
+
+    if !schema_path.exists() {
+        return Ok(SchemaParser::default_schema());
+    }
+
+    let schema_yaml = fs::read_to_string(&schema_path).map_err(|e| Diagnostic {
+        rule: "schema-read-error".into(),
+        severity: Severity::Error,
+        node_id: None,
+        file: Some(schema_path.to_string_lossy().into()),
+        detail: format!("Cannot read schema file '{}': {e}", schema_path.display()),
+        fix: "Ensure graph.schema exists and is readable UTF-8.".into(),
+        example: None,
+        hint: "Place graph.schema at the repository root next to graphite.yaml.".into(),
+    })?;
+
+    SchemaParser::parse(&schema_yaml).map_err(|mut d| {
+        d.file = Some(schema_path.to_string_lossy().into());
+        d
+    })
 }
 
 fn collect_node_files(path: &Path, graph: &mut Graph, errors: &mut Vec<Diagnostic>) {
@@ -211,16 +273,28 @@ fn collect_node_files(path: &Path, graph: &mut Graph, errors: &mut Vec<Diagnosti
 // Evidence resolution
 // ---------------------------------------------------------------------------
 
-fn resolve_evidence(scan_paths: &[String]) -> HashMap<String, Vec<(PathBuf, usize)>> {
+fn resolve_evidence(
+    scan_paths: &[String],
+    base_dir: &Path,
+) -> HashMap<String, Vec<(PathBuf, usize)>> {
     let mut evidence = HashMap::new();
 
     for scan_path in scan_paths {
-        if let Ok(scanned) = AnchorScanner::scan(Path::new(scan_path)) {
+        let full_path = {
+            let p = Path::new(scan_path);
+            if p.is_absolute() {
+                p.to_path_buf()
+            } else {
+                base_dir.join(p)
+            }
+        };
+
+        if let Ok(scanned) = AnchorScanner::scan(&full_path) {
             for (id, locs) in scanned {
                 evidence.entry(id).or_insert_with(Vec::new).extend(locs);
             }
         }
-        if let Ok(sidecars) = SidecarResolver::resolve(Path::new(scan_path)) {
+        if let Ok(sidecars) = SidecarResolver::resolve(&full_path) {
             for (id, locs) in sidecars {
                 evidence.entry(id).or_insert_with(Vec::new).extend(locs);
             }
@@ -234,7 +308,15 @@ fn resolve_evidence(scan_paths: &[String]) -> HashMap<String, Vec<(PathBuf, usiz
 // validate
 // ---------------------------------------------------------------------------
 
-fn cmd_validate(graph_dir: &str, focus: Option<&str>, first: bool, json: bool, config: &Config) -> bool {
+fn cmd_validate(
+    graph_dir: &str,
+    focus: Option<&str>,
+    first: bool,
+    strict: bool,
+    json: bool,
+    compat: Option<&str>,
+    config: &Config,
+) -> bool {
     let graph = match load_graph(graph_dir) {
         Ok(g) => g,
         Err(errors) => {
@@ -246,16 +328,67 @@ fn cmd_validate(graph_dir: &str, focus: Option<&str>, first: bool, json: bool, c
     let engine = ValidationEngine;
     let mut diagnostics = engine.validate(&graph);
 
-    let evidence = resolve_evidence(&config.scan);
+    let base_dir = Path::new(graph_dir)
+        .parent()
+        .unwrap_or_else(|| Path::new("."));
+    let evidence = resolve_evidence(&config.scan, base_dir);
     diagnostics.extend(engine.check_evidence_anchors(&graph, &evidence));
+    diagnostics.extend(check_compatibility(&graph, compat));
+
+    if strict {
+        for d in &mut diagnostics {
+            if matches!(d.severity, Severity::Warning) {
+                d.severity = Severity::Error;
+            }
+        }
+    }
+
+    let has_errors = diagnostics
+        .iter()
+        .any(|d| matches!(d.severity, Severity::Error));
 
     if diagnostics.is_empty() {
         println!("✓ graph is valid");
         return true;
     }
 
+    if !has_errors {
+        output_diagnostics(&diagnostics, focus, first, json);
+        if !json {
+            println!("✓ graph is valid with warnings");
+        }
+        return true;
+    }
+
     output_diagnostics(&diagnostics, focus, first, json);
     false
+}
+
+fn check_compatibility(graph: &Graph, compat: Option<&str>) -> Vec<Diagnostic> {
+    let mut diagnostics = Vec::new();
+    if compat != Some("0.1.0") {
+        return diagnostics;
+    }
+
+    for node in graph.nodes.values() {
+        if node.edges.contains_key("evidence") {
+            diagnostics.push(Diagnostic {
+                rule: "compat-0.1.0".into(),
+                severity: Severity::Warning,
+                node_id: Some(node.id.clone()),
+                file: None,
+                detail: format!(
+                    "Node '{}' uses 'evidence' edges, which graphite 0.1.0 does not validate correctly.",
+                    node.id
+                ),
+                fix: "Use the local CLI wrapper (current repo version) for accurate evidence validation, or upgrade the installed binary.".into(),
+                example: None,
+                hint: "0.1.0 uses a fixed built-in schema path that misses newer edge types.".into(),
+            });
+        }
+    }
+
+    diagnostics
 }
 
 fn output_diagnostics(diags: &[Diagnostic], focus: Option<&str>, first: bool, json: bool) {
@@ -314,17 +447,34 @@ fn cmd_init(path: &str, force: bool) {
         "graph/adr",
         "graph/service",
         "graph/test",
+        "graph/compliance",
+        "graph/runbook",
+        "graph/infra",
     ];
     for d in &dirs {
         let _ = fs::create_dir_all(root.join(d));
     }
+
+    let schema_path = root.join("graph.schema");
+    let _ = fs::write(&schema_path, DEFAULT_SCHEMA_YAML);
 
     // root/root.node
     write_node(
         &graph_dir.join("root/root.node"),
         "root",
         "index",
-        &[("contains", &["requirement", "adr", "service", "test"])],
+        &[(
+            "contains",
+            &[
+                "requirement",
+                "adr",
+                "service",
+                "test",
+                "compliance",
+                "runbook",
+                "infra",
+            ],
+        )],
         "# Graphite\n\nA compiled knowledge graph for software engineering.",
         Some("general"),
     );
@@ -402,6 +552,60 @@ fn cmd_init(path: &str, force: bool) {
         "test",
         &[],
         "# Compiler Tests\n\nTests for the graphite compiler pipeline.",
+        None,
+    );
+
+    write_node(
+        &graph_dir.join("compliance/compliance.index"),
+        "compliance",
+        "index",
+        &[("contains", &["traceability-policy"])],
+        "# Compliance Index",
+        Some("compliance"),
+    );
+
+    write_node(
+        &graph_dir.join("compliance/traceability-policy.node"),
+        "traceability-policy",
+        "compliance",
+        &[],
+        "# Traceability Policy\n\nRequirements should be linked to implementation, tests, and evidence.",
+        None,
+    );
+
+    write_node(
+        &graph_dir.join("runbook/runbook.index"),
+        "runbook",
+        "index",
+        &[("contains", &["validation-runbook"])],
+        "# Runbook Index",
+        Some("runbook"),
+    );
+
+    write_node(
+        &graph_dir.join("runbook/validation-runbook.node"),
+        "validation-runbook",
+        "runbook",
+        &[],
+        "# Validation Runbook\n\nRun graphite validate before shipping graph changes.",
+        None,
+    );
+
+    write_node(
+        &graph_dir.join("infra/infra.index"),
+        "infra",
+        "index",
+        &[("contains", &["distribution-pipeline"])],
+        "# Infra Index",
+        Some("infra"),
+    );
+
+    write_node(
+        &graph_dir.join("infra/distribution-pipeline.node"),
+        "distribution-pipeline",
+        "infra",
+        &[],
+        "# Distribution Pipeline\n\nThe package and binary distribution path for graphite.",
         None,
     );
 
@@ -515,6 +719,140 @@ fn cmd_diff(from: &str, json: bool) {
     }
 }
 
+#[derive(serde::Serialize)]
+struct StatsOutput {
+    nodes_total: usize,
+    nodes_by_kind: HashMap<String, usize>,
+    edges_total: usize,
+    edges_by_kind: HashMap<String, usize>,
+    diagnostics_total: usize,
+    diagnostics_by_rule: HashMap<String, usize>,
+    diagnostics_by_severity: HashMap<String, usize>,
+    requirements_total: usize,
+    requirements_with_implementation: usize,
+    requirements_with_tests: usize,
+    requirements_fully_traced_pct: f64,
+    nodes_with_evidence_pct: f64,
+}
+
+fn cmd_stats(graph_dir: &str, json: bool, config: &Config) {
+    let graph = match load_graph(graph_dir) {
+        Ok(g) => g,
+        Err(errors) => {
+            output_diagnostics(&errors, None, false, json);
+            std::process::exit(1);
+        }
+    };
+
+    let engine = ValidationEngine;
+    let mut diagnostics = engine.validate(&graph);
+    let base_dir = Path::new(graph_dir)
+        .parent()
+        .unwrap_or_else(|| Path::new("."));
+    let evidence = resolve_evidence(&config.scan, base_dir);
+    diagnostics.extend(engine.check_evidence_anchors(&graph, &evidence));
+
+    let mut nodes_by_kind: HashMap<String, usize> = HashMap::new();
+    let mut edges_by_kind: HashMap<String, usize> = HashMap::new();
+    let mut edges_total = 0usize;
+    let mut requirements_total = 0usize;
+    let mut requirements_with_implementation = 0usize;
+    let mut requirements_with_tests = 0usize;
+    let mut nodes_with_evidence = 0usize;
+
+    for node in graph.nodes.values() {
+        *nodes_by_kind.entry(node.kind.clone()).or_insert(0) += 1;
+
+        if node
+            .edges
+            .get("evidence")
+            .map(|v| !v.is_empty())
+            .unwrap_or(false)
+        {
+            nodes_with_evidence += 1;
+        }
+
+        if node.kind == "requirement" {
+            requirements_total += 1;
+            if node
+                .edges
+                .get("implemented_by")
+                .map(|v| !v.is_empty())
+                .unwrap_or(false)
+            {
+                requirements_with_implementation += 1;
+            }
+            if node
+                .edges
+                .get("verified_by")
+                .map(|v| !v.is_empty())
+                .unwrap_or(false)
+            {
+                requirements_with_tests += 1;
+            }
+        }
+
+        for (edge_kind, targets) in &node.edges {
+            *edges_by_kind.entry(edge_kind.clone()).or_insert(0) += targets.len();
+            edges_total += targets.len();
+        }
+    }
+
+    let mut diagnostics_by_rule: HashMap<String, usize> = HashMap::new();
+    let mut diagnostics_by_severity: HashMap<String, usize> = HashMap::new();
+    for d in &diagnostics {
+        *diagnostics_by_rule.entry(d.rule.clone()).or_insert(0) += 1;
+        let sev = match d.severity {
+            Severity::Error => "error".to_string(),
+            Severity::Warning => "warning".to_string(),
+        };
+        *diagnostics_by_severity.entry(sev).or_insert(0) += 1;
+    }
+
+    let requirements_fully_traced = requirements_with_implementation.min(requirements_with_tests);
+    let requirements_fully_traced_pct = if requirements_total == 0 {
+        100.0
+    } else {
+        (requirements_fully_traced as f64 / requirements_total as f64) * 100.0
+    };
+    let nodes_with_evidence_pct = if graph.nodes.is_empty() {
+        100.0
+    } else {
+        (nodes_with_evidence as f64 / graph.nodes.len() as f64) * 100.0
+    };
+
+    let out = StatsOutput {
+        nodes_total: graph.nodes.len(),
+        nodes_by_kind,
+        edges_total,
+        edges_by_kind,
+        diagnostics_total: diagnostics.len(),
+        diagnostics_by_rule,
+        diagnostics_by_severity,
+        requirements_total,
+        requirements_with_implementation,
+        requirements_with_tests,
+        requirements_fully_traced_pct,
+        nodes_with_evidence_pct,
+    };
+
+    if json {
+        println!(
+            "{}",
+            serde_json::to_string_pretty(&out).expect("serialize stats")
+        );
+    } else {
+        println!("nodes: {}", out.nodes_total);
+        println!("edges: {}", out.edges_total);
+        println!("diagnostics: {}", out.diagnostics_total);
+        println!(
+            "requirements fully traced: {}/{} ({:.1}%)",
+            requirements_fully_traced, out.requirements_total, out.requirements_fully_traced_pct
+        );
+        println!("nodes with evidence: {:.1}%", out.nodes_with_evidence_pct);
+    }
+}
+
 fn git_root() -> Option<PathBuf> {
     let output = std::process::Command::new("git")
         .args(["rev-parse", "--show-toplevel"])
@@ -586,9 +924,7 @@ fn cmd_context(id: &str, phase: Option<&str>, graph_dir: &str) {
     let mut dependents: Vec<&graphite_core::Node> = Vec::new();
     for node in graph.nodes.values() {
         for targets in node.edges.values() {
-            if targets.iter().any(|t| t == id)
-                && !dependents.iter().any(|d| d.id == node.id)
-            {
+            if targets.iter().any(|t| t == id) && !dependents.iter().any(|d| d.id == node.id) {
                 dependents.push(node);
             }
         }
@@ -609,7 +945,7 @@ fn cmd_context(id: &str, phase: Option<&str>, graph_dir: &str) {
         ContextNode {
             id: n.id.clone(),
             kind: n.kind.clone(),
-            file: format!("graph/{}/{}.node", n.kind, n.id),
+            file: resolve_node_source_file(graph_dir, n),
             body: n.body.clone(),
         }
     };
@@ -734,7 +1070,11 @@ fn cmd_plan(id: &str, graph_dir: &str) {
     for targets in target.edges.values() {
         for t in targets {
             if seen.insert(t.clone()) {
-                let source_file = format!("graph/{kind}/{t}.node", kind = target.kind);
+                let source_file = graph
+                    .nodes
+                    .get(t.as_str())
+                    .map(|n| resolve_node_source_file(graph_dir, n))
+                    .unwrap_or_else(|| format!("graph/{kind}/{t}.node", kind = target.kind));
                 work_order.push(WorkStep {
                     order,
                     action: "read".into(),
@@ -748,7 +1088,7 @@ fn cmd_plan(id: &str, graph_dir: &str) {
     }
 
     // Phase 2: Modify the target node
-    let target_file = format!("graph/{kind}/{id}.node", kind = target.kind);
+    let target_file = resolve_node_source_file(graph_dir, target);
     work_order.push(WorkStep {
         order,
         action: "modify".into(),
@@ -810,7 +1150,10 @@ fn cmd_render(graph_dir: &str, output: &str, style_arg: &str, config: &Config) {
         }
     };
 
-    let evidence = resolve_evidence(&config.scan);
+    let base_dir = Path::new(graph_dir)
+        .parent()
+        .unwrap_or_else(|| Path::new("."));
+    let evidence = resolve_evidence(&config.scan, base_dir);
     let output_path = Path::new(output);
 
     let repo_url = std::env::var("GRAPHITE_REPO_URL").ok();
@@ -822,14 +1165,15 @@ fn cmd_render(graph_dir: &str, output: &str, style_arg: &str, config: &Config) {
             Ok(content) => content,
             Err(e) => {
                 eprintln!("[error] style-read-error: Cannot read CSS file '{path}': {e}");
-                eprintln!("  fix: pass --style default, --style sci-fi, or a readable CSS file path");
+                eprintln!(
+                    "  fix: pass --style default, --style sci-fi, or a readable CSS file path"
+                );
                 std::process::exit(1);
             }
         },
     };
 
-    if let Err(d) = graphite_render::render_to_dir(&graph, &evidence, output_path, repo_url, &css)
-    {
+    if let Err(d) = graphite_render::render_to_dir(&graph, &evidence, output_path, repo_url, &css) {
         let sev = match d.severity {
             Severity::Error => "error",
             Severity::Warning => "warning",
@@ -840,11 +1184,55 @@ fn cmd_render(graph_dir: &str, output: &str, style_arg: &str, config: &Config) {
         std::process::exit(1);
     }
 
-    println!(
-        "✓ rendered {} nodes to '{}'",
-        graph.nodes.len(),
-        output
-    );
+    println!("✓ rendered {} nodes to '{}'", graph.nodes.len(), output);
+}
+
+fn resolve_node_source_file(graph_dir: &str, node: &graphite_core::Node) -> String {
+    let root = Path::new(graph_dir);
+    let preferred = [
+        root.join(&node.kind).join(format!("{}.node", node.id)),
+        root.join(&node.kind).join(format!("{}.index", node.id)),
+    ];
+
+    for p in preferred {
+        if p.exists() {
+            return p.to_string_lossy().into();
+        }
+    }
+
+    if let Some(found) = find_node_file(root, &node.id) {
+        return found.to_string_lossy().into();
+    }
+
+    format!("graph/{}/{}.node", node.kind, node.id)
+}
+
+fn find_node_file(root: &Path, node_id: &str) -> Option<PathBuf> {
+    let entries = fs::read_dir(root).ok()?;
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if path.is_dir() {
+            if let Some(name) = path.file_name().and_then(|s| s.to_str())
+                && (name.starts_with('.') || name == "target" || name == "node_modules")
+            {
+                continue;
+            }
+            if let Some(found) = find_node_file(&path, node_id) {
+                return Some(found);
+            }
+            continue;
+        }
+
+        if let Some(stem) = path.file_stem().and_then(|s| s.to_str())
+            && stem == node_id
+        {
+            let ext = path.extension().and_then(|s| s.to_str());
+            if ext == Some("node") || ext == Some("index") {
+                return Some(path);
+            }
+        }
+    }
+    None
 }
 
 // ---------------------------------------------------------------------------
@@ -863,8 +1251,16 @@ mod tests {
             .parent()
             .expect("workspace root");
         let graph_dir = workspace_root.join("graph");
-        let config = Config::default();
-        let ok = cmd_validate(graph_dir.to_str().unwrap(), None, false, false, &config);
+        let config = Config::load_or_default(workspace_root).expect("load config");
+        let ok = cmd_validate(
+            graph_dir.to_str().unwrap(),
+            None,
+            false,
+            false,
+            false,
+            None,
+            &config,
+        );
         assert!(ok, "self-hosting validation failed on graph/");
     }
 
@@ -905,7 +1301,15 @@ The compiler must parse and validate [edge:compiler] and [edge:compiler-tests].
         .unwrap();
 
         let config = Config::default();
-        let valid = cmd_validate(graph_dir.to_str().unwrap(), None, false, false, &config);
+        let valid = cmd_validate(
+            graph_dir.to_str().unwrap(),
+            None,
+            false,
+            false,
+            false,
+            None,
+            &config,
+        );
         assert!(valid, "integration: validate should pass with valid graph");
 
         // Call context --phase implement and plan on the requirement node.
@@ -919,15 +1323,9 @@ The compiler must parse and validate [edge:compiler] and [edge:compiler-tests].
         cmd_plan("compiler-requirement", graph_dir.to_str().unwrap());
 
         let graph = load_graph(graph_dir.to_str().unwrap()).expect("integration: load graph");
-        let evidence = resolve_evidence(&config.scan);
+        let evidence = resolve_evidence(&config.scan, root);
         let output_dir = root.join("html");
-        graphite_render::render_to_dir(
-            &graph,
-            &evidence,
-            &output_dir,
-            None,
-            style::DEFAULT_CSS,
-        )
+        graphite_render::render_to_dir(&graph, &evidence, &output_dir, None, style::DEFAULT_CSS)
             .expect("integration: render should succeed");
 
         assert!(
@@ -949,5 +1347,66 @@ The compiler must parse and validate [edge:compiler] and [edge:compiler-tests].
             "integration: rendered page should have hyperlinks: {}",
             html
         );
+    }
+
+    #[test]
+    fn load_graph_reports_schema_parse_error() {
+        let tmp = tempfile::tempdir().expect("temp dir");
+        let root = tmp.path();
+        let graph_dir = root.join("graph");
+        fs::create_dir_all(&graph_dir).expect("create graph dir");
+
+        fs::write(root.join("graph.schema"), "kinds:\n  bad: [\n").expect("write invalid schema");
+
+        let result = load_graph(graph_dir.to_str().expect("graph path"));
+        let errors = result.expect_err("invalid graph.schema should fail load_graph");
+        assert!(
+            errors.iter().any(|d| d.rule == "schema-parse-error"),
+            "expected schema-parse-error, got: {:?}",
+            errors
+        );
+    }
+
+    #[test]
+    fn strict_mode_turns_warnings_into_failure() {
+        let tmp = tempfile::tempdir().expect("temp dir");
+        let root = tmp.path();
+        let graph_dir = root.join("graph");
+        fs::create_dir_all(graph_dir.join("root")).expect("root dir");
+        fs::create_dir_all(graph_dir.join("adr")).expect("adr dir");
+
+        fs::write(
+            graph_dir.join("root/root.node"),
+            "---\nid: root\nkind: index\nmetadata:\n  of_kind: general\nedges:\n  contains:\n    - svc\n---\n# Root\n",
+        )
+        .expect("write root");
+        fs::write(
+            graph_dir.join("adr/svc.node"),
+            "---\nid: svc\nkind: adr\nedges:\n  references:\n    - root\n---\n# ADR\n",
+        )
+        .expect("write service");
+
+        let cfg = Config::default();
+        let non_strict = cmd_validate(
+            graph_dir.to_str().expect("graph path"),
+            None,
+            false,
+            false,
+            false,
+            None,
+            &cfg,
+        );
+        assert!(non_strict, "warnings should not fail non-strict validation");
+
+        let strict = cmd_validate(
+            graph_dir.to_str().expect("graph path"),
+            None,
+            false,
+            true,
+            false,
+            None,
+            &cfg,
+        );
+        assert!(!strict, "strict validation should fail on warnings");
     }
 }

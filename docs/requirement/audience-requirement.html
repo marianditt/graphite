@@ -293,8 +293,10 @@ th {
 <h3>REQ-1 Audience Requirement</h3>
 <p>The AI-first protocol requirement: CLI output must fit weak model context windows, every command serves a specific work phase, and every error teaches the fix.</p>
 <p>This shapes the design of <a href="../adr/ai-protocol.html">ADR-1 AI Protocol</a>, the <a href="../service/cli.html">SVC-1 CLI</a> subcommands, and <a href="../adr/tutoring-errors.html">ADR-10 Tutoring Errors</a> diagnostics.</p>
+<p>It is implemented through <a href="../service/cli.html">SVC-1 CLI</a> command design and verified by <a href="../test/compiler-tests.html">TST-1 Compiler Tests</a>.</p>
+<p>Evidence for this requirement is anchored at <span class="broken-edge">audience-requirement-def?</span>.</p>
 
-
+<div class="evidence"><h3>Evidence</h3><ul><li><code>graphite-cli/src/main.rs</code> line 16</li><li><code>graphite-cli/src/main.rs</code> line 16</li></ul></div>
 
 </body>
 </html>

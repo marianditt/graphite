@@ -291,10 +291,12 @@ th {
 <p class="brand">Graphite</p>
 <p class="node-meta"><strong>SVC-1 CLI</strong> · <a href="index.html">↑ service</a></p>
 <h3>SVC-1 CLI</h3>
-<p>Five subcommands: <code>init</code> scaffolds a new project, <code>validate</code> runs structural checks with <code>--focus</code>/<code>--first</code>/<code>--json</code> flags, <code>context</code> returns phase-specific context slices, <code>plan</code> computes a work order, <code>diff</code> shows knowledge-level changes.</p>
+<p>Seven subcommands: <code>init</code> scaffolds a new project, <code>validate</code> runs structural checks with <code>--focus</code>/<code>--first</code>/<code>--json</code>/<code>--strict</code> and <code>--compat 0.1.0</code>, <code>context</code> returns phase-specific context slices, <code>plan</code> computes a work order, <code>diff</code> shows knowledge-level changes, <code>stats</code> reports measurable effectiveness metrics, and <code>render</code> generates static docs.</p>
 <p>Each command serves a specific phase of the two-phase AI protocol described at <a href="../adr/ai-protocol.html">ADR-1 AI Protocol</a>.</p>
 
-
-<div class="backlinks"><h3>Referenced by</h3><ul><li><a href="../requirement/audience-requirement.html">REQ-1 Audience Requirement</a></li></ul></div>
+<div class="evidence"><h3>Evidence</h3><ul><li><code>graphite-cli/src/main.rs</code> line 15</li><li><code>graphite-cli/src/main.rs</code> line 15</li></ul></div>
+<div class="backlinks"><h3>Referenced by</h3><ul><li><a href="../infra/npm-wrapper.html">??-2 npm Wrapper</a></li>
+<li><a href="../infra/distribution-pipeline.html">??-1 Distribution Pipeline</a></li>
+<li><a href="../requirement/audience-requirement.html">REQ-1 Audience Requirement</a></li></ul></div>
 </body>
 </html>

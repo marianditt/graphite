@@ -6,6 +6,8 @@ edges:
     - compiler
   references:
     - heading-depth
+  evidence:
+    - rendering-adr
 ---
 # Rendering
 

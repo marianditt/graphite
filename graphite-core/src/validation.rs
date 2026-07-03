@@ -3,6 +3,11 @@ use std::path::PathBuf;
 
 use crate::{Diagnostic, Graph, Severity};
 
+// @graphite:evidence compiler-requirement-def
+// @graphite:evidence compiler-pipeline-adr
+// @graphite:evidence edge-narrative-adr
+// @graphite:evidence tutoring-errors-adr
+
 /// A map from evidence ID to resolved file locations.
 ///
 /// Produced by merging results from `AnchorScanner` and `SidecarResolver`.
@@ -45,8 +50,11 @@ impl ValidationEngine {
         diagnostics.extend(self.check_reachability(graph));
         diagnostics.extend(self.check_tree_constraint(graph));
         diagnostics.extend(self.check_cycles(graph));
+        diagnostics.extend(self.check_dependency_cycles(graph));
         diagnostics.extend(self.check_schema_conformance(graph));
+        diagnostics.extend(self.check_requirement_completeness(graph));
         diagnostics.extend(self.check_body_edge_usage(graph));
+        diagnostics.extend(self.check_evidence_coverage(graph));
         diagnostics.extend(self.check_index_body_has_title(graph));
         diagnostics.extend(self.check_node_body_has_title(graph));
         diagnostics
@@ -286,7 +294,7 @@ impl ValidationEngine {
                     continue;
                 }
 
-                if edge_kind == "contains" {
+                if edge_kind == "contains" || edge_kind == "evidence" {
                     continue;
                 }
 
@@ -386,8 +394,9 @@ impl ValidationEngine {
 
             let declared_targets: HashSet<&str> = node
                 .edges
-                .values()
-                .flat_map(|v| v.iter().map(|s| s.as_str()))
+                .iter()
+                .filter(|(k, _)| k.as_str() != "evidence")
+                .flat_map(|(_, v)| v.iter().map(|s| s.as_str()))
                 .collect();
 
             let body_refs: Vec<String> = extract_edge_refs(&node.body);
@@ -455,6 +464,204 @@ impl ValidationEngine {
         diagnostics
     }
 
+    /// Check semantic dependency cycles (non-containment edges) among knowledge
+    /// nodes. Cycles in references/describes/etc. are disallowed.
+    fn check_dependency_cycles(&self, graph: &Graph) -> Vec<Diagnostic> {
+        let node_ids: Vec<&str> = graph
+            .nodes
+            .values()
+            .filter(|n| n.kind != "index" && n.kind != "evidence")
+            .map(|n| n.id.as_str())
+            .collect();
+        let id_to_idx: HashMap<&str, usize> = node_ids
+            .iter()
+            .enumerate()
+            .map(|(i, id)| (*id, i))
+            .collect();
+
+        let n = node_ids.len();
+        let mut adj: Vec<Vec<usize>> = vec![Vec::new(); n];
+
+        for node in graph.nodes.values() {
+            if node.kind == "index" || node.kind == "evidence" {
+                continue;
+            }
+            let Some(&src) = id_to_idx.get(node.id.as_str()) else {
+                continue;
+            };
+            for (edge_kind, targets) in &node.edges {
+                if edge_kind == "contains" || edge_kind == "evidence" || edge_kind == "describes" {
+                    continue;
+                }
+                for target in targets {
+                    if let Some(target_node) = graph.nodes.get(target)
+                        && target_node.kind != "index"
+                        && target_node.kind != "evidence"
+                        && let Some(&tgt) = id_to_idx.get(target.as_str())
+                    {
+                        adj[src].push(tgt);
+                    }
+                }
+            }
+        }
+
+        let mut color = vec![0u8; n];
+        let mut path = Vec::new();
+        let mut diagnostics = Vec::new();
+
+        for start in 0..n {
+            if color[start] == 0 {
+                Self::dfs_dependency_cycle(
+                    start,
+                    &adj,
+                    &mut color,
+                    &mut path,
+                    &node_ids,
+                    &mut diagnostics,
+                );
+            }
+        }
+
+        diagnostics
+    }
+
+    fn dfs_dependency_cycle(
+        idx: usize,
+        adj: &[Vec<usize>],
+        color: &mut [u8],
+        path: &mut Vec<usize>,
+        node_ids: &[&str],
+        diagnostics: &mut Vec<Diagnostic>,
+    ) {
+        color[idx] = 1;
+        path.push(idx);
+
+        for &next in &adj[idx] {
+            if color[next] == 1 {
+                let mut cycle: Vec<&str> = path
+                    .iter()
+                    .skip_while(|&&i| i != next)
+                    .map(|&i| node_ids[i])
+                    .collect();
+                cycle.push(node_ids[next]);
+
+                diagnostics.push(diag_err(
+                    "dependency-cycle",
+                    node_ids[idx],
+                    &format!(
+                        "Cycle detected in semantic dependencies: {}",
+                        cycle.join(" → ")
+                    ),
+                    "Remove one of the semantic edges to break the cycle.",
+                    "Knowledge-node dependencies must be acyclic.",
+                ));
+            } else if color[next] == 0 {
+                Self::dfs_dependency_cycle(next, adj, color, path, node_ids, diagnostics);
+            }
+        }
+
+        color[idx] = 2;
+        path.pop();
+    }
+
+    fn check_evidence_coverage(&self, graph: &Graph) -> Vec<Diagnostic> {
+        let mut diagnostics = Vec::new();
+
+        let any_evidence_declared = graph.nodes.values().any(|n| {
+            n.edges
+                .get("evidence")
+                .map(|v| !v.is_empty())
+                .unwrap_or(false)
+        });
+        if !any_evidence_declared {
+            return diagnostics;
+        }
+
+        for node in graph.nodes.values() {
+            if node.kind == "index" || node.kind == "evidence" {
+                continue;
+            }
+
+            let has_evidence = node
+                .edges
+                .get("evidence")
+                .map(|v| !v.is_empty())
+                .unwrap_or(false);
+            if !has_evidence {
+                diagnostics.push(diag_err(
+                    "missing-evidence",
+                    &node.id,
+                    &format!(
+                        "Node '{}' has no evidence edges. Every knowledge node must be anchored in evidence.",
+                        node.id
+                    ),
+                    &format!(
+                        "Add an 'evidence' edge to '{}' and provide a matching @graphite:evidence anchor in source code.",
+                        node.id
+                    ),
+                    "Knowledge claims must be anchored in evidence.",
+                ));
+            }
+        }
+
+        diagnostics
+    }
+
+    fn check_requirement_completeness(&self, graph: &Graph) -> Vec<Diagnostic> {
+        let mut diagnostics = Vec::new();
+
+        for node in graph.nodes.values() {
+            if node.kind != "requirement" {
+                continue;
+            }
+
+            let has_implementation = node
+                .edges
+                .get("implemented_by")
+                .map(|v| !v.is_empty())
+                .unwrap_or(false);
+            let has_tests = node
+                .edges
+                .get("verified_by")
+                .map(|v| !v.is_empty())
+                .unwrap_or(false);
+
+            if !has_implementation {
+                diagnostics.push(diag_err(
+                    "missing-implementation",
+                    &node.id,
+                    &format!(
+                        "Requirement '{}' is missing an 'implemented_by' edge.",
+                        node.id
+                    ),
+                    &format!(
+                        "Add 'implemented_by' targets to '{}', pointing to service nodes that realize the requirement.",
+                        node.id
+                    ),
+                    "Every requirement must trace to implementation.",
+                ));
+            }
+
+            if !has_tests {
+                diagnostics.push(diag_err(
+                    "missing-tests",
+                    &node.id,
+                    &format!(
+                        "Requirement '{}' is missing a 'verified_by' edge.",
+                        node.id
+                    ),
+                    &format!(
+                        "Add 'verified_by' targets to '{}', pointing to test nodes that validate the requirement.",
+                        node.id
+                    ),
+                    "Every requirement must trace to validation tests.",
+                ));
+            }
+        }
+
+        diagnostics
+    }
+
     /// Check that every index node body has at least one markdown heading (# title).
     /// Rule: "index-body-title"
     fn check_index_body_has_title(&self, graph: &Graph) -> Vec<Diagnostic> {
@@ -480,7 +687,10 @@ impl ValidationEngine {
                         "Add a level-1 heading to the body of '{}', for example:\n\n\
                          # {} Index",
                         node.id,
-                        node.metadata.get("of_kind").map(|s| s.as_str()).unwrap_or("Nodes")
+                        node.metadata
+                            .get("of_kind")
+                            .map(|s| s.as_str())
+                            .unwrap_or("Nodes")
                     ),
                     example: None,
                     hint: "Index pages should have a descriptive title as their first heading."
@@ -519,8 +729,9 @@ impl ValidationEngine {
                         node.id, node.id
                     ),
                     example: None,
-                    hint: "Every knowledge node should have a descriptive title as its first heading."
-                        .to_string(),
+                    hint:
+                        "Every knowledge node should have a descriptive title as its first heading."
+                            .to_string(),
                 });
             }
         }
@@ -629,7 +840,7 @@ mod tests {
 ---\n\
 id: idx\n\
 kind: index\n\
-edges:\n  contains:\n    - req-1\n    - adr-1\n    - svc-1\n\
+edges:\n  contains:\n    - req-1\n    - adr-1\n    - svc-1\n    - tst-1\n\
 metadata:\n  of_kind: general\n\
 ---\n",
             )
@@ -642,8 +853,10 @@ metadata:\n  of_kind: general\n\
 ---\n\
 id: req-1\n\
 kind: requirement\n\
+edges:\n  implemented_by:\n    - svc-1\n  verified_by:\n    - tst-1\n\
 ---\n\
-# Requirement\n",
+# Requirement\n\n\
+Implemented by [edge:svc-1] and verified by [edge:tst-1].\n",
             )
             .expect("sample requirement"),
         );
@@ -672,6 +885,18 @@ kind: service\n\
 # Service\n",
             )
             .expect("sample service"),
+        );
+
+        g.add_node(
+            NodeParser::parse(
+                "\
+---\n\
+id: tst-1\n\
+kind: test\n\
+---\n\
+# Test\n",
+            )
+            .expect("sample test"),
         );
 
         g
@@ -843,6 +1068,131 @@ kind: service\n\
         assert!(
             diags.iter().any(|d| d.rule == "cycle-detected"),
             "should detect cycle: {:?}",
+            diags
+        );
+    }
+
+    #[test]
+    fn dependency_cycle_detected() {
+        let schema = SchemaParser::default_schema();
+        let mut g = Graph::new(schema);
+
+        g.add_node(make_node(
+            "idx",
+            "index",
+            HashMap::from([("contains".into(), vec!["a".into(), "b".into()])]),
+            "# Index\n",
+        ));
+
+        g.add_node(make_node(
+            "a",
+            "service",
+            HashMap::from([
+                ("references".into(), vec!["b".into()]),
+                ("evidence".into(), vec!["ev-a".into()]),
+            ]),
+            "# A\n\n[edge:b]",
+        ));
+
+        g.add_node(make_node(
+            "b",
+            "service",
+            HashMap::from([
+                ("references".into(), vec!["a".into()]),
+                ("evidence".into(), vec!["ev-b".into()]),
+            ]),
+            "# B\n\n[edge:a]",
+        ));
+
+        let engine = ValidationEngine;
+        let diags = engine.validate(&g);
+        assert!(
+            diags.iter().any(|d| d.rule == "dependency-cycle"),
+            "should detect dependency cycle: {:?}",
+            diags
+        );
+    }
+
+    #[test]
+    fn missing_evidence_detected() {
+        let schema = SchemaParser::default_schema();
+        let mut g = Graph::new(schema);
+
+        g.add_node(make_node(
+            "idx",
+            "index",
+            HashMap::from([("contains".into(), vec!["svc".into(), "svc2".into()])]),
+            "# Index\n",
+        ));
+        g.add_node(make_node("svc", "service", HashMap::new(), "# Service\n"));
+        g.add_node(make_node(
+            "svc2",
+            "service",
+            HashMap::from([("evidence".into(), vec!["ev-svc2".into()])]),
+            "# Service 2\n",
+        ));
+
+        let engine = ValidationEngine;
+        let diags = engine.validate(&g);
+        assert!(
+            diags.iter().any(|d| d.rule == "missing-evidence"),
+            "should detect missing evidence: {:?}",
+            diags
+        );
+    }
+
+    #[test]
+    fn missing_implementation_detected() {
+        let schema = SchemaParser::default_schema();
+        let mut g = Graph::new(schema);
+
+        g.add_node(make_node(
+            "idx",
+            "index",
+            HashMap::from([("contains".into(), vec!["req".into(), "tst".into()])]),
+            "# Index\n",
+        ));
+        g.add_node(make_node(
+            "req",
+            "requirement",
+            HashMap::from([("verified_by".into(), vec!["tst".into()])]),
+            "# Requirement\n\nVerified by [edge:tst].",
+        ));
+        g.add_node(make_node("tst", "test", HashMap::new(), "# Test\n"));
+
+        let engine = ValidationEngine;
+        let diags = engine.validate(&g);
+        assert!(
+            diags.iter().any(|d| d.rule == "missing-implementation"),
+            "should detect missing implementation: {:?}",
+            diags
+        );
+    }
+
+    #[test]
+    fn missing_tests_detected() {
+        let schema = SchemaParser::default_schema();
+        let mut g = Graph::new(schema);
+
+        g.add_node(make_node(
+            "idx",
+            "index",
+            HashMap::from([("contains".into(), vec!["req".into(), "svc".into()])]),
+            "# Index\n",
+        ));
+        g.add_node(make_node(
+            "req",
+            "requirement",
+            HashMap::from([("implemented_by".into(), vec!["svc".into()])]),
+            "# Requirement\n\nImplemented by [edge:svc].",
+        ));
+        g.add_node(make_node("svc", "service", HashMap::new(), "# Service\n"));
+
+        let engine = ValidationEngine;
+        let diags = engine.validate(&g);
+        assert!(
+            diags.iter().any(|d| d.rule == "missing-tests"),
+            "should detect missing tests: {:?}",
             diags
         );
     }
@@ -1053,6 +1403,35 @@ See also: [edge:unknown]\n",
         assert!(
             diags[0].detail.contains("ev-missing"),
             "detail mentions the missing id"
+        );
+    }
+
+    #[test]
+    fn evidence_edges_are_ignored_by_body_edge_usage() {
+        let schema = SchemaParser::default_schema();
+        let mut g = Graph::new(schema);
+
+        g.add_node(make_node(
+            "idx",
+            "index",
+            HashMap::from([("contains".into(), vec!["svc".into()])]),
+            "# Index\n",
+        ));
+
+        g.add_node(make_node(
+            "svc",
+            "service",
+            HashMap::from([("evidence".into(), vec!["ev-svc".into()])]),
+            "# Service\n",
+        ));
+
+        let engine = ValidationEngine;
+        let diags = engine.validate(&g);
+
+        assert!(
+            !diags.iter().any(|d| d.rule == "body-edge-usage"),
+            "evidence edges should not require [edge:...] body refs: {:?}",
+            diags
         );
     }
 

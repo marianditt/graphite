@@ -4,6 +4,8 @@ kind: adr
 edges:
   describes:
     - compiler
+  evidence:
+    - anchor-syntax-adr
 ---
 # Anchor Syntax
 

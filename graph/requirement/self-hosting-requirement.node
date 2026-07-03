@@ -2,11 +2,22 @@
 id: self-hosting-requirement
 kind: requirement
 edges:
+  implemented_by:
+    - compiler
+  verified_by:
+    - compiler-tests
   references:
     - compiler-requirement
+    - self-hosting-requirement-def
+  evidence:
+    - self-hosting-requirement-def
 ---
 # Self-Hosting Requirement
 
 The self-describing constraint: the graph/ directory is the canonical record, the compiler validates its own graph in CI, and no essential knowledge lives outside the graph.
 
 This extends [edge:compiler-requirement] by adding reflexivity — the tool documents itself.
+
+It is implemented by [edge:compiler] and continuously verified by [edge:compiler-tests].
+
+Evidence anchor: [edge:self-hosting-requirement-def].

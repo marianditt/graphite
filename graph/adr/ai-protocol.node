@@ -1,6 +1,11 @@
 ---
 id: ai-protocol
 kind: adr
+edges:
+  references:
+    - ai-protocol-adr
+  evidence:
+    - ai-protocol-adr
 ---
 # AI Protocol
 
@@ -11,3 +16,5 @@ The two-phase protocol for AI agents:
 **Phase 2 (Code)**: `graphite context <id> --phase implement` → edit source with evidence anchors → `graphite validate` → `graphite diff`.
 
 The AI never searches, never guesses. Every action has a command with structured output that fits in a small context window.
+
+Protocol evidence anchor: [edge:ai-protocol-adr].

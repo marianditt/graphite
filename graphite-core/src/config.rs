@@ -109,10 +109,7 @@ scan:
         let config = Config::load(dir.path()).unwrap().unwrap();
         assert_eq!(config.graph_dir, "my-graph");
         assert_eq!(config.output_dir, "site");
-        assert_eq!(
-            config.scan,
-            vec!["src", "tests", "graphite-core/src"]
-        );
+        assert_eq!(config.scan, vec!["src", "tests", "graphite-core/src"]);
     }
 
     #[test]

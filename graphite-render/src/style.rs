@@ -1,4 +1,7 @@
 /// Default minimal style — clean, fast, readable.
+// @graphite:evidence compiler-service-def
+// @graphite:evidence ai-protocol-adr
+// @graphite:evidence anchor-syntax-adr
 pub const DEFAULT_CSS: &str = r#"
 body { font-family: system-ui, sans-serif; max-width: 800px; margin: 0 auto; padding: 1em; line-height: 1.6; }
 a { color: #0066cc; }
@@ -29,6 +32,10 @@ pub const SCI_FI_CSS: &str = r#"
 
 * { box-sizing: border-box; }
 
+html {
+  font-size: 150%;
+}
+
 body {
   font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   background: var(--bg);
@@ -36,7 +43,7 @@ body {
   max-width: 74ch;
   margin: 0 auto;
   padding: 1.5rem 1rem 3rem;
-  font-size: 14pt;
+  font-size: 1rem;
   line-height: 1.65;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
@@ -272,7 +279,7 @@ th {
 @media (max-width: 640px) {
   body {
     padding: 1rem 0.85rem 2rem;
-    font-size: 14pt;
+    font-size: 1rem;
     line-height: 1.6;
   }
 

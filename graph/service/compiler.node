@@ -8,6 +8,8 @@ edges:
     - anchor-syntax
     - rendering
     - tutoring-errors
+  evidence:
+    - compiler-service-def
 ---
 # Compiler
 

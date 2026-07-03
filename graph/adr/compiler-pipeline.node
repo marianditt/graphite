@@ -9,6 +9,9 @@ edges:
     - heading-depth
     - anchor-syntax
     - schema-design
+    - compiler-pipeline-adr
+  evidence:
+    - compiler-pipeline-adr
 ---
 # Compiler Pipeline
 
@@ -20,3 +23,5 @@ The compiler pipeline has four stages:
 4. **Render**: Generate static HTML with heading depth derivation and hyperlinked edge references
 
 See [edge:compiler] for the implementation. The stages are designed per [edge:edge-narrative] (narrative consistency), [edge:heading-depth] (heading derivation), [edge:anchor-syntax] (evidence resolution), and [edge:schema-design] (type system).
+
+Pipeline decision evidence: [edge:compiler-pipeline-adr].

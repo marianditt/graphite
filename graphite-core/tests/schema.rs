@@ -3,8 +3,8 @@ use graphite_core::schema::{DEFAULT_SCHEMA_YAML, SchemaParser};
 #[test]
 fn test_default_schema_parses() {
     let schema = SchemaParser::parse(DEFAULT_SCHEMA_YAML).expect("default schema should parse");
-    assert_eq!(schema.kinds.len(), 4, "default schema should have 4 kinds");
-    assert_eq!(schema.edges.len(), 5, "default schema should have 5 edges");
+    assert_eq!(schema.kinds.len(), 7, "default schema should have 7 kinds");
+    assert_eq!(schema.edges.len(), 6, "default schema should have 6 edges");
 }
 
 #[test]
@@ -88,6 +88,10 @@ fn test_default_schema_contains_expected_edges() {
     assert!(
         names.contains(&"references"),
         "default schema should contain references edge"
+    );
+    assert!(
+        names.contains(&"evidence"),
+        "default schema should contain evidence edge"
     );
 }
 

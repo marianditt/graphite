@@ -5,6 +5,11 @@ use std::path::{Path, PathBuf};
 use graphite_core::{Diagnostic, Graph, Node, Schema, Severity};
 use pulldown_cmark::HeadingLevel;
 
+// @graphite:evidence rendering-adr
+// @graphite:evidence heading-depth-adr
+// @graphite:evidence stable-identity-adr
+// @graphite:evidence index-pattern-adr
+
 pub mod style;
 
 /// Output of rendering a single node page.
@@ -78,12 +83,28 @@ pub fn render_to_dir(
         }
         let kind_dir = output_dir.join(&kind);
         fs::create_dir_all(&kind_dir).ok();
-        let index_html = render_kind_index(&kind, &nodes, &rendered.depth_map, graph, schema, &numbering, repo_url, css);
+        let index_html = render_kind_index(
+            &kind,
+            &nodes,
+            &rendered.depth_map,
+            graph,
+            schema,
+            &numbering,
+            repo_url,
+            css,
+        );
         fs::write(kind_dir.join("index.html"), index_html).ok();
     }
 
     // Generate root index
-    let root_html = render_root_index(graph, &rendered.depth_map, schema, &numbering, repo_url, css);
+    let root_html = render_root_index(
+        graph,
+        &rendered.depth_map,
+        schema,
+        &numbering,
+        repo_url,
+        css,
+    );
     fs::write(output_dir.join("index.html"), root_html).ok();
 
     Ok(())
@@ -197,7 +218,11 @@ fn compute_node_numbering(graph: &Graph) -> NodeNumbering {
 
 /// Build the numeric key label for a node, e.g. "SVC-3".
 fn node_key_index(schema: &Schema, numbering: &NodeNumbering, kind: &str, node_id: &str) -> String {
-    let key = schema.kinds.get(kind).map(|k| k.key.as_str()).unwrap_or("??");
+    let key = schema
+        .kinds
+        .get(kind)
+        .map(|k| k.key.as_str())
+        .unwrap_or("??");
     let num = numbering
         .get(kind)
         .and_then(|m| m.get(node_id))
@@ -596,10 +621,7 @@ fn render_kind_index(
     let index_body: String = graph
         .nodes
         .values()
-        .find(|n| {
-            n.kind == "index"
-                && n.metadata.get("of_kind").map(|s| s.as_str()) == Some(kind)
-        })
+        .find(|n| n.kind == "index" && n.metadata.get("of_kind").map(|s| s.as_str()) == Some(kind))
         .map(|idx_node| {
             let raw = render_body(idx_node, 0, None);
             replace_edge_refs(graph, &raw, kind, numbering)
@@ -623,7 +645,11 @@ fn render_kind_index(
 
     let toc_items = items.join("\n");
     let root_link = relative_index_link(kind, "index"); // from kind/ to root = ../index.html
-    let kind_key = schema.kinds.get(kind).map(|k| k.key.as_str()).unwrap_or("??");
+    let kind_key = schema
+        .kinds
+        .get(kind)
+        .map(|k| k.key.as_str())
+        .unwrap_or("??");
 
     format!(
         r#"<!DOCTYPE html>
@@ -718,8 +744,7 @@ fn render_root_index(
 
         // Root index body — rendered with edge ref resolution.
         let body_html = render_body(root, 0, None);
-        let body_with_links =
-            replace_edge_refs(graph, &body_html, "index", numbering);
+        let body_with_links = replace_edge_refs(graph, &body_html, "index", numbering);
 
         format!(
             r#"<!DOCTYPE html>
@@ -838,8 +863,8 @@ Body with [edge:root].\n",
     fn renders_without_crashing() {
         let g = sample_graph();
         let evidence = HashMap::new();
-        let rendered = render_graph(&g, &evidence, None, style::DEFAULT_CSS)
-            .expect("render should succeed");
+        let rendered =
+            render_graph(&g, &evidence, None, style::DEFAULT_CSS).expect("render should succeed");
         // svc is at depth 2 → heading_base = 3 → offset headings to h3
         let svc_page = rendered.pages.iter().find(|p| p.id == "svc").unwrap();
         assert!(
@@ -955,7 +980,8 @@ edges:\n  evidence:\n    - ev-auth\n---\n\
         .expect("render");
         let page = &rendered.pages[0];
         assert!(
-            page.html.contains("https://github.com/owner/repo/blob/main/src/main.rs#L42"),
+            page.html
+                .contains("https://github.com/owner/repo/blob/main/src/main.rs#L42"),
             "evidence link should include repo URL"
         );
     }
@@ -1153,10 +1179,7 @@ kind: service\n\
         // The index node body should appear after the TOC (the <ul>)
         let ul_pos = html.find("<ul").unwrap();
         let body_pos = html.find("Service Overview").unwrap();
-        assert!(
-            body_pos > ul_pos,
-            "body should appear after TOC list"
-        );
+        assert!(body_pos > ul_pos, "body should appear after TOC list");
     }
 
     #[test]
@@ -1166,7 +1189,10 @@ kind: service\n\
 
     #[test]
     fn relative_link_diff_kind() {
-        assert_eq!(relative_link("service", "adr", "adr-1"), "../adr/adr-1.html");
+        assert_eq!(
+            relative_link("service", "adr", "adr-1"),
+            "../adr/adr-1.html"
+        );
     }
 
     #[test]

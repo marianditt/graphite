@@ -1,6 +1,9 @@
 ---
 id: stable-identity
 kind: adr
+edges:
+  evidence:
+    - stable-identity-adr
 ---
 # Stable Identity
 

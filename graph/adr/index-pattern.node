@@ -1,6 +1,9 @@
 ---
 id: index-pattern
 kind: adr
+edges:
+  evidence:
+    - index-pattern-adr
 ---
 # Index Pattern
 

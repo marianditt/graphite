@@ -1,6 +1,9 @@
 ---
 id: edge-narrative
 kind: adr
+edges:
+  evidence:
+    - edge-narrative-adr
 ---
 # Edge Narrative
 

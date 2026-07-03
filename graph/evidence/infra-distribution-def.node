@@ -1,0 +1,7 @@
+---
+id: infra-distribution-def
+kind: evidence
+---
+# infra-distribution-def
+
+Evidence anchor for distribution pipeline and npm wrapper implementation.

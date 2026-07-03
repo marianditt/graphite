@@ -292,9 +292,9 @@ th {
 <p class="node-meta"><strong>ADR-5 Heading Depth</strong> · <a href="index.html">↑ adr</a></p>
 <h3>ADR-5 Heading Depth</h3>
 <p>Heading level is derived from containment depth: root nodes render at h1, children at h2, and so on. The author always uses <code>#</code> (h1) in the body. The renderer offsets all headings by the node's depth, clamping at h6.</p>
-<p>This ensures consistent visual hierarchy regardless of nesting depth. See <a href="rendering.html">ADR-7 Rendering</a> for the full rendering design.</p>
+<p>This ensures consistent visual hierarchy regardless of nesting depth.</p>
 
-
+<div class="evidence"><h3>Evidence</h3><ul><li><code>graphite-render/src/lib.rs</code> line 9</li><li><code>graphite-render/src/lib.rs</code> line 9</li></ul></div>
 <div class="backlinks"><h3>Referenced by</h3><ul><li><a href="compiler-pipeline.html">ADR-3 Compiler Pipeline</a></li>
 <li><a href="rendering.html">ADR-7 Rendering</a></li></ul></div>
 </body>

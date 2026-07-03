@@ -4,9 +4,15 @@ kind: adr
 edges:
   describes:
     - compiler
+  references:
+    - tutoring-errors-adr
+  evidence:
+    - tutoring-errors-adr
 ---
 # Tutoring Errors
 
 Every Diagnostic has seven fields: `rule`, `severity`, `node_id`, `file`, `detail`, `fix`, `example`, and `hint`. The `--first` flag emits one error and exits 1, so an AI fixes one thing at a time. The `--focus <id>` flag narrows diagnostics to one node and its dependencies.
 
 This answers five questions: what rule was violated, what's wrong, how to fix it, a correct example, and the general principle. See [edge:compiler] for the validation implementation.
+
+Tutoring diagnostic design evidence: [edge:tutoring-errors-adr].

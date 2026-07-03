@@ -4,6 +4,8 @@ use serde::Deserialize;
 
 use crate::{Diagnostic, EdgeDef, KindDef, Schema, Severity};
 
+// @graphite:evidence schema-design-adr
+
 const BUILT_IN_KINDS: [&str; 3] = ["any", "index", "evidence"];
 
 pub struct SchemaParser;
@@ -99,6 +101,24 @@ impl SchemaParser {
                         key: "TST".to_string(),
                     },
                 ),
+                (
+                    "compliance".to_string(),
+                    KindDef {
+                        key: "CPL".to_string(),
+                    },
+                ),
+                (
+                    "runbook".to_string(),
+                    KindDef {
+                        key: "RBK".to_string(),
+                    },
+                ),
+                (
+                    "infra".to_string(),
+                    KindDef {
+                        key: "INF".to_string(),
+                    },
+                ),
             ]),
             edges: vec![
                 EdgeDef {
@@ -125,6 +145,11 @@ impl SchemaParser {
                     name: "relates_to".to_string(),
                     from: "any".to_string(),
                     to: "any".to_string(),
+                },
+                EdgeDef {
+                    name: "evidence".to_string(),
+                    from: "any".to_string(),
+                    to: "evidence".to_string(),
                 },
             ],
         }
@@ -236,12 +261,16 @@ kinds:
   adr: { key: ADR }
   service: { key: SVC }
   test: { key: TST }
+  compliance: { key: CPL }
+  runbook: { key: RBK }
+  infra: { key: INF }
 edges:
   implemented_by: { from: requirement, to: service }
   verified_by: { from: requirement, to: test }
   describes: { from: adr, to: service }
   references: { from: any, to: any }
   relates_to: { from: any, to: any }
+  evidence: { from: any, to: evidence }
 ";
 
 #[cfg(test)]
@@ -251,15 +280,15 @@ mod tests {
     #[test]
     fn parse_default_schema_yaml() {
         let schema = SchemaParser::parse(DEFAULT_SCHEMA_YAML).expect("default schema should parse");
-        assert_eq!(schema.kinds.len(), 4, "should have 4 kinds");
-        assert_eq!(schema.edges.len(), 5, "should have 5 edges");
+        assert_eq!(schema.kinds.len(), 7, "should have 7 kinds");
+        assert_eq!(schema.edges.len(), 6, "should have 6 edges");
     }
 
     #[test]
     fn default_schema_struct_matches() {
         let schema = SchemaParser::default_schema();
-        assert_eq!(schema.kinds.len(), 4);
-        assert_eq!(schema.edges.len(), 5);
+        assert_eq!(schema.kinds.len(), 7);
+        assert_eq!(schema.edges.len(), 6);
     }
 
     #[test]

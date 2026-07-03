@@ -1,0 +1,13 @@
+---
+id: distribution-pipeline
+kind: infra
+edges:
+  references:
+    - cli
+    - compiler
+  evidence:
+    - infra-distribution-def
+---
+# Distribution Pipeline
+
+Graphite is distributed as an npm global package that launches the Rust CLI binary. The path is implemented across [edge:cli] entrypoints and [edge:compiler] runtime behavior.

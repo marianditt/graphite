@@ -6,6 +6,10 @@ edges:
     - compiler
   verified_by:
     - compiler-tests
+  references:
+    - compiler-requirement-def
+  evidence:
+    - compiler-requirement-def
 ---
 # Compiler Requirement
 
@@ -14,3 +18,5 @@ The compiler must parse .node files into a typed directed graph, validate its st
 This is the core requirement of Graphite. Every other node serves this goal.
 
 See [edge:compiler] for the implementation and [edge:compiler-tests] for test coverage.
+
+Requirement evidence anchor: [edge:compiler-requirement-def].

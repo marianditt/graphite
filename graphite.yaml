@@ -6,3 +6,8 @@ scan:
   - graphite-core/src
   - graphite-cli/src
   - graphite-render/src
+  - graphite-core/src/schema.rs
+  - graphite-core/src/validation.rs
+  - graphite-render/src/lib.rs
+  - graphite-render/src/style.rs
+  - graphite-cli/src/main.rs

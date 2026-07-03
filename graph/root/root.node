@@ -7,6 +7,10 @@ edges:
     - adr
     - service
     - test
+    - compliance
+    - runbook
+    - infra
+    - evidence
 metadata:
   of_kind: general
 ---

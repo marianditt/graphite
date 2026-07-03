@@ -293,8 +293,10 @@ th {
 <h3>REQ-3 Self-Hosting Requirement</h3>
 <p>The self-describing constraint: the graph/ directory is the canonical record, the compiler validates its own graph in CI, and no essential knowledge lives outside the graph.</p>
 <p>This extends <a href="compiler-requirement.html">REQ-2 Compiler Requirement</a> by adding reflexivity — the tool documents itself.</p>
+<p>It is implemented by <a href="../service/compiler.html">SVC-2 Compiler</a> and continuously verified by <a href="../test/compiler-tests.html">TST-1 Compiler Tests</a>.</p>
+<p>Evidence anchor: <span class="broken-edge">self-hosting-requirement-def?</span>.</p>
 
-
+<div class="evidence"><h3>Evidence</h3><ul><li><code>graphite-cli/src/main.rs</code> line 17</li><li><code>graphite-cli/src/main.rs</code> line 17</li></ul></div>
 
 </body>
 </html>

@@ -1,0 +1,13 @@
+---
+id: npm-wrapper
+kind: infra
+edges:
+  references:
+    - distribution-pipeline
+    - cli
+  evidence:
+    - infra-distribution-def
+---
+# npm Wrapper
+
+The npm wrapper builds and invokes the graphite binary for global command usage. It supports the [edge:distribution-pipeline] and surfaces [edge:cli] functionality.
