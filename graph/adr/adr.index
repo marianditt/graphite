@@ -1,0 +1,19 @@
+---
+id: adr
+kind: index
+edges:
+  contains:
+    - compiler-pipeline
+    - edge-narrative
+    - heading-depth
+    - anchor-syntax
+    - index-pattern
+    - ai-protocol
+    - tutoring-errors
+    - schema-design
+    - rendering
+    - stable-identity
+metadata:
+  of_kind: adr
+---
+Architecture Decision Records index

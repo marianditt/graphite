@@ -1,0 +1,13 @@
+---
+id: root
+kind: index
+edges:
+  contains:
+    - requirement
+    - adr
+    - service
+    - test
+metadata:
+  of_kind: general
+---
+A compiled knowledge graph for software engineering.

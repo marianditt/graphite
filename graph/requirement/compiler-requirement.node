@@ -1,0 +1,14 @@
+---
+id: compiler-requirement
+kind: requirement
+edges:
+  implemented_by:
+    - compiler
+  verified_by:
+    - compiler-tests
+---
+The compiler must parse .node files into a typed directed graph, validate its structural integrity with tutoring diagnostics, resolve evidence anchors in source code, and render navigable static HTML documentation.
+
+This is the core requirement of Graphite. Every other node serves this goal.
+
+See [edge:compiler] for the implementation and [edge:compiler-tests] for test coverage.

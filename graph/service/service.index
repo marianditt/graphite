@@ -1,0 +1,11 @@
+---
+id: service
+kind: index
+edges:
+  contains:
+    - compiler
+    - cli
+metadata:
+  of_kind: service
+---
+Service index

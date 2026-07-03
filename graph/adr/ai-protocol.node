@@ -1,0 +1,11 @@
+---
+id: ai-protocol
+kind: adr
+---
+The two-phase protocol for AI agents:
+
+**Phase 1 (Graph)**: `graphite plan <id>` → `graphite context <id> --phase understand` → edit .node file → `graphite validate --first` → repeat until clean.
+
+**Phase 2 (Code)**: `graphite context <id> --phase implement` → edit source with evidence anchors → `graphite validate` → `graphite diff`.
+
+The AI never searches, never guesses. Every action has a command with structured output that fits in a small context window.

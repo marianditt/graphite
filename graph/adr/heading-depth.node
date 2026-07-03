@@ -1,0 +1,10 @@
+---
+id: heading-depth
+kind: adr
+edges:
+  references:
+    - rendering
+---
+Heading level is derived from containment depth: root nodes render at h1, children at h2, and so on. The author always uses `#` (h1) in the body. The renderer offsets all headings by the node's depth, clamping at h6.
+
+This ensures consistent visual hierarchy regardless of nesting depth. See [edge:rendering] for the full rendering design.

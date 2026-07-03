@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><title>rendering — graphite</title>
+<style>
+body { font-family: system-ui, sans-serif; max-width: 800px; margin: 0 auto; padding: 1em; line-height: 1.6; }
+a { color: #0066cc; }
+a:hover { text-decoration: underline; }
+.evidence { background: #f5f5f5; padding: 0.5em 1em; border-radius: 4px; }
+.backlinks { border-top: 1px solid #ddd; margin-top: 1em; padding-top: 0.5em; }
+.node-meta { color: #666; font-size: 0.9em; margin-bottom: 1em; }
+pre { background: #f0f0f0; padding: 0.5em; overflow-x: auto; }
+code { background: #f0f0f0; padding: 0.1em 0.3em; }
+</style>
+</head>
+<body>
+<p class="node-meta"><strong>adr</strong> · <a href="/kind/adr.html">↑ adr</a></p>
+<p>Static HTML generation: a table of contents from DFS containment order, one page per node with heading depth offset, edge-reference patterns replaced with hyperlinks, backlinks from incoming edges, and evidence sections for <code>verified_by</code> targets.</p>
+<p>No JavaScript, no server, no build step beyond the CLI. Cosmetic display IDs (REQ-1, ADR-2) are assigned in DFS order and may shift on insertion — permanent references use stable IDs. See <a href="/service/compiler.html">compiler</a> for the pipeline and <a href="/adr/heading-depth.html">heading-depth</a> for heading derivation.</p>
+
+
+<div class="backlinks"><h3>Referenced by</h3><ul><li><a href="/index/adr.html">adr</a></li>
+<li><a href="/adr/heading-depth.html">heading-depth</a></li>
+<li><a href="/service/compiler.html">compiler</a></li></ul></div>
+</body>
+</html>

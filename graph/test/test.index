@@ -1,0 +1,10 @@
+---
+id: test
+kind: index
+edges:
+  contains:
+    - compiler-tests
+metadata:
+  of_kind: test
+---
+Test index

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><title>compiler-pipeline — graphite</title>
+<style>
+body { font-family: system-ui, sans-serif; max-width: 800px; margin: 0 auto; padding: 1em; line-height: 1.6; }
+a { color: #0066cc; }
+a:hover { text-decoration: underline; }
+.evidence { background: #f5f5f5; padding: 0.5em 1em; border-radius: 4px; }
+.backlinks { border-top: 1px solid #ddd; margin-top: 1em; padding-top: 0.5em; }
+.node-meta { color: #666; font-size: 0.9em; margin-bottom: 1em; }
+pre { background: #f0f0f0; padding: 0.5em; overflow-x: auto; }
+code { background: #f0f0f0; padding: 0.1em 0.3em; }
+</style>
+</head>
+<body>
+<p class="node-meta"><strong>adr</strong> · <a href="/kind/adr.html">↑ adr</a></p>
+<p>The compiler pipeline has four stages:</p>
+<ol>
+<li><strong>Parse</strong>: Read .node files into a Graph via the schema and node parsers</li>
+<li><strong>Validate</strong>: Run structural checks (reachability, tree constraint, cycles, schema conformance, body-edge usage, anchor resolution)</li>
+<li><strong>Resolve</strong>: Match evidence anchors to source file locations via the scanner and sidecar resolvers</li>
+<li><strong>Render</strong>: Generate static HTML with heading depth derivation and hyperlinked edge references</li>
+</ol>
+<p>See <a href="/service/compiler.html">compiler</a> for the implementation. The stages are designed per <a href="/adr/edge-narrative.html">edge-narrative</a> (narrative consistency), <a href="/adr/heading-depth.html">heading-depth</a> (heading derivation), <a href="/adr/anchor-syntax.html">anchor-syntax</a> (evidence resolution), and <a href="/adr/schema-design.html">schema-design</a> (type system).</p>
+
+
+<div class="backlinks"><h3>Referenced by</h3><ul><li><a href="/index/adr.html">adr</a></li>
+<li><a href="/service/compiler.html">compiler</a></li></ul></div>
+</body>
+</html>

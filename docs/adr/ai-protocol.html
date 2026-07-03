@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><title>ai-protocol — graphite</title>
+<style>
+body { font-family: system-ui, sans-serif; max-width: 800px; margin: 0 auto; padding: 1em; line-height: 1.6; }
+a { color: #0066cc; }
+a:hover { text-decoration: underline; }
+.evidence { background: #f5f5f5; padding: 0.5em 1em; border-radius: 4px; }
+.backlinks { border-top: 1px solid #ddd; margin-top: 1em; padding-top: 0.5em; }
+.node-meta { color: #666; font-size: 0.9em; margin-bottom: 1em; }
+pre { background: #f0f0f0; padding: 0.5em; overflow-x: auto; }
+code { background: #f0f0f0; padding: 0.1em 0.3em; }
+</style>
+</head>
+<body>
+<p class="node-meta"><strong>adr</strong> · <a href="/kind/adr.html">↑ adr</a></p>
+<p>The two-phase protocol for AI agents:</p>
+<p><strong>Phase 1 (Graph)</strong>: <code>graphite plan &lt;id&gt;</code> → <code>graphite context &lt;id&gt; --phase understand</code> → edit .node file → <code>graphite validate --first</code> → repeat until clean.</p>
+<p><strong>Phase 2 (Code)</strong>: <code>graphite context &lt;id&gt; --phase implement</code> → edit source with evidence anchors → <code>graphite validate</code> → <code>graphite diff</code>.</p>
+<p>The AI never searches, never guesses. Every action has a command with structured output that fits in a small context window.</p>
+
+
+<div class="backlinks"><h3>Referenced by</h3><ul><li><a href="/requirement/audience-requirement.html">audience-requirement</a></li>
+<li><a href="/service/cli.html">cli</a></li>
+<li><a href="/index/adr.html">adr</a></li></ul></div>
+</body>
+</html>
