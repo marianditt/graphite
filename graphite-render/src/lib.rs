@@ -216,9 +216,15 @@ fn relative_link(from_kind: &str, to_kind: &str, to_id: &str) -> String {
 }
 
 /// Build a relative link from a page of `from_kind` to a kind index page.
+///
+/// Special case: `to_kind == "index"` refers to the root index page, which
+/// lives at the output root (`index.html`), not in `index/index.html`.
 fn relative_index_link(from_kind: &str, to_kind: &str) -> String {
-    if from_kind == to_kind {
-        "index.html".to_string()
+    if to_kind == "index" {
+        // Root page lives at the output root, not in a kind subdirectory.
+        "../index.html".into()
+    } else if from_kind == to_kind {
+        "index.html".into()
     } else {
         format!("../{}/index.html", to_kind)
     }
@@ -252,8 +258,18 @@ fn render_node_page(
     // Evidence section
     let ev_section = render_evidence_section(node, evidence, repo_url);
 
-    // TOC link — relative from {kind}/{id}.html to {kind}/index.html
-    let toc_link = relative_index_link(current_kind, current_kind);
+    // TOC link — relative from {kind}/{id}.html to the kind index page.
+    // For index-kind nodes we link to their of_kind index page (if known)
+    // or the root page (fallback).
+    let toc_link = if current_kind == "index" {
+        if let Some(of_kind) = node.metadata.get("of_kind").filter(|k| *k != "general") {
+            format!("../{}/index.html", of_kind)
+        } else {
+            "../index.html".into()
+        }
+    } else {
+        relative_index_link(current_kind, current_kind)
+    };
 
     let label = node_label(&graph.schema, numbering, current_kind, &node.id);
 
@@ -405,6 +421,11 @@ fn render_backlinks(
     let mut backlinks: Vec<&str> = Vec::new();
 
     for node in graph.nodes.values() {
+        // Skip index-kind nodes — they are parent containers whose pages are
+        // the kind index pages (not individual pages worth linking to).
+        if node.kind == "index" {
+            continue;
+        }
         for targets in node.edges.values() {
             if targets.iter().any(|t| t == node_id) && !backlinks.contains(&node.id.as_str()) {
                 backlinks.push(node.id.as_str());
@@ -499,7 +520,6 @@ fn render_kind_index(
     numbering: &NodeNumbering,
     _repo_url: Option<&str>,
 ) -> String {
-    // Find the body of the index node that has of_kind == this kind
     let index_body: String = graph
         .nodes
         .values()
@@ -507,7 +527,10 @@ fn render_kind_index(
             n.kind == "index"
                 && n.metadata.get("of_kind").map(|s| s.as_str()) == Some(kind)
         })
-        .map(|idx_node| render_body(idx_node, 0))
+        .map(|idx_node| {
+            let raw = render_body(idx_node, 0);
+            replace_edge_refs(graph, &raw, kind, numbering)
+        })
         .unwrap_or_default();
 
     // Build TOC items with sequential numbering
@@ -564,51 +587,88 @@ a {{ color: #0066cc; }}
 
 fn render_root_index(
     graph: &Graph,
-    depths: &DepthMap,
+    _depths: &DepthMap,
     schema: &Schema,
     numbering: &NodeNumbering,
     _repo_url: Option<&str>,
 ) -> String {
-    let mut kind_links = String::new();
-    let mut seen_kinds: Vec<&str> = graph
-        .nodes
-        .values()
-        .map(|n| n.kind.as_str())
-        .filter(|k| *k != "index" && *k != "evidence")
-        .collect();
-    seen_kinds.sort();
-    seen_kinds.dedup();
+    // The root node is the single index-kind node that is NOT targeted by
+    // any `contains` edge (i.e. depth 0, the containment tree root).
+    let root_node = graph.nodes.values().find(|n| {
+        n.kind == "index"
+            && !graph.nodes.values().any(|parent| {
+                parent
+                    .edges
+                    .get("contains")
+                    .map(|t| t.contains(&n.id))
+                    .unwrap_or(false)
+            })
+    });
 
-    for kind in &seen_kinds {
-        let key = schema.kinds.get(*kind).map(|k| k.key.as_str()).unwrap_or("??");
-        kind_links.push_str(&format!(
-            r#"<li><a href="{kind}/index.html">{kind} ({key})</a></li>"#,
-            kind = kind,
-            key = key,
-        ));
-    }
+    // Build TOC from the root node's directly contained children.
+    let mut toc_items: Vec<String> = Vec::new();
+    if let Some(root) = root_node {
+        if let Some(children) = root.edges.get("contains") {
+            for child_id in children {
+                if let Some(child) = graph.nodes.get(child_id.as_str()) {
+                    // Child is an index node with of_kind metadata — use that to
+                    // find the kind key and link to its kind index page.
+                    let of_kind = child
+                        .metadata
+                        .get("of_kind")
+                        .map(|s| s.as_str())
+                        .unwrap_or(child_id);
+                    let key = schema
+                        .kinds
+                        .get(of_kind)
+                        .map(|k| k.key.as_str())
+                        .unwrap_or("??");
+                    toc_items.push(format!(
+                        r#"<li><a href="{kind}/index.html">{label} ({key})</a></li>"#,
+                        kind = of_kind,
+                        label = child_id,
+                        key = key,
+                    ));
+                }
+            }
+        }
+        toc_items.sort();
 
-    let mut all_items: Vec<String> = graph
-        .nodes
-        .values()
-        .filter(|n| n.kind != "index" && n.kind != "evidence")
-        .map(|n| {
-            let depth = depths.get(&n.id).copied().unwrap_or(0);
-            let indent = "  ".repeat(depth);
-            let label = node_label(schema, numbering, &n.kind, &n.id);
-            format!(
-                r#"{}<li><a href="{kind}/{id}.html">{label}</a></li>"#,
-                indent,
-                kind = n.kind,
-                id = n.id,
-                label = label,
-            )
-        })
-        .collect();
-    all_items.sort();
+        // Root index body — rendered with edge ref resolution.
+        let body_html = render_body(root, 0);
+        let body_with_links =
+            replace_edge_refs(graph, &body_html, "index", numbering);
 
-    format!(
-        r#"<!DOCTYPE html>
+        format!(
+            r#"<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Table of Contents — graphite</title>
+<style>
+body {{ font-family: system-ui, sans-serif; max-width: 800px; margin: 0 auto; padding: 1em; line-height: 1.6; }}
+a {{ color: #0066cc; }}
+.index-body {{ margin-top: 1.5em; }}
+</style>
+</head>
+<body>
+<h1>Table of Contents</h1>
+
+<ul>
+{}
+</ul>
+
+<div class="index-body">
+{}
+</div>
+
+</body>
+</html>"#,
+            toc_items.join("\n"),
+            body_with_links,
+        )
+    } else {
+        // Fallback: no root node found
+        format!(
+            r#"<!DOCTYPE html>
 <html lang="en">
 <head><meta charset="utf-8"><title>graphite — knowledge graph</title>
 <style>
@@ -619,19 +679,10 @@ a {{ color: #0066cc; }}
 <body>
 <h1>graphite</h1>
 <p>A compiled knowledge graph for software engineering.</p>
-<h2>Kinds</h2>
-<ul>
-{kind_links}
-</ul>
-<h2>All Nodes</h2>
-<ul>
-{all_items}
-</ul>
 </body>
 </html>"#,
-        kind_links = kind_links,
-        all_items = all_items.join("\n"),
-    )
+        )
+    }
 }
 
 #[cfg(test)]
@@ -651,13 +702,28 @@ mod tests {
 ---\n\
 id: root\n\
 kind: index\n\
-edges:\n  contains:\n    - svc\n\
-metadata:\n  of_kind: service\n\
+edges:\n  contains:\n    - svc-index\n\
+metadata:\n  of_kind: general\n\
 ---\n\
 # Root\n\n\
 Root body.\n",
             )
             .expect("root"),
+        );
+
+        g.add_node(
+            NodeParser::parse(
+                "\
+---\n\
+id: svc-index\n\
+kind: index\n\
+edges:\n  contains:\n    - svc\n\
+metadata:\n  of_kind: service\n\
+---\n\
+# Service Index\n\n\
+Service overview.\n",
+            )
+            .expect("svc-index"),
         );
 
         g.add_node(
@@ -681,7 +747,8 @@ Body with [edge:root].\n",
         let g = sample_graph();
         let depths = compute_depths(&g);
         assert_eq!(depths.get("root"), Some(&0));
-        assert_eq!(depths.get("svc"), Some(&1));
+        assert_eq!(depths.get("svc-index"), Some(&1));
+        assert_eq!(depths.get("svc"), Some(&2));
     }
 
     #[test]
@@ -689,11 +756,18 @@ Body with [edge:root].\n",
         let g = sample_graph();
         let evidence = HashMap::new();
         let rendered = render_graph(&g, &evidence, None).expect("render should succeed");
-        // Only service node is rendered (index kind skipped as a page)
+        // svc is at depth 2 → heading_base = 3 → offset headings to h3
         let svc_page = rendered.pages.iter().find(|p| p.id == "svc").unwrap();
         assert!(
-            svc_page.html.contains("<h2"),
-            "child page heading should be offset"
+            svc_page.html.contains("<h3"),
+            "svc (depth 2) heading should be offset to h3: {}",
+            svc_page.html
+        );
+        // svc-index (kind: index) is also rendered as a page
+        let idx_page = rendered.pages.iter().find(|p| p.id == "svc-index").unwrap();
+        assert!(
+            idx_page.html.contains("<h2"),
+            "svc-index (depth 1) heading should be offset to h2"
         );
     }
 
@@ -956,5 +1030,159 @@ kind: service\n\
     #[test]
     fn relative_index_diff_kind() {
         assert_eq!(relative_index_link("service", "adr"), "../adr/index.html");
+    }
+
+    #[test]
+    fn relative_index_to_root() {
+        // to_kind == "index" means the root index page at output root
+        assert_eq!(relative_index_link("service", "index"), "../index.html");
+        assert_eq!(relative_index_link("adr", "index"), "../index.html");
+    }
+
+    #[test]
+    fn root_index_follows_index_pattern() {
+        let g = sample_graph();
+        let depths = compute_depths(&g);
+        let numbering = compute_node_numbering(&g);
+        let schema = &g.schema;
+
+        let html = render_root_index(&g, &depths, schema, &numbering, None);
+        // Should say "Table of Contents"
+        assert!(
+            html.contains("Table of Contents"),
+            "root index should say 'Table of Contents': {}",
+            html
+        );
+        // Should contain the root body
+        assert!(
+            html.contains("Root body"),
+            "root index should contain the root node's body"
+        );
+        // Should NOT contain the old "Kinds" section
+        assert!(
+            !html.contains("<h2>Kinds</h2>"),
+            "root index should NOT have the old Kinds section"
+        );
+        // Should NOT contain the old "All Nodes" section
+        assert!(
+            !html.contains("<h2>All Nodes</h2>"),
+            "root index should NOT have the old All Nodes section"
+        );
+        // Should link to the service kind index
+        assert!(
+            html.contains(r#"href="service/index.html""#),
+            "root index should link to service/index.html"
+        );
+    }
+
+    #[test]
+    fn backlinks_skip_index_kind_nodes() {
+        let schema = SchemaParser::default_schema();
+        let mut g = Graph::new(schema);
+
+        g.add_node(
+            NodeParser::parse(
+                "\
+---\n\
+id: root\n\
+kind: index\n\
+edges:\n  contains:\n    - svc\n\
+metadata:\n  of_kind: general\n\
+---\n# Root\n",
+            )
+            .expect("root"),
+        );
+
+        g.add_node(
+            NodeParser::parse(
+                "\
+---\n\
+id: svc\n\
+kind: service\n\
+---\n# Service\n",
+            )
+            .expect("svc"),
+        );
+
+        let numbering = compute_node_numbering(&g);
+        // svc is contained by root (kind: index) — root should NOT appear
+        // as a backlink because index-kind nodes are skipped.
+        let html = render_backlinks(&g, "svc", "service", &numbering);
+        assert!(
+            !html.contains("Referenced by"),
+            "backlinks for svc should be empty (only root contains it): {}",
+            html
+        );
+    }
+
+    #[test]
+    fn index_node_toc_link_uses_of_kind() {
+        let schema = SchemaParser::default_schema();
+        let mut g = Graph::new(schema);
+
+        g.add_node(
+            NodeParser::parse(
+                "\
+---\n\
+id: root\n\
+kind: index\n\
+edges:\n  contains:\n    - svc-index\n\
+metadata:\n  of_kind: general\n\
+---\n# Root\n",
+            )
+            .expect("root"),
+        );
+
+        g.add_node(
+            NodeParser::parse(
+                "\
+---\n\
+id: svc-index\n\
+kind: index\n\
+edges:\n  contains:\n    - svc-1\n\
+metadata:\n  of_kind: service\n\
+---\n# Service Index\n",
+            )
+            .expect("svc-index"),
+        );
+
+        g.add_node(
+            NodeParser::parse(
+                "\
+---\n\
+id: svc-1\n\
+kind: service\n\
+---\n# Service One\n",
+            )
+            .expect("svc-1"),
+        );
+
+        let evidence = HashMap::new();
+        let rendered = render_graph(&g, &evidence, None).expect("render");
+
+        // The svc-index node (kind: index, of_kind: service) should have
+        // a TOC link pointing to the service kind index page.
+        let idx_page = rendered
+            .pages
+            .iter()
+            .find(|p| p.id == "svc-index")
+            .expect("svc-index page");
+        assert!(
+            idx_page.html.contains(r#"href="../service/index.html""#),
+            "index node should link to its of_kind index page: {}",
+            idx_page.html
+        );
+
+        // The root node (kind: index, of_kind: general) should link to root.
+        let root_page = rendered
+            .pages
+            .iter()
+            .find(|p| p.id == "root")
+            .expect("root page");
+        assert!(
+            root_page.html.contains(r#"href="../index.html""#),
+            "root node should link to ../index.html: {}",
+            root_page.html
+        );
     }
 }
