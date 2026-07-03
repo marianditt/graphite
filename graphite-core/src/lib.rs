@@ -2,6 +2,12 @@ use std::collections::HashMap;
 
 use serde::{Deserialize, Serialize};
 
+pub mod anchor_scanner;
+pub mod config;
+pub mod node_parser;
+pub mod sidecar;
+pub mod validation;
+
 /// A string newtype representing the kind of an edge.
 #[derive(Clone, Debug, PartialEq, Eq, Hash, Serialize, Deserialize)]
 pub struct EdgeKind(pub String);
@@ -45,6 +51,7 @@ pub struct KindDef {
 /// The definition of a directed edge between two kinds.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct EdgeDef {
+    pub name: String,
     #[serde(rename = "from")]
     pub from: String,
     #[serde(rename = "to")]
@@ -74,3 +81,18 @@ pub struct Graph {
     pub nodes: HashMap<String, Node>,
     pub schema: Schema,
 }
+
+impl Graph {
+    pub fn new(schema: Schema) -> Self {
+        Graph {
+            nodes: HashMap::new(),
+            schema,
+        }
+    }
+
+    pub fn add_node(&mut self, node: Node) {
+        self.nodes.insert(node.id.clone(), node);
+    }
+}
+
+pub mod schema;
