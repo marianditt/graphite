@@ -5,6 +5,8 @@ edges:
   references:
     - ai-protocol
 ---
+# CLI
+
 Five subcommands: `init` scaffolds a new project, `validate` runs structural checks with `--focus`/`--first`/`--json` flags, `context` returns phase-specific context slices, `plan` computes a work order, `diff` shows knowledge-level changes.
 
 Each command serves a specific phase of the two-phase AI protocol described at [edge:ai-protocol].

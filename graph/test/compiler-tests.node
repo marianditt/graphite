@@ -5,6 +5,8 @@ edges:
   references:
     - compiler-requirement
 ---
+# Compiler Tests
+
 Three testing levels:
 
 1. **Unit tests**: each validation pass has targeted tests (reachability, tree constraint, cycles, schema conformance, body-edge usage, anchor resolution)

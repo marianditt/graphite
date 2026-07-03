@@ -318,7 +318,7 @@ fn cmd_init(path: &str, force: bool) {
         "root",
         "index",
         &[("contains", &["requirement", "adr", "service", "test"])],
-        "A compiled knowledge graph for software engineering.",
+        "# Graphite\n\nA compiled knowledge graph for software engineering.",
         Some("general"),
     );
 
@@ -328,7 +328,7 @@ fn cmd_init(path: &str, force: bool) {
         "requirement",
         "index",
         &[("contains", &["compiler-requirement"])],
-        "Requirement index",
+        "# Requirement Index",
         Some("requirement"),
     );
 
@@ -337,7 +337,7 @@ fn cmd_init(path: &str, force: bool) {
         "compiler-requirement",
         "requirement",
         &[],
-        "The compiler must parse .node files, validate the graph, resolve evidence anchors, and render HTML documentation.",
+        "# Compiler Requirement\n\nThe compiler must parse .node files, validate the graph, resolve evidence anchors, and render HTML documentation.",
         None,
     );
 
@@ -347,7 +347,7 @@ fn cmd_init(path: &str, force: bool) {
         "adr",
         "index",
         &[("contains", &["compiler-pipeline"])],
-        "Architecture Decision Records index",
+        "# Architecture Decision Records",
         Some("adr"),
     );
 
@@ -356,7 +356,7 @@ fn cmd_init(path: &str, force: bool) {
         "compiler-pipeline",
         "adr",
         &[("relates_to", &["compiler-requirement"])],
-        "The compiler pipeline has four stages:\n\n1. **Parse**: Read .node files into a Graph\n2. **Validate**: Run structural checks\n3. **Resolve**: Match evidence anchors to source\n4. **Render**: Generate static HTML\n\nRelated: [edge:compiler-requirement]",
+        "# Compiler Pipeline\n\nThe compiler pipeline has four stages:\n\n1. **Parse**: Read .node files into a Graph\n2. **Validate**: Run structural checks\n3. **Resolve**: Match evidence anchors to source\n4. **Render**: Generate static HTML\n\nRelated: [edge:compiler-requirement]",
         None,
     );
 
@@ -366,7 +366,7 @@ fn cmd_init(path: &str, force: bool) {
         "service",
         "index",
         &[("contains", &["compiler"])],
-        "Service index",
+        "# Service Index",
         Some("service"),
     );
 
@@ -375,7 +375,7 @@ fn cmd_init(path: &str, force: bool) {
         "compiler",
         "service",
         &[],
-        "A Rust CLI that implements the graphite compiler pipeline.",
+        "# Compiler\n\nA Rust CLI that implements the graphite compiler pipeline.",
         None,
     );
 
@@ -385,7 +385,7 @@ fn cmd_init(path: &str, force: bool) {
         "test",
         "index",
         &[("contains", &["compiler-tests"])],
-        "Test index",
+        "# Test Index",
         Some("test"),
     );
 
@@ -394,7 +394,7 @@ fn cmd_init(path: &str, force: bool) {
         "compiler-tests",
         "test",
         &[],
-        "Tests for the graphite compiler pipeline.",
+        "# Compiler Tests\n\nTests for the graphite compiler pipeline.",
         None,
     );
 
@@ -806,7 +806,10 @@ fn cmd_render(graph_dir: &str, output: &str, config: &Config) {
     let evidence = resolve_evidence(&config.scan);
     let output_path = Path::new(output);
 
-    if let Err(d) = graphite_render::render_to_dir(&graph, &evidence, output_path) {
+    let repo_url = std::env::var("GRAPHITE_REPO_URL").ok();
+    let repo_url = repo_url.as_deref();
+
+    if let Err(d) = graphite_render::render_to_dir(&graph, &evidence, output_path, repo_url) {
         let sev = match d.severity {
             Severity::Error => "error",
             Severity::Warning => "warning",
@@ -874,6 +877,8 @@ edges:
   verified_by:
     - compiler-tests
 ---
+# Compiler Requirement
+
 The compiler must parse and validate [edge:compiler] and [edge:compiler-tests].
 "#,
         )
@@ -896,7 +901,7 @@ The compiler must parse and validate [edge:compiler] and [edge:compiler-tests].
         let graph = load_graph(graph_dir.to_str().unwrap()).expect("integration: load graph");
         let evidence = resolve_evidence(&config.scan);
         let output_dir = root.join("html");
-        graphite_render::render_to_dir(&graph, &evidence, &output_dir)
+        graphite_render::render_to_dir(&graph, &evidence, &output_dir, None)
             .expect("integration: render should succeed");
 
         assert!(

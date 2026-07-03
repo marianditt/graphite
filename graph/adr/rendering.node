@@ -7,6 +7,8 @@ edges:
   references:
     - heading-depth
 ---
+# Rendering
+
 Static HTML generation: a table of contents from DFS containment order, one page per node with heading depth offset, edge-reference patterns replaced with hyperlinks, backlinks from incoming edges, and evidence sections for `verified_by` targets.
 
 No JavaScript, no server, no build step beyond the CLI. Cosmetic display IDs (REQ-1, ADR-2) are assigned in DFS order and may shift on insertion — permanent references use stable IDs. See [edge:compiler] for the pipeline and [edge:heading-depth] for heading derivation.

@@ -9,6 +9,8 @@ edges:
     - rendering
     - tutoring-errors
 ---
+# Compiler
+
 A Rust CLI that implements the Graphite compiler pipeline: parse, validate, resolve, render. Operates offline with no database, no state, and no plugin system.
 
 The pipeline architecture is at [edge:compiler-pipeline], the type system at [edge:schema-design], evidence anchoring at [edge:anchor-syntax], HTML generation at [edge:rendering], and the tutoring error format at [edge:tutoring-errors].

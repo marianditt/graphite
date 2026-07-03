@@ -10,6 +10,8 @@ edges:
     - anchor-syntax
     - schema-design
 ---
+# Compiler Pipeline
+
 The compiler pipeline has four stages:
 
 1. **Parse**: Read .node files into a Graph via the schema and node parsers

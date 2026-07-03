@@ -2,6 +2,8 @@
 id: ai-protocol
 kind: adr
 ---
+# AI Protocol
+
 The two-phase protocol for AI agents:
 
 **Phase 1 (Graph)**: `graphite plan <id>` → `graphite context <id> --phase understand` → edit .node file → `graphite validate --first` → repeat until clean.

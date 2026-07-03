@@ -47,6 +47,8 @@ impl ValidationEngine {
         diagnostics.extend(self.check_cycles(graph));
         diagnostics.extend(self.check_schema_conformance(graph));
         diagnostics.extend(self.check_body_edge_usage(graph));
+        diagnostics.extend(self.check_index_body_has_title(graph));
+        diagnostics.extend(self.check_node_body_has_title(graph));
         diagnostics
     }
 
@@ -453,7 +455,78 @@ impl ValidationEngine {
         diagnostics
     }
 
-    /// Check that all `evidence` edges in the graph resolve to known locations.
+    /// Check that every index node body has at least one markdown heading (# title).
+    /// Rule: "index-body-title"
+    fn check_index_body_has_title(&self, graph: &Graph) -> Vec<Diagnostic> {
+        let mut diagnostics = Vec::new();
+
+        for node in graph.nodes.values() {
+            if node.kind != "index" {
+                continue;
+            }
+            let has_heading = node.body.lines().any(|l| l.trim().starts_with("# "));
+
+            if !has_heading {
+                diagnostics.push(Diagnostic {
+                    rule: "index-body-title".to_string(),
+                    severity: Severity::Warning,
+                    node_id: Some(node.id.clone()),
+                    file: None,
+                    detail: format!(
+                        "Index node '{}' has no top-level heading (# Title) in its body.",
+                        node.id
+                    ),
+                    fix: format!(
+                        "Add a level-1 heading to the body of '{}', for example:\n\n\
+                         # {} Index",
+                        node.id,
+                        node.metadata.get("of_kind").map(|s| s.as_str()).unwrap_or("Nodes")
+                    ),
+                    example: None,
+                    hint: "Index pages should have a descriptive title as their first heading."
+                        .to_string(),
+                });
+            }
+        }
+
+        diagnostics
+    }
+
+    /// Check that every non-index node body has at least one markdown heading (# title).
+    /// Rule: "node-body-title"
+    fn check_node_body_has_title(&self, graph: &Graph) -> Vec<Diagnostic> {
+        let mut diagnostics = Vec::new();
+
+        for node in graph.nodes.values() {
+            if node.kind == "index" || node.kind == "evidence" {
+                continue;
+            }
+            let has_heading = node.body.lines().any(|l| l.trim().starts_with("# "));
+
+            if !has_heading {
+                diagnostics.push(Diagnostic {
+                    rule: "node-body-title".to_string(),
+                    severity: Severity::Warning,
+                    node_id: Some(node.id.clone()),
+                    file: None,
+                    detail: format!(
+                        "Node '{}' has no top-level heading (# Title) in its body.",
+                        node.id
+                    ),
+                    fix: format!(
+                        "Add a level-1 heading to the body of '{}', for example:\n\n\
+                         # {}",
+                        node.id, node.id
+                    ),
+                    example: None,
+                    hint: "Every knowledge node should have a descriptive title as its first heading."
+                        .to_string(),
+                });
+            }
+        }
+
+        diagnostics
+    }
     ///
     /// `resolved` is the merged output of `AnchorScanner` and `SidecarResolver`:
     /// a map from evidence ID to its file+line locations.

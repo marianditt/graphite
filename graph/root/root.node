@@ -10,4 +10,6 @@ edges:
 metadata:
   of_kind: general
 ---
+# Graphite
+
 A compiled knowledge graph for software engineering.

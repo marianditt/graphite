@@ -2,6 +2,8 @@
 id: stable-identity
 kind: adr
 ---
+# Stable Identity
+
 Every node has a stable ID (`compiler-requirement`, `anchor-syntax`) that is independent of filenames and directory layout. Cosmetic display IDs (REQ-1, ADR-2) are computed by the renderer in DFS order and may shift when new nodes are inserted. Permanent references in edge syntax always use the stable ID.
 
 This means a node can be renamed or moved without breaking cross-references — the stable ID is the canonical identifier.

@@ -2,6 +2,8 @@
 id: index-pattern
 kind: adr
 ---
+# Index Pattern
+
 Two mutually exclusive roles: **index nodes** use `contains` edges only and carry `of_kind` metadata. **Knowledge nodes** use domain edges (`implemented_by`, `verified_by`, `describes`, `references`) and never `contains`.
 
 Indices form a containment tree under `root`. A sub-index can live within a kind directory to enable arbitrary nesting. This separation keeps the hierarchy clean while allowing any relationship between knowledge nodes.

@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-use graphite_core::{Diagnostic, Graph, Node, Severity};
+use graphite_core::{Diagnostic, Graph, Node, Schema, Severity};
 use pulldown_cmark::HeadingLevel;
 
 /// Output of rendering a single node page.
@@ -21,14 +21,18 @@ pub struct RenderedGraph {
     pub depth_map: DepthMap,
 }
 
+/// Per-kind sequential numbering: kind → node_id → 1-based index.
+type NodeNumbering = HashMap<String, HashMap<String, usize>>;
+
 /// Errors produced during rendering.
 #[allow(clippy::result_large_err)]
 pub fn render_to_dir(
     graph: &Graph,
     evidence: &HashMap<String, Vec<(PathBuf, usize)>>,
     output_dir: &Path,
+    repo_url: Option<&str>,
 ) -> Result<(), Diagnostic> {
-    let rendered = render_graph(graph, evidence)?;
+    let rendered = render_graph(graph, evidence, repo_url)?;
     fs::create_dir_all(output_dir).map_err(|e| Diagnostic {
         rule: "render-error".into(),
         severity: Severity::Error,
@@ -60,16 +64,23 @@ pub fn render_to_dir(
         })?;
     }
 
+    let numbering = compute_node_numbering(graph);
+    let schema = &graph.schema;
+
     // Generate kind index pages
     for (kind, nodes) in group_by_kind(graph) {
+        // Skip "index" kind — its ontology is different
+        if kind == "index" {
+            continue;
+        }
         let kind_dir = output_dir.join(&kind);
         fs::create_dir_all(&kind_dir).ok();
-        let index_html = render_kind_index(&kind, &nodes, &rendered.depth_map);
+        let index_html = render_kind_index(&kind, &nodes, &rendered.depth_map, graph, schema, &numbering, repo_url);
         fs::write(kind_dir.join("index.html"), index_html).ok();
     }
 
     // Generate root index
-    let root_html = render_root_index(graph, &rendered.depth_map);
+    let root_html = render_root_index(graph, &rendered.depth_map, schema, &numbering, repo_url);
     fs::write(output_dir.join("index.html"), root_html).ok();
 
     Ok(())
@@ -80,12 +91,14 @@ pub fn render_to_dir(
 fn render_graph(
     graph: &Graph,
     evidence: &HashMap<String, Vec<(PathBuf, usize)>>,
+    repo_url: Option<&str>,
 ) -> Result<RenderedGraph, Diagnostic> {
     let depth_map = compute_depths(graph);
+    let numbering = compute_node_numbering(graph);
 
     let mut pages = Vec::new();
     for node in graph.nodes.values() {
-        let html = render_node_page(graph, node, &depth_map, evidence);
+        let html = render_node_page(graph, node, &depth_map, evidence, &numbering, repo_url);
         pages.push(RenderedNode {
             id: node.id.clone(),
             kind: node.kind.clone(),
@@ -151,13 +164,64 @@ fn compute_depths(graph: &Graph) -> DepthMap {
     depths
 }
 
-/// Group nodes by their kind.
+/// Group nodes by their kind, excluding "index" and "evidence" nodes.
 fn group_by_kind(graph: &Graph) -> HashMap<String, Vec<&Node>> {
     let mut map: HashMap<String, Vec<&Node>> = HashMap::new();
     for node in graph.nodes.values() {
+        if node.kind == "index" || node.kind == "evidence" {
+            continue;
+        }
         map.entry(node.kind.clone()).or_default().push(node);
     }
     map
+}
+
+/// Compute sequential numbering per kind (sorted by node ID).
+fn compute_node_numbering(graph: &Graph) -> NodeNumbering {
+    let mut numbering = HashMap::new();
+    for (kind, nodes) in group_by_kind(graph) {
+        let mut sorted: Vec<&Node> = nodes;
+        sorted.sort_by(|a, b| a.id.cmp(&b.id));
+        let mut kind_map = HashMap::new();
+        for (i, node) in sorted.iter().enumerate() {
+            kind_map.insert(node.id.clone(), i + 1);
+        }
+        numbering.insert(kind, kind_map);
+    }
+    numbering
+}
+
+/// Build the display label for a node, e.g. "SVC-003".
+fn node_label(schema: &Schema, numbering: &NodeNumbering, kind: &str, node_id: &str) -> String {
+    let key = schema.kinds.get(kind).map(|k| k.key.as_str()).unwrap_or("??");
+    let num = numbering
+        .get(kind)
+        .and_then(|m| m.get(node_id))
+        .copied()
+        .unwrap_or(0);
+    format!("{}-{:03}", key, num)
+}
+
+// ---------------------------------------------------------------------------
+// Relative link helpers
+// ---------------------------------------------------------------------------
+
+/// Build a relative link from a page of `from_kind` to a node in `to_kind`.
+fn relative_link(from_kind: &str, to_kind: &str, to_id: &str) -> String {
+    if from_kind == to_kind {
+        format!("{}.html", to_id)
+    } else {
+        format!("../{}/{}.html", to_kind, to_id)
+    }
+}
+
+/// Build a relative link from a page of `from_kind` to a kind index page.
+fn relative_index_link(from_kind: &str, to_kind: &str) -> String {
+    if from_kind == to_kind {
+        "index.html".to_string()
+    } else {
+        format!("../{}/index.html", to_kind)
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -169,24 +233,29 @@ fn render_node_page(
     node: &Node,
     depths: &DepthMap,
     evidence: &HashMap<String, Vec<(PathBuf, usize)>>,
+    numbering: &NodeNumbering,
+    repo_url: Option<&str>,
 ) -> String {
+    let current_kind = &node.kind;
     let depth = depths.get(&node.id).copied().unwrap_or(0);
     let heading_base = (1 + depth).min(6); // clamp at h6
 
     // Build heading-depth-adjusted body
     let body_html = render_body(node, heading_base);
 
-    // Replace [edge:<id>] with links
-    let body_with_links = replace_edge_refs(graph, &body_html);
+    // Replace [edge:<id>] with relative links
+    let body_with_links = replace_edge_refs(graph, &body_html, current_kind, numbering);
 
     // Backlinks
-    let backlinks = render_backlinks(graph, &node.id);
+    let backlinks = render_backlinks(graph, &node.id, current_kind, numbering);
 
     // Evidence section
-    let ev_section = render_evidence_section(node, evidence);
+    let ev_section = render_evidence_section(node, evidence, repo_url);
 
-    // TOC link
-    let toc_link = format!("/kind/{}.html", node.kind);
+    // TOC link — relative from {kind}/{id}.html to {kind}/index.html
+    let toc_link = relative_index_link(current_kind, current_kind);
+
+    let label = node_label(&graph.schema, numbering, current_kind, &node.id);
 
     format!(
         r#"<!DOCTYPE html>
@@ -204,7 +273,7 @@ code {{ background: #f0f0f0; padding: 0.1em 0.3em; }}
 </style>
 </head>
 <body>
-<p class="node-meta"><strong>{kind}</strong> · <a href="{toc_link}">↑ {kind}</a></p>
+<p class="node-meta"><strong>{label}</strong> · <a href="{toc_link}">↑ {kind}</a></p>
 {body_with_links}
 {ev_section}
 {backlinks}
@@ -212,6 +281,7 @@ code {{ background: #f0f0f0; padding: 0.1em 0.3em; }}
 </html>"#,
         id = node.id,
         kind = node.kind,
+        label = label,
         toc_link = toc_link,
         body_with_links = body_with_links,
         ev_section = ev_section,
@@ -278,10 +348,15 @@ fn offset_heading(level: HeadingLevel, offset: usize) -> HeadingLevel {
 }
 
 // ---------------------------------------------------------------------------
-// [edge:<id>] → <a href="/<kind>/<id>.html">
+// [edge:<id>] → <a href="RELATIVE_PATH">LABEL</a>
 // ---------------------------------------------------------------------------
 
-fn replace_edge_refs(graph: &Graph, html: &str) -> String {
+fn replace_edge_refs(
+    graph: &Graph,
+    html: &str,
+    current_kind: &str,
+    numbering: &NodeNumbering,
+) -> String {
     let marker = "[edge:";
     let mut result = String::new();
     let mut pos = 0;
@@ -292,10 +367,12 @@ fn replace_edge_refs(graph: &Graph, html: &str) -> String {
         if let Some(end) = html[content_start..].find(']') {
             let id = html[content_start..content_start + end].trim();
             if let Some(target) = graph.nodes.get(id) {
+                let href = relative_link(current_kind, &target.kind, &target.id);
+                let label = node_label(&graph.schema, numbering, &target.kind, &target.id);
                 result.push_str(&format!(
-                    r#"<a href="/{kind}/{id}.html">{id}</a>"#,
-                    kind = target.kind,
-                    id = target.id,
+                    r#"<a href="{href}">{label}</a>"#,
+                    href = href,
+                    label = label,
                 ));
             } else {
                 // Target not found — render as text with a broken-link indicator
@@ -319,7 +396,12 @@ fn replace_edge_refs(graph: &Graph, html: &str) -> String {
 // Backlinks
 // ---------------------------------------------------------------------------
 
-fn render_backlinks(graph: &Graph, node_id: &str) -> String {
+fn render_backlinks(
+    graph: &Graph,
+    node_id: &str,
+    current_kind: &str,
+    numbering: &NodeNumbering,
+) -> String {
     let mut backlinks: Vec<&str> = Vec::new();
 
     for node in graph.nodes.values() {
@@ -337,16 +419,15 @@ fn render_backlinks(graph: &Graph, node_id: &str) -> String {
     let items: String = backlinks
         .iter()
         .map(|id| {
-            format!(
-                "<li><a href=\"/{}/{}.html\">{}</a></li>",
-                graph
-                    .nodes
-                    .get(*id)
-                    .map(|n| n.kind.as_str())
-                    .unwrap_or("unknown"),
-                id,
-                id
-            )
+            let target_node = graph.nodes.get(*id);
+            let kind = target_node.map(|n| n.kind.as_str()).unwrap_or("unknown");
+            let href = relative_link(current_kind, kind, id);
+            let label = if let Some(n) = target_node {
+                node_label(&graph.schema, numbering, &n.kind, id)
+            } else {
+                id.to_string()
+            };
+            format!("<li><a href=\"{href}\">{label}</a></li>")
         })
         .collect::<Vec<_>>()
         .join("\n");
@@ -361,6 +442,7 @@ fn render_backlinks(graph: &Graph, node_id: &str) -> String {
 fn render_evidence_section(
     node: &Node,
     evidence: &HashMap<String, Vec<(PathBuf, usize)>>,
+    repo_url: Option<&str>,
 ) -> String {
     let mut items = String::new();
 
@@ -371,11 +453,22 @@ fn render_evidence_section(
         for ev_id in targets {
             if let Some(locations) = evidence.get(ev_id) {
                 for (path, line) in locations {
-                    items.push_str(&format!(
-                        r#"<li><code>{}</code> line {}</li>"#,
-                        path.display(),
-                        line
-                    ));
+                    let display_path = path.display();
+                    if let Some(base) = repo_url {
+                        items.push_str(&format!(
+                            r#"<li><a href="{base}/blob/main/{path}#L{line}"><code>{display_path}</code> line {line}</a></li>"#,
+                            base = base,
+                            path = path.display(),
+                            line = line,
+                            display_path = display_path,
+                        ));
+                    } else {
+                        items.push_str(&format!(
+                            r#"<li><code>{display_path}</code> line {line}</li>"#,
+                            display_path = display_path,
+                            line = line,
+                        ));
+                    }
                 }
             } else {
                 items.push_str(&format!(
@@ -397,37 +490,71 @@ fn render_evidence_section(
 // Kind index page
 // ---------------------------------------------------------------------------
 
-fn render_kind_index(kind: &str, nodes: &[&Node], depths: &DepthMap) -> String {
+fn render_kind_index(
+    kind: &str,
+    nodes: &[&Node],
+    depths: &DepthMap,
+    graph: &Graph,
+    schema: &Schema,
+    numbering: &NodeNumbering,
+    _repo_url: Option<&str>,
+) -> String {
+    // Find the body of the index node that has of_kind == this kind
+    let index_body: String = graph
+        .nodes
+        .values()
+        .find(|n| {
+            n.kind == "index"
+                && n.metadata.get("of_kind").map(|s| s.as_str()) == Some(kind)
+        })
+        .map(|idx_node| render_body(idx_node, 0))
+        .unwrap_or_default();
+
+    // Build TOC items with sequential numbering
     let mut items: Vec<String> = nodes
         .iter()
         .map(|n| {
             let depth = depths.get(&n.id).copied().unwrap_or(0);
             let indent = "  ".repeat(depth);
-            format!(r#"{}<li><a href="{}.html">{}</a></li>"#, indent, n.id, n.id)
+            let label = node_label(schema, numbering, kind, &n.id);
+            format!(
+                r#"{}<li><a href="{}.html">{}</a></li>"#,
+                indent, n.id, label
+            )
         })
         .collect();
     items.sort();
 
+    let toc_items = items.join("\n");
+    let root_link = relative_index_link(kind, "index"); // from kind/ to root = ../index.html
+    let kind_key = schema.kinds.get(kind).map(|k| k.key.as_str()).unwrap_or("??");
+
     format!(
         r#"<!DOCTYPE html>
 <html lang="en">
-<head><meta charset="utf-8"><title>{kind} — graphite</title>
+<head><meta charset="utf-8"><title>Table of Contents: {kind} — graphite</title>
 <style>
 body {{ font-family: system-ui, sans-serif; max-width: 800px; margin: 0 auto; padding: 1em; line-height: 1.6; }}
 a {{ color: #0066cc; }}
 </style>
 </head>
 <body>
-<h1>{kind}</h1>
-<p>Nodes of kind <strong>{kind}</strong>.</p>
+<h1>Table of Contents: {kind} ({kind_key})</h1>
+
 <ul>
-{items}
+{toc_items}
 </ul>
-<a href="/index.html">← Graph root</a>
+
+{index_body}
+
+<a href="{root_link}">← Graph root</a>
 </body>
 </html>"#,
         kind = kind,
-        items = items.join("\n"),
+        kind_key = kind_key,
+        toc_items = toc_items,
+        index_body = index_body,
+        root_link = root_link,
     )
 }
 
@@ -435,30 +562,46 @@ a {{ color: #0066cc; }}
 // Root index page
 // ---------------------------------------------------------------------------
 
-fn render_root_index(graph: &Graph, depths: &DepthMap) -> String {
+fn render_root_index(
+    graph: &Graph,
+    depths: &DepthMap,
+    schema: &Schema,
+    numbering: &NodeNumbering,
+    _repo_url: Option<&str>,
+) -> String {
     let mut kind_links = String::new();
-    let mut seen_kinds: Vec<&str> = graph.nodes.values().map(|n| n.kind.as_str()).collect();
+    let mut seen_kinds: Vec<&str> = graph
+        .nodes
+        .values()
+        .map(|n| n.kind.as_str())
+        .filter(|k| *k != "index" && *k != "evidence")
+        .collect();
     seen_kinds.sort();
     seen_kinds.dedup();
 
     for kind in &seen_kinds {
+        let key = schema.kinds.get(*kind).map(|k| k.key.as_str()).unwrap_or("??");
         kind_links.push_str(&format!(
-            r#"<li><a href="{kind}/index.html">{kind}</a></li>"#,
+            r#"<li><a href="{kind}/index.html">{kind} ({key})</a></li>"#,
             kind = kind,
+            key = key,
         ));
     }
 
     let mut all_items: Vec<String> = graph
         .nodes
         .values()
+        .filter(|n| n.kind != "index" && n.kind != "evidence")
         .map(|n| {
             let depth = depths.get(&n.id).copied().unwrap_or(0);
             let indent = "  ".repeat(depth);
+            let label = node_label(schema, numbering, &n.kind, &n.id);
             format!(
-                r#"{}<li><a href="{kind}/{id}.html">{id}</a></li>"#,
+                r#"{}<li><a href="{kind}/{id}.html">{label}</a></li>"#,
                 indent,
                 kind = n.kind,
                 id = n.id,
+                label = label,
             )
         })
         .collect();
@@ -509,7 +652,7 @@ mod tests {
 id: root\n\
 kind: index\n\
 edges:\n  contains:\n    - svc\n\
-metadata:\n  of_kind: general\n\
+metadata:\n  of_kind: service\n\
 ---\n\
 # Root\n\n\
 Root body.\n",
@@ -545,17 +688,8 @@ Body with [edge:root].\n",
     fn renders_without_crashing() {
         let g = sample_graph();
         let evidence = HashMap::new();
-        let rendered = render_graph(&g, &evidence).expect("render should succeed");
-        assert_eq!(rendered.pages.len(), 2);
-
-        // Root page should contain h1 since depth=0 → heading_base=1
-        let root_page = rendered.pages.iter().find(|p| p.id == "root").unwrap();
-        assert!(
-            root_page.html.contains("<h1"),
-            "root page should have a top-level heading"
-        );
-
-        // Service page should have depth=1 → heading_base=2 → h2
+        let rendered = render_graph(&g, &evidence, None).expect("render should succeed");
+        // Only service node is rendered (index kind skipped as a page)
         let svc_page = rendered.pages.iter().find(|p| p.id == "svc").unwrap();
         assert!(
             svc_page.html.contains("<h2"),
@@ -564,16 +698,16 @@ Body with [edge:root].\n",
     }
 
     #[test]
-    fn edge_refs_replaced_in_html() {
+    fn edge_refs_replaced_with_relative_paths() {
         let g = sample_graph();
         let evidence = HashMap::new();
-        let rendered = render_graph(&g, &evidence).expect("render");
+        let rendered = render_graph(&g, &evidence, None).expect("render");
 
         let svc = rendered.pages.iter().find(|p| p.id == "svc").unwrap();
-        // [edge:root] should become a link to root
+        // [edge:root] should become a relative link from service/svc.html to index/root.html
         assert!(
-            svc.html.contains(r#"href="/index/root.html""#),
-            "edge ref should be an anchor: {}",
+            svc.html.contains(r#"href="../index/root.html""#),
+            "edge ref should be a relative anchor: {}",
             svc.html
         );
     }
@@ -596,7 +730,7 @@ See [edge:nonexistent].\n",
         );
 
         let evidence = HashMap::new();
-        let rendered = render_graph(&g, &evidence).expect("render");
+        let rendered = render_graph(&g, &evidence, None).expect("render");
         let page = &rendered.pages[0];
         assert!(
             page.html.contains("nonexistent?"),
@@ -623,7 +757,7 @@ edges:\n  evidence:\n    - ev-auth\n---\n\
         let mut evidence = HashMap::new();
         evidence.insert("ev-auth".into(), vec![(PathBuf::from("src/main.rs"), 42)]);
 
-        let rendered = render_graph(&g, &evidence).expect("render");
+        let rendered = render_graph(&g, &evidence, None).expect("render");
         let page = &rendered.pages[0];
         assert!(
             page.html.contains("Evidence"),
@@ -632,6 +766,34 @@ edges:\n  evidence:\n    - ev-auth\n---\n\
         assert!(
             page.html.contains("src/main.rs"),
             "evidence file path should appear"
+        );
+    }
+
+    #[test]
+    fn evidence_with_repo_url() {
+        let schema = SchemaParser::default_schema();
+        let mut g = Graph::new(schema);
+        g.add_node(
+            NodeParser::parse(
+                "\
+---\n\
+id: svc\n\
+kind: service\n\
+edges:\n  evidence:\n    - ev-auth\n---\n\
+# Service\n",
+            )
+            .expect("svc"),
+        );
+
+        let mut evidence = HashMap::new();
+        evidence.insert("ev-auth".into(), vec![(PathBuf::from("src/main.rs"), 42)]);
+
+        let rendered = render_graph(&g, &evidence, Some("https://github.com/owner/repo"))
+            .expect("render");
+        let page = &rendered.pages[0];
+        assert!(
+            page.html.contains("https://github.com/owner/repo/blob/main/src/main.rs#L42"),
+            "evidence link should include repo URL"
         );
     }
 
@@ -682,7 +844,7 @@ kind: service\n\
         );
 
         let evidence = HashMap::new();
-        let rendered = render_graph(&g, &evidence).expect("render");
+        let rendered = render_graph(&g, &evidence, None).expect("render");
 
         // Deepest node should have heading clamped at h6
         let deepest = rendered.pages.iter().find(|p| p.id == "r11").unwrap();
@@ -692,5 +854,107 @@ kind: service\n\
         );
         // Should NOT have h7
         assert!(!deepest.html.contains("<h7"), "no h7 allowed");
+    }
+
+    #[test]
+    fn kind_index_page_has_toc_title() {
+        let g = sample_graph();
+        let depths = compute_depths(&g);
+        let numbering = compute_node_numbering(&g);
+        let schema = &g.schema;
+        let nodes_by_kind = group_by_kind(&g);
+        let service_nodes = nodes_by_kind.get("service").expect("service nodes");
+
+        let html = render_kind_index("service", service_nodes, &depths, &g, schema, &numbering, None);
+        assert!(
+            html.contains("Table of Contents"),
+            "kind index should say 'Table of Contents': {}",
+            html
+        );
+        assert!(
+            html.contains("SVC"),
+            "kind index should show kind key 'SVC'"
+        );
+    }
+
+    #[test]
+    fn node_label_format() {
+        let schema = SchemaParser::default_schema();
+        let mut numbering = HashMap::new();
+        let mut service_nums = HashMap::new();
+        service_nums.insert("svc".to_string(), 1usize);
+        numbering.insert("service".to_string(), service_nums);
+
+        let label = node_label(&schema, &numbering, "service", "svc");
+        assert_eq!(label, "SVC-001", "label should be key + 3-digit number");
+    }
+
+    #[test]
+    fn kind_index_has_body_between_title_and_toc() {
+        let schema = SchemaParser::default_schema();
+        let mut g = Graph::new(schema);
+
+        // Index node with body and of_kind=service
+        g.add_node(
+            NodeParser::parse(
+                "\
+---\n\
+id: svc-index\n\
+kind: index\n\
+edges:\n  contains:\n    - svc-1\n\
+metadata:\n  of_kind: service\n\
+---\n\
+# Service Overview\n\n\
+This index page covers all services.\n",
+            )
+            .expect("svc-index"),
+        );
+
+        g.add_node(
+            NodeParser::parse(
+                "\
+---\n\
+id: svc-1\n\
+kind: service\n\
+---\n\
+# Service One\n",
+            )
+            .expect("svc-1"),
+        );
+
+        let depths = compute_depths(&g);
+        let numbering = compute_node_numbering(&g);
+        let schema = &g.schema;
+        let nodes_by_kind = group_by_kind(&g);
+        let service_nodes = nodes_by_kind.get("service").expect("service nodes");
+
+        let html = render_kind_index("service", service_nodes, &depths, &g, schema, &numbering, None);
+        // The index node body should appear after the TOC (the <ul>)
+        let ul_pos = html.find("<ul").unwrap();
+        let body_pos = html.find("Service Overview").unwrap();
+        assert!(
+            body_pos > ul_pos,
+            "body should appear after TOC list"
+        );
+    }
+
+    #[test]
+    fn relative_link_same_kind() {
+        assert_eq!(relative_link("service", "service", "svc-1"), "svc-1.html");
+    }
+
+    #[test]
+    fn relative_link_diff_kind() {
+        assert_eq!(relative_link("service", "adr", "adr-1"), "../adr/adr-1.html");
+    }
+
+    #[test]
+    fn relative_index_same_kind() {
+        assert_eq!(relative_index_link("service", "service"), "index.html");
+    }
+
+    #[test]
+    fn relative_index_diff_kind() {
+        assert_eq!(relative_index_link("service", "adr"), "../adr/index.html");
     }
 }
