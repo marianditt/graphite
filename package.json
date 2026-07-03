@@ -1,0 +1,34 @@
+{
+  "name": "@marianditt/graphite",
+  "version": "0.1.0",
+  "description": "Graphite CLI: compiled knowledge graph tooling",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "bin": {
+    "graphite": "npm/bin/graphite.mjs"
+  },
+  "scripts": {
+    "postinstall": "node npm/scripts/postinstall.mjs"
+  },
+  "files": [
+    "Cargo.toml",
+    "Cargo.lock",
+    "graphite-core/**",
+    "graphite-cli/**",
+    "graphite-render/**",
+    "graph/**",
+    "graphite.yaml",
+    "LICENSE",
+    "README.md",
+    "npm/bin/**",
+    "npm/scripts/**"
+  ],
+  "keywords": [
+    "graphite",
+    "cli",
+    "knowledge-graph",
+    "rust"
+  ]
+}

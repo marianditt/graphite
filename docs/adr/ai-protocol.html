@@ -6,15 +6,12 @@
 :root {
   --bg: #0b1120;
   --surface: #111b2e;
-  --surface-hover: #162240;
   --text: #e2e8f0;
   --text-dim: #94a3b8;
-  --text-muted: #64748b;
   --accent: #22d3ee;
   --accent-dim: #0891b2;
   --accent-glow: rgba(34, 211, 238, 0.12);
   --border: #1e293b;
-  --border-bright: #334155;
   --code-bg: #0a0f1a;
   --code-border: #1e293b;
 }
@@ -28,10 +25,20 @@ body {
   max-width: 74ch;
   margin: 0 auto;
   padding: 1.5rem 1rem 3rem;
-  font-size: 1rem;
+  font-size: 14pt;
   line-height: 1.65;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+}
+
+.brand {
+  margin: 0 0 0.9rem;
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 0.9em;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  text-shadow: 0 0 10px var(--accent-glow);
 }
 
 /* ── Typography ──────────────────────────────────────────────── */
@@ -64,6 +71,7 @@ a {
   text-decoration: underline;
   text-underline-offset: 2px;
   text-decoration-thickness: 1px;
+  font-size: 1em;
   transition: color 0.15s, text-shadow 0.2s;
 }
 
@@ -84,7 +92,7 @@ a:hover {
   padding: 0.65rem 0.9rem;
   margin-bottom: 1.25rem;
   color: var(--text-dim);
-  font-size: 0.95rem;
+  font-size: 1em;
   display: flex;
   gap: 0.65rem;
   align-items: baseline;
@@ -103,7 +111,7 @@ a:hover {
 
 .evidence h3 {
   color: var(--accent-dim);
-  font-size: 0.92rem;
+  font-size: 1.05em;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   margin: 0 0 0.55rem;
@@ -123,7 +131,7 @@ a:hover {
 
 .backlinks h3 {
   color: var(--text-dim);
-  font-size: 0.92rem;
+  font-size: 1.05em;
   text-transform: uppercase;
   letter-spacing: 0.06em;
   margin: 0 0 0.5rem;
@@ -140,7 +148,7 @@ a:hover {
 
 .backlinks li a {
   color: var(--text-dim);
-  font-size: 0.95rem;
+  font-size: 1em;
   transition: color 0.15s;
 }
 
@@ -157,7 +165,7 @@ pre {
   padding: 0.95rem 1rem;
   overflow-x: auto;
   font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'SF Mono', monospace;
-  font-size: 0.9rem;
+  font-size: 0.9em;
   line-height: 1.55;
   tab-size: 4;
 }
@@ -167,7 +175,7 @@ code {
   padding: 0.1rem 0.35rem;
   border-radius: 4px;
   font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'SF Mono', monospace;
-  font-size: 0.9rem;
+  font-size: 0.9em;
 }
 
 pre code {
@@ -194,7 +202,7 @@ body > a[href$="index.html"] {
   display: inline-block;
   margin-top: 1.3rem;
   color: var(--text-dim);
-  font-size: 0.95rem;
+  font-size: 1em;
   transition: color 0.15s;
 }
 
@@ -235,7 +243,7 @@ table {
   width: 100%;
   border-collapse: collapse;
   margin: 1rem 0;
-  font-size: 0.95rem;
+  font-size: 1em;
 }
 
 th, td {
@@ -253,12 +261,12 @@ th {
 @media (max-width: 640px) {
   body {
     padding: 1rem 0.85rem 2rem;
-    font-size: 0.98rem;
+    font-size: 14pt;
     line-height: 1.6;
   }
 
   .node-meta {
-    font-size: 0.92rem;
+    font-size: 1em;
     padding: 0.6rem 0.75rem;
   }
 
@@ -280,6 +288,7 @@ th {
 </style>
 </head>
 <body>
+<p class="brand">Graphite</p>
 <p class="node-meta"><strong>ADR-1 AI Protocol</strong> · <a href="index.html">↑ adr</a></p>
 <h3>ADR-1 AI Protocol</h3>
 <p>The two-phase protocol for AI agents:</p>

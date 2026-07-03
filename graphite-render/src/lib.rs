@@ -330,6 +330,7 @@ fn render_node_page(
 </style>
 </head>
 <body>
+<p class="brand">Graphite</p>
 <p class="node-meta"><strong>{display_label}</strong> · <a href="{toc_link}">↑ {kind}</a></p>
 {body_with_links}
 {ev_section}
@@ -633,6 +634,7 @@ fn render_kind_index(
 </style>
 </head>
 <body>
+<p class="brand">Graphite</p>
 <h1>Table of Contents: {kind} ({kind_key})</h1>
 
 <ul>
@@ -728,6 +730,7 @@ fn render_root_index(
 </style>
 </head>
 <body>
+<p class="brand">Graphite</p>
 <h1>Table of Contents</h1>
 
 <ul>
@@ -755,6 +758,7 @@ fn render_root_index(
 </style>
 </head>
 <body>
+<p class="brand">Graphite</p>
 <h1>graphite</h1>
 <p>A compiled knowledge graph for software engineering.</p>
 </body>
