@@ -42,8 +42,7 @@ fn test_diagnostic_serialization() {
     };
 
     let json = serde_json::to_string(&diagnostic).expect("serialize diagnostic");
-    let value: serde_json::Value =
-        serde_json::from_str(&json).expect("parse diagnostic JSON");
+    let value: serde_json::Value = serde_json::from_str(&json).expect("parse diagnostic JSON");
 
     // All 7 non-None fields should be present in the serialized output:
     // rule, severity, node_id, file, detail, fix, hint
@@ -56,10 +55,7 @@ fn test_diagnostic_serialization() {
         value["fix"],
         "Add `-> ReturnType` to the function signature."
     );
-    assert_eq!(
-        value["hint"],
-        "Use `fn foo() -> i32 { 42 }` instead."
-    );
+    assert_eq!(value["hint"], "Use `fn foo() -> i32 { 42 }` instead.");
 
     // The optional `example` field is None and should be absent
     assert!(value.get("example").is_none());
@@ -70,8 +66,7 @@ fn test_severity_enum() {
     let error_json = serde_json::to_string(&Severity::Error).expect("serialize Error");
     assert_eq!(error_json, "\"Error\"");
 
-    let warning_json =
-        serde_json::to_string(&Severity::Warning).expect("serialize Warning");
+    let warning_json = serde_json::to_string(&Severity::Warning).expect("serialize Warning");
     assert_eq!(warning_json, "\"Warning\"");
 
     let error_deserialized: Severity =
