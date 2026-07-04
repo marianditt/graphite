@@ -36,3 +36,12 @@ THEN component nodes with `depends_on` edges SHALL pass validation.
 GIVEN a graph node with kind `undefined_kind` not declared in `graph.schema`
 WHEN graph validation runs
 THEN the system SHALL emit a schema-conformance diagnostic.
+
+### Scenario: Edge target existence
+GIVEN a node with an edge declaration `addressed_by: [nonexistent-node]`
+WHEN `graphite validate graph` is run
+THEN the system SHALL emit a diagnostic with rule `broken-edge-target`
+AND the diagnostic SHALL include:
+  - `detail`: which node declared the edge, which target is missing, and that the target ID does not correspond to any known node
+  - `fix`: how to either create the missing node or correct the target ID
+  - `hint`: a general principle that every edge target MUST resolve to an existing node ID in the graph

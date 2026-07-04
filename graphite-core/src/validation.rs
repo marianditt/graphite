@@ -47,6 +47,7 @@ impl ValidationEngine {
         diagnostics.extend(self.check_cycles(graph));
         diagnostics.extend(self.check_dependency_cycles(graph));
         diagnostics.extend(self.check_schema_conformance(graph));
+        diagnostics.extend(self.check_edge_targets_exist(graph));
         diagnostics.extend(self.check_body_edge_usage(graph));
         diagnostics.extend(self.check_evidence_coverage(graph));
         diagnostics.extend(self.check_index_body_has_title(graph));
@@ -370,6 +371,48 @@ impl ValidationEngine {
                                  its target ('to' field).",
                             ));
                         }
+                    }
+                }
+            }
+        }
+
+        diagnostics
+    }
+
+    /// Check that every edge target (except `evidence`) resolves to an existing node ID.
+    fn check_edge_targets_exist(&self, graph: &Graph) -> Vec<Diagnostic> {
+        let mut diagnostics = Vec::new();
+
+        for node in graph.nodes.values() {
+            for (edge_kind, targets) in &node.edges {
+                if edge_kind == "evidence" || edge_kind == "contains" {
+                    continue;
+                }
+                for target in targets {
+                    if !graph.nodes.contains_key(target.as_str()) {
+                        let detail = format!(
+                            "Node '{}' has edge '{}' targeting '{}', but no node with ID \
+                             '{}' exists in the graph.",
+                            node.id, edge_kind, target, target
+                        );
+                        let fix = format!(
+                            "Either create a new node with id '{}' (in the appropriate \
+                             kind directory), or correct the edge target in node '{}' \
+                             to point to an existing node ID.",
+                            target, node.id
+                        );
+                        let hint = "Every edge target MUST resolve to an existing node \
+                                    ID in the graph. Use `graphite context <id>` to \
+                                    discover existing nodes, or `graphite ls` to list \
+                                    all node IDs."
+                            .to_string();
+                        diagnostics.push(diag_err(
+                            "broken-edge-target",
+                            &node.id,
+                            &detail,
+                            &fix,
+                            &hint,
+                        ));
                     }
                 }
             }
@@ -1150,6 +1193,59 @@ kind: test\n\
                 .iter()
                 .any(|d| d.rule == "schema-conformance" && d.detail.contains("reserved for index")),
             "knowledge node with contains should error: {:?}",
+            diags
+        );
+    }
+
+    // ------------------------------------------------------------------
+    // Edge target existence
+    // ------------------------------------------------------------------
+
+    #[test]
+    fn broken_edge_target_detected() {
+        let schema = SchemaParser::default_schema();
+        let mut g = Graph::new(schema);
+
+        // A node with an edge to a non-existent target.
+        g.add_node(make_node(
+            "req-1",
+            "requirement",
+            HashMap::from([("addressed_by".into(), vec!["ghost-arc".into()])]),
+            "Addressed by [edge:ghost-arc].",
+        ));
+
+        let engine = ValidationEngine;
+        let diags = engine.validate(&g);
+        assert!(
+            diags.iter().any(|d| d.rule == "broken-edge-target"),
+            "should detect broken edge target: {:?}",
+            diags
+        );
+    }
+
+    #[test]
+    fn existing_edge_target_passes_silently() {
+        let schema = SchemaParser::default_schema();
+        let mut g = Graph::new(schema);
+
+        g.add_node(make_node(
+            "arc-1",
+            "architecture",
+            HashMap::new(),
+            "# Arc One\n\n",
+        ));
+        g.add_node(make_node(
+            "req-1",
+            "requirement",
+            HashMap::from([("addressed_by".into(), vec!["arc-1".into()])]),
+            "Addressed by [edge:arc-1].",
+        ));
+
+        let engine = ValidationEngine;
+        let diags = engine.validate(&g);
+        assert!(
+            diags.iter().all(|d| d.rule != "broken-edge-target"),
+            "should NOT detect broken edge target when target exists: {:?}",
             diags
         );
     }
