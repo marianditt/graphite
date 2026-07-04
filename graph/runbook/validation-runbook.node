@@ -1,12 +1,7 @@
 ---
 id: validation-runbook
 kind: runbook
-edges:
-  references:
-    - compiler-tests
-  evidence:
-    - runbook-validation-def
 ---
 # Validation Runbook
 
-Use `graphite validate graph --strict` for release gating, then `graphite stats graph --json` for measurable status. This runbook is backed by [edge:compiler-tests] coverage.
+Run graphite validate before shipping graph changes.

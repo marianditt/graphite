@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<head><meta charset="utf-8"><title>SVC-2 Compiler — graphite</title>
+<head><meta charset="utf-8"><title>SVC-1 Compiler — graphite</title>
 <style>
 
 :root {
@@ -18,6 +18,10 @@
 
 * { box-sizing: border-box; }
 
+html {
+  font-size: 150%;
+}
+
 body {
   font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   background: var(--bg);
@@ -25,7 +29,7 @@ body {
   max-width: 74ch;
   margin: 0 auto;
   padding: 1.5rem 1rem 3rem;
-  font-size: 14pt;
+  font-size: 1rem;
   line-height: 1.65;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
@@ -261,7 +265,7 @@ th {
 @media (max-width: 640px) {
   body {
     padding: 1rem 0.85rem 2rem;
-    font-size: 14pt;
+    font-size: 1rem;
     line-height: 1.6;
   }
 
@@ -289,19 +293,11 @@ th {
 </head>
 <body>
 <p class="brand">Graphite</p>
-<p class="node-meta"><strong>SVC-2 Compiler</strong> · <a href="index.html">↑ service</a></p>
-<h3>SVC-2 Compiler</h3>
-<p>A Rust CLI that implements the Graphite compiler pipeline: parse, validate, resolve, render. Operates offline with no database, no state, and no plugin system.</p>
-<p>The pipeline architecture is at <a href="../adr/compiler-pipeline.html">ADR-3 Compiler Pipeline</a>, the type system at <a href="../adr/schema-design.html">ADR-8 Schema Design</a>, evidence anchoring at <a href="../adr/anchor-syntax.html">ADR-2 Anchor Syntax</a>, HTML generation at <a href="../adr/rendering.html">ADR-7 Rendering</a>, and the tutoring error format at <a href="../adr/tutoring-errors.html">ADR-10 Tutoring Errors</a>.</p>
+<p class="node-meta"><strong>SVC-1 Compiler</strong> · <a href="index.html">↑ service</a></p>
+<h3>SVC-1 Compiler</h3>
+<p>A Rust CLI that implements the graphite compiler pipeline.</p>
 
-<div class="evidence"><h3>Evidence</h3><ul><li><code>graphite-render/src/style.rs</code> line 2</li><li><code>graphite-render/src/style.rs</code> line 2</li></ul></div>
-<div class="backlinks"><h3>Referenced by</h3><ul><li><a href="../adr/anchor-syntax.html">ADR-2 Anchor Syntax</a></li>
-<li><a href="../adr/compiler-pipeline.html">ADR-3 Compiler Pipeline</a></li>
-<li><a href="../adr/rendering.html">ADR-7 Rendering</a></li>
-<li><a href="../requirement/compiler-requirement.html">REQ-2 Compiler Requirement</a></li>
-<li><a href="../adr/schema-design.html">ADR-8 Schema Design</a></li>
-<li><a href="../requirement/self-hosting-requirement.html">REQ-3 Self-Hosting Requirement</a></li>
-<li><a href="../infra/distribution-pipeline.html">??-1 Distribution Pipeline</a></li>
-<li><a href="../adr/tutoring-errors.html">ADR-10 Tutoring Errors</a></li></ul></div>
+
+
 </body>
 </html>

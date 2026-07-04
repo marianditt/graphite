@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<head><meta charset="utf-8"><title>REQ-2 Compiler Requirement — graphite</title>
+<head><meta charset="utf-8"><title>REQ-1 Compiler Requirement — graphite</title>
 <style>
 
 :root {
@@ -18,6 +18,10 @@
 
 * { box-sizing: border-box; }
 
+html {
+  font-size: 150%;
+}
+
 body {
   font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   background: var(--bg);
@@ -25,7 +29,7 @@ body {
   max-width: 74ch;
   margin: 0 auto;
   padding: 1.5rem 1rem 3rem;
-  font-size: 14pt;
+  font-size: 1rem;
   line-height: 1.65;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
@@ -261,7 +265,7 @@ th {
 @media (max-width: 640px) {
   body {
     padding: 1rem 0.85rem 2rem;
-    font-size: 14pt;
+    font-size: 1rem;
     line-height: 1.6;
   }
 
@@ -289,14 +293,11 @@ th {
 </head>
 <body>
 <p class="brand">Graphite</p>
-<p class="node-meta"><strong>REQ-2 Compiler Requirement</strong> · <a href="index.html">↑ requirement</a></p>
-<h3>REQ-2 Compiler Requirement</h3>
-<p>The compiler must parse .node files into a typed directed graph, validate its structural integrity with tutoring diagnostics, resolve evidence anchors in source code, and render navigable static HTML documentation.</p>
-<p>This is the core requirement of Graphite. Every other node serves this goal.</p>
-<p>See <a href="../service/compiler.html">SVC-2 Compiler</a> for the implementation and <a href="../test/compiler-tests.html">TST-1 Compiler Tests</a> for test coverage.</p>
-<p>Requirement evidence anchor: <span class="broken-edge">compiler-requirement-def?</span>.</p>
+<p class="node-meta"><strong>REQ-1 Compiler Requirement</strong> · <a href="index.html">↑ requirement</a></p>
+<h3>REQ-1 Compiler Requirement</h3>
+<p>The compiler must parse .node files, validate the graph, resolve evidence anchors, and render HTML documentation.</p>
 
-<div class="evidence"><h3>Evidence</h3><ul><li><code>graphite-core/src/validation.rs</code> line 6</li><li><code>graphite-core/src/validation.rs</code> line 6</li></ul></div>
-<div class="backlinks"><h3>Referenced by</h3><ul><li><a href="self-hosting-requirement.html">REQ-3 Self-Hosting Requirement</a></li></ul></div>
+
+<div class="backlinks"><h3>Referenced by</h3><ul><li><a href="../adr/compiler-pipeline.html">ADR-1 Compiler Pipeline</a></li></ul></div>
 </body>
 </html>

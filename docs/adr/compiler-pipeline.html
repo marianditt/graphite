@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<head><meta charset="utf-8"><title>ADR-3 Compiler Pipeline — graphite</title>
+<head><meta charset="utf-8"><title>ADR-1 Compiler Pipeline — graphite</title>
 <style>
 
 :root {
@@ -18,6 +18,10 @@
 
 * { box-sizing: border-box; }
 
+html {
+  font-size: 150%;
+}
+
 body {
   font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   background: var(--bg);
@@ -25,7 +29,7 @@ body {
   max-width: 74ch;
   margin: 0 auto;
   padding: 1.5rem 1rem 3rem;
-  font-size: 14pt;
+  font-size: 1rem;
   line-height: 1.65;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
@@ -261,7 +265,7 @@ th {
 @media (max-width: 640px) {
   body {
     padding: 1rem 0.85rem 2rem;
-    font-size: 14pt;
+    font-size: 1rem;
     line-height: 1.6;
   }
 
@@ -289,20 +293,18 @@ th {
 </head>
 <body>
 <p class="brand">Graphite</p>
-<p class="node-meta"><strong>ADR-3 Compiler Pipeline</strong> · <a href="index.html">↑ adr</a></p>
-<h3>ADR-3 Compiler Pipeline</h3>
+<p class="node-meta"><strong>ADR-1 Compiler Pipeline</strong> · <a href="index.html">↑ adr</a></p>
+<h3>ADR-1 Compiler Pipeline</h3>
 <p>The compiler pipeline has four stages:</p>
 <ol>
-<li><strong>Parse</strong>: Read .node files into a Graph via the schema and node parsers</li>
-<li><strong>Validate</strong>: Run structural checks (reachability, tree constraint, cycles, schema conformance, body-edge usage, anchor resolution)</li>
-<li><strong>Resolve</strong>: Match evidence anchors to source file locations via the scanner and sidecar resolvers</li>
-<li><strong>Render</strong>: Generate static HTML with heading depth derivation and hyperlinked edge references</li>
+<li><strong>Parse</strong>: Read .node files into a Graph</li>
+<li><strong>Validate</strong>: Run structural checks</li>
+<li><strong>Resolve</strong>: Match evidence anchors to source</li>
+<li><strong>Render</strong>: Generate static HTML</li>
 </ol>
-<p>See <a href="../service/compiler.html">SVC-2 Compiler</a> for the implementation. The stages are designed per <a href="edge-narrative.html">ADR-4 Edge Narrative</a> (narrative consistency), <a href="heading-depth.html">ADR-5 Heading Depth</a> (heading derivation), <a href="anchor-syntax.html">ADR-2 Anchor Syntax</a> (evidence resolution), and <a href="schema-design.html">ADR-8 Schema Design</a> (type system).</p>
-<p>Pipeline decision evidence: <span class="broken-edge">compiler-pipeline-adr?</span>.</p>
+<p>Related: <a href="../requirement/compiler-requirement.html">REQ-1 Compiler Requirement</a></p>
 
-<div class="evidence"><h3>Evidence</h3><ul><li><code>graphite-core/src/validation.rs</code> line 7</li><li><code>graphite-core/src/validation.rs</code> line 7</li></ul></div>
-<div class="backlinks"><h3>Referenced by</h3><ul><li><a href="../runbook/expansion-runbook.html">??-1 Graph Expansion Runbook</a></li>
-<li><a href="../service/compiler.html">SVC-2 Compiler</a></li></ul></div>
+
+
 </body>
 </html>

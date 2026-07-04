@@ -1,6 +1,6 @@
 {
   "name": "@marianditt/graphite",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Graphite CLI: compiled knowledge graph tooling",
   "license": "MIT",
   "engines": {

@@ -1,11 +1,10 @@
 ---
 id: infra
 kind: index
+metadata:
+  of_kind: infra
 edges:
   contains:
     - distribution-pipeline
-    - npm-wrapper
-metadata:
-  of_kind: infra
 ---
 # Infra Index

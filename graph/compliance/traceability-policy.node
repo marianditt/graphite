@@ -1,12 +1,7 @@
 ---
 id: traceability-policy
 kind: compliance
-edges:
-  references:
-    - compiler-tests
-  evidence:
-    - compliance-traceability-def
 ---
 # Traceability Policy
 
-Every requirement must trace to implementation and tests so work remains auditable. This policy is enforced through validation coverage in [edge:compiler-tests].
+Requirements should be linked to implementation, tests, and evidence.

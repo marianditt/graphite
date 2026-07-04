@@ -1,6 +1,8 @@
 ---
 id: root
 kind: index
+metadata:
+  of_kind: general
 edges:
   contains:
     - requirement
@@ -10,9 +12,6 @@ edges:
     - compliance
     - runbook
     - infra
-    - evidence
-metadata:
-  of_kind: general
 ---
 # Graphite
 

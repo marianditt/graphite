@@ -1,11 +1,10 @@
 ---
 id: runbook
 kind: index
+metadata:
+  of_kind: runbook
 edges:
   contains:
     - validation-runbook
-    - expansion-runbook
-metadata:
-  of_kind: runbook
 ---
 # Runbook Index

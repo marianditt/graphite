@@ -1,12 +1,10 @@
 ---
 id: requirement
 kind: index
+metadata:
+  of_kind: requirement
 edges:
   contains:
     - compiler-requirement
-    - audience-requirement
-    - self-hosting-requirement
-metadata:
-  of_kind: requirement
 ---
 # Requirement Index

@@ -1,11 +1,10 @@
 ---
 id: service
 kind: index
+metadata:
+  of_kind: service
 edges:
   contains:
     - compiler
-    - cli
-metadata:
-  of_kind: service
 ---
 # Service Index

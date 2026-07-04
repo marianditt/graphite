@@ -1,21 +1,7 @@
 ---
 id: compiler-tests
 kind: test
-edges:
-  references:
-    - compatibility-analysis
-    - compiler-tests-def
-  evidence:
-    - compiler-tests-def
 ---
 # Compiler Tests
 
-Three testing levels:
-
-1. **Unit tests**: each validation pass has targeted tests (reachability, tree constraint, cycles, schema conformance, body-edge usage, anchor resolution)
-2. **Integration tests**: synthetic graphs exercise the full pipeline
-3. **Self-hosting test**: `graphite validate --strict` runs on the project's own `graph/` directory in CI
-
-These tests verify compiler behavior end-to-end and support [edge:compatibility-analysis].
-
-Evidence anchor: [edge:compiler-tests-def].
+Tests for the graphite compiler pipeline.
