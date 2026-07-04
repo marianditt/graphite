@@ -1,0 +1,36 @@
+---
+id: schema-flexibility-req
+kind: requirement
+edges:
+  addressed_by:
+    - schema-driven-graph
+---
+# Schema Flexibility
+
+## Statement
+
+WHEN a project requires custom knowledge structures,
+THE system SHALL allow users to define node kinds and edge types in `graph.schema`.
+
+Addressed by [edge:schema-driven-graph].
+
+## Rationale
+
+Different projects need different knowledge models. A fixed set of kinds limits Graphite's applicability.
+
+## Acceptance Criteria
+
+### Scenario: Custom kind definition
+GIVEN a project with a custom `component` kind defined in `graph.schema`
+WHEN `graphite validate graph` is run
+THEN all component nodes SHALL be accepted.
+
+### Scenario: Custom edge definition
+GIVEN a custom `depends_on` edge from `component` to `component` defined in `graph.schema`
+WHEN graph validation runs
+THEN component nodes with `depends_on` edges SHALL pass validation.
+
+### Scenario: Unknown kind rejection
+GIVEN a graph node with kind `undefined_kind` not declared in `graph.schema`
+WHEN graph validation runs
+THEN the system SHALL emit a schema-conformance diagnostic.
