@@ -1,0 +1,54 @@
+---
+id: clap-cli
+kind: architecture
+edges:
+  justified_by:
+    - clap-ergonomics-adr
+  evidence:
+    - clap-cli-arc-ev
+---
+# Clap-based CLI Architecture
+
+## Status: Active
+
+## Abstract
+
+The command-line interface SHALL use the `clap` crate with derive macros for subcommand definition, argument parsing, and help generation. The justification is in [edge:clap-ergonomics-adr].
+
+## Context
+
+Graphite exposes multiple commands (init, validate, context, plan, diff, stats, render) that require consistent argument handling and self-documenting user-facing help.
+
+## Architecture
+
+1. **Subcommand Definition** — Each command SHALL be a variant of the `Commands` enum with `#[derive(Subcommand)]`.
+2. **Argument Parsing** — All arguments SHALL use clap's derive API for type-safe parsing with automatic `--help` generation.
+3. **Error Reporting** — Clap's built-in error formatter SHALL produce user-readable messages for missing arguments, invalid values, and unknown subcommands.
+
+## Components
+
+- **`Cli` struct** — Top-level parser with `#[derive(Parser)]`
+- **`Commands` enum** — Per-subcommand with `#[derive(Subcommand)]`
+- **Command handlers** — One function per subcommand variant
+
+## Interfaces
+
+```
+Cli {
+    #[command(subcommand)]
+    command: Commands
+}
+
+Commands {
+    Init { path: Option<String> },
+    Validate { dir: String },
+    Context { id: String, phase: Option<String> },
+    ...
+}
+```
+
+## Operational Characteristics
+
+- **Missing command** → prints help and exits
+- **Unknown command** → prints error + suggestions
+- **Required argument missing** → describes which argument
