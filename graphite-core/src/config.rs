@@ -14,6 +14,10 @@ pub struct Config {
     /// Directories to scan for `@graphite:evidence` anchors.
     /// Default: `["src", "tests"]`
     pub scan: Vec<String>,
+
+    /// Base URL prefix for rendered links (e.g. `/graphite/` for GitHub Pages).
+    /// Empty string means use relative links.
+    pub base_url: String,
 }
 
 impl Default for Config {
@@ -22,6 +26,7 @@ impl Default for Config {
             graph_dir: "graph".into(),
             output_dir: "docs".into(),
             scan: vec!["src".into(), "tests".into()],
+            base_url: String::new(),
         }
     }
 }
@@ -54,6 +59,9 @@ impl Config {
         if let Some(scan) = raw.scan {
             config.scan = scan;
         }
+        if let Some(bu) = raw.base_url {
+            config.base_url = bu;
+        }
 
         Ok(Some(config))
     }
@@ -77,6 +85,8 @@ struct RawConfig {
     output_dir: Option<String>,
     #[serde(default)]
     scan: Option<Vec<String>>,
+    #[serde(default)]
+    base_url: Option<String>,
 }
 
 #[cfg(test)]

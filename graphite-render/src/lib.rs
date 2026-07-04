@@ -34,8 +34,9 @@ pub fn render_to_dir(
     output_dir: &Path,
     repo_url: Option<&str>,
     css: &str,
+    base_url: &str,
 ) -> Result<(), Diagnostic> {
-    let rendered = render_graph(graph, evidence, repo_url, css)?;
+    let rendered = render_graph(graph, evidence, repo_url, css, base_url)?;
     fs::create_dir_all(output_dir).map_err(|e| Diagnostic {
         rule: "render-error".into(),
         severity: Severity::Error,
@@ -87,6 +88,7 @@ pub fn render_to_dir(
             &numbering,
             repo_url,
             css,
+            base_url,
         );
         fs::write(kind_dir.join("index.html"), index_html).ok();
     }
@@ -99,6 +101,7 @@ pub fn render_to_dir(
         &numbering,
         repo_url,
         css,
+        base_url,
     );
     fs::write(output_dir.join("index.html"), root_html).ok();
 
@@ -112,13 +115,14 @@ fn render_graph(
     evidence: &HashMap<String, Vec<(PathBuf, usize)>>,
     repo_url: Option<&str>,
     css: &str,
+    base_url: &str,
 ) -> Result<RenderedGraph, Diagnostic> {
     let depth_map = compute_depths(graph);
     let numbering = compute_node_numbering(graph);
 
     let mut pages = Vec::new();
     for node in graph.nodes.values() {
-        let html = render_node_page(graph, node, &depth_map, evidence, &numbering, repo_url, css);
+        let html = render_node_page(graph, node, &depth_map, evidence, &numbering, repo_url, css, base_url);
         pages.push(RenderedNode {
             id: node.id.clone(),
             kind: node.kind.clone(),
@@ -272,27 +276,47 @@ fn node_display_label(schema: &Schema, numbering: &NodeNumbering, node: &Node) -
 // Relative link helpers
 // ---------------------------------------------------------------------------
 
-/// Build a relative link from a page of `from_kind` to a node in `to_kind`.
-fn relative_link(from_kind: &str, to_kind: &str, to_id: &str) -> String {
-    if from_kind == to_kind {
-        format!("{}.html", to_id)
+/// Build a link from a page of `from_kind` to a node in `to_kind`.
+///
+/// When `base_url` is non-empty, generates an absolute path prefixed with
+/// `base_url` (for GitHub Pages subpath serving). When empty, generates a
+/// relative path (default behaviour).
+fn relative_link(base_url: &str, from_kind: &str, to_kind: &str, to_id: &str) -> String {
+    if base_url.is_empty() {
+        if from_kind == to_kind {
+            format!("{}.html", to_id)
+        } else {
+            format!("../{}/{}.html", to_kind, to_id)
+        }
     } else {
-        format!("../{}/{}.html", to_kind, to_id)
+        let base = base_url.trim_end_matches('/');
+        format!("{}/{}/{}.html", base, to_kind, to_id)
     }
 }
 
-/// Build a relative link from a page of `from_kind` to a kind index page.
+/// Build a link from a page of `from_kind` to a kind index page.
+///
+/// When `base_url` is non-empty, generates an absolute path (for GitHub
+/// Pages subpath serving). When empty, generates a relative path (default).
 ///
 /// Special case: `to_kind == "index"` refers to the root index page, which
 /// lives at the output root (`index.html`), not in `index/index.html`.
-fn relative_index_link(from_kind: &str, to_kind: &str) -> String {
-    if to_kind == "index" {
-        // Root page lives at the output root, not in a kind subdirectory.
-        "../index.html".into()
-    } else if from_kind == to_kind {
-        "index.html".into()
+fn relative_index_link(base_url: &str, from_kind: &str, to_kind: &str) -> String {
+    if base_url.is_empty() {
+        if to_kind == "index" {
+            "../index.html".into()
+        } else if from_kind == to_kind {
+            "index.html".into()
+        } else {
+            format!("../{}/index.html", to_kind)
+        }
     } else {
-        format!("../{}/index.html", to_kind)
+        let base = base_url.trim_end_matches('/');
+        if to_kind == "index" {
+            format!("{}/index.html", base)
+        } else {
+            format!("{}/{}/index.html", base, to_kind)
+        }
     }
 }
 
@@ -308,6 +332,7 @@ fn render_node_page(
     numbering: &NodeNumbering,
     repo_url: Option<&str>,
     css: &str,
+    base_url: &str,
 ) -> String {
     let current_kind = &node.kind;
     let depth = depths.get(&node.id).copied().unwrap_or(0);
@@ -318,10 +343,10 @@ fn render_node_page(
     let body_html = render_body(node, heading_base, Some(&key_index));
 
     // Replace [edge:<id>] with relative links
-    let body_with_links = replace_edge_refs(graph, &body_html, current_kind, numbering);
+    let body_with_links = replace_edge_refs(graph, &body_html, current_kind, numbering, base_url);
 
     // Backlinks
-    let backlinks = render_backlinks(graph, &node.id, current_kind, numbering);
+    let backlinks = render_backlinks(graph, &node.id, current_kind, numbering, base_url);
 
     // Evidence section
     let ev_section = render_evidence_section(node, evidence, repo_url);
@@ -331,12 +356,12 @@ fn render_node_page(
     // or the root page (fallback).
     let toc_link = if current_kind == "index" {
         if let Some(of_kind) = node.metadata.get("of_kind").filter(|k| *k != "general") {
-            format!("../{}/index.html", of_kind)
+            relative_index_link(base_url, current_kind, of_kind)
         } else {
-            "../index.html".into()
+            relative_index_link(base_url, current_kind, "index")
         }
     } else {
-        relative_index_link(current_kind, current_kind)
+        relative_index_link(base_url, current_kind, current_kind)
     };
 
     let display_label = node_display_label(&graph.schema, numbering, node);
@@ -464,6 +489,7 @@ fn replace_edge_refs(
     html: &str,
     current_kind: &str,
     numbering: &NodeNumbering,
+    base_url: &str,
 ) -> String {
     let marker = "[edge:";
     let mut result = String::new();
@@ -475,7 +501,7 @@ fn replace_edge_refs(
         if let Some(end) = html[content_start..].find(']') {
             let id = html[content_start..content_start + end].trim();
             if let Some(target) = graph.nodes.get(id) {
-                let href = relative_link(current_kind, &target.kind, &target.id);
+                let href = relative_link(base_url, current_kind, &target.kind, &target.id);
                 let label = node_display_label(&graph.schema, numbering, target);
                 result.push_str(&format!(
                     r#"<a href="{href}">{label}</a>"#,
@@ -509,6 +535,7 @@ fn render_backlinks(
     node_id: &str,
     current_kind: &str,
     numbering: &NodeNumbering,
+    base_url: &str,
 ) -> String {
     let mut backlinks: Vec<&str> = Vec::new();
 
@@ -534,7 +561,7 @@ fn render_backlinks(
         .map(|id| {
             let target_node = graph.nodes.get(*id);
             let kind = target_node.map(|n| n.kind.as_str()).unwrap_or("unknown");
-            let href = relative_link(current_kind, kind, id);
+            let href = relative_link(base_url, current_kind, kind, id);
             let label = if let Some(n) = target_node {
                 node_display_label(&graph.schema, numbering, n)
             } else {
@@ -612,6 +639,7 @@ fn render_kind_index(
     numbering: &NodeNumbering,
     _repo_url: Option<&str>,
     css: &str,
+    base_url: &str,
 ) -> String {
     let index_body: String = graph
         .nodes
@@ -619,7 +647,7 @@ fn render_kind_index(
         .find(|n| n.kind == "index" && n.metadata.get("of_kind").map(|s| s.as_str()) == Some(kind))
         .map(|idx_node| {
             let raw = render_body(idx_node, 0, None);
-            replace_edge_refs(graph, &raw, kind, numbering)
+            replace_edge_refs(graph, &raw, kind, numbering, base_url)
         })
         .unwrap_or_default();
 
@@ -630,16 +658,24 @@ fn render_kind_index(
             let depth = depths.get(&n.id).copied().unwrap_or(0);
             let indent = "  ".repeat(depth);
             let label = node_display_label(schema, numbering, n);
-            format!(
-                r#"{}<li><a href="{}.html">{}</a></li>"#,
-                indent, n.id, label
-            )
+            if base_url.is_empty() {
+                format!(
+                    r#"{}<li><a href="{}.html">{}</a></li>"#,
+                    indent, n.id, label
+                )
+            } else {
+                let base = base_url.trim_end_matches('/');
+                format!(
+                    r#"{}<li><a href="{}/{}.html">{}</a></li>"#,
+                    indent, base, n.id, label
+                )
+            }
         })
         .collect();
     items.sort();
 
     let toc_items = items.join("\n");
-    let root_link = relative_index_link(kind, "index"); // from kind/ to root = ../index.html
+    let root_link = relative_index_link(base_url, kind, "index"); // from kind/ to root = ../index.html
     let kind_key = schema
         .kinds
         .get(kind)
@@ -687,6 +723,7 @@ fn render_root_index(
     numbering: &NodeNumbering,
     _repo_url: Option<&str>,
     css: &str,
+    base_url: &str,
 ) -> String {
     // The root node is the single index-kind node that is NOT targeted by
     // any `contains` edge (i.e. depth 0, the containment tree root).
@@ -727,11 +764,21 @@ fn render_root_index(
                     };
                     let title = node_title(child);
                     let label = format!("{}-{} {}", key, index, title);
-                    toc_items.push(format!(
-                        r#"<li><a href="{kind}/index.html">{label}</a></li>"#,
-                        kind = of_kind,
-                        label = label,
-                    ));
+                    if base_url.is_empty() {
+                        toc_items.push(format!(
+                            r#"<li><a href="{kind}/index.html">{label}</a></li>"#,
+                            kind = of_kind,
+                            label = label,
+                        ));
+                    } else {
+                        let base = base_url.trim_end_matches('/');
+                        toc_items.push(format!(
+                            r#"<li><a href="{base}/{kind}/index.html">{label}</a></li>"#,
+                            base = base,
+                            kind = of_kind,
+                            label = label,
+                        ));
+                    }
                 }
             }
         }
@@ -739,7 +786,7 @@ fn render_root_index(
 
         // Root index body — rendered with edge ref resolution.
         let body_html = render_body(root, 0, None);
-        let body_with_links = replace_edge_refs(graph, &body_html, "index", numbering);
+        let body_with_links = replace_edge_refs(graph, &body_html, "index", numbering, base_url);
 
         format!(
             r#"<!DOCTYPE html>
@@ -859,7 +906,7 @@ Body with [edge:root].\n",
         let g = sample_graph();
         let evidence = HashMap::new();
         let rendered =
-            render_graph(&g, &evidence, None, style::DEFAULT_CSS).expect("render should succeed");
+            render_graph(&g, &evidence,             None, style::DEFAULT_CSS, "").expect("render should succeed");
         // svc is at depth 2 → heading_base = 3 → offset headings to h3
         let svc_page = rendered.pages.iter().find(|p| p.id == "svc").unwrap();
         assert!(
@@ -879,7 +926,7 @@ Body with [edge:root].\n",
     fn edge_refs_replaced_with_relative_paths() {
         let g = sample_graph();
         let evidence = HashMap::new();
-        let rendered = render_graph(&g, &evidence, None, style::DEFAULT_CSS).expect("render");
+        let rendered = render_graph(&g, &evidence, None, style::DEFAULT_CSS, "").expect("render");
 
         let svc = rendered.pages.iter().find(|p| p.id == "svc").unwrap();
         // [edge:root] should become a relative link from service/svc.html to index/root.html
@@ -908,7 +955,7 @@ See [edge:nonexistent].\n",
         );
 
         let evidence = HashMap::new();
-        let rendered = render_graph(&g, &evidence, None, style::DEFAULT_CSS).expect("render");
+        let rendered = render_graph(&g, &evidence, None, style::DEFAULT_CSS, "").expect("render");
         let page = &rendered.pages[0];
         assert!(
             page.html.contains("nonexistent?"),
@@ -935,7 +982,7 @@ edges:\n  evidence:\n    - ev-auth\n---\n\
         let mut evidence = HashMap::new();
         evidence.insert("ev-auth".into(), vec![(PathBuf::from("src/main.rs"), 42)]);
 
-        let rendered = render_graph(&g, &evidence, None, style::DEFAULT_CSS).expect("render");
+        let rendered = render_graph(&g, &evidence, None, style::DEFAULT_CSS, "").expect("render");
         let page = &rendered.pages[0];
         assert!(
             page.html.contains("Evidence"),
@@ -971,6 +1018,7 @@ edges:\n  evidence:\n    - ev-auth\n---\n\
             &evidence,
             Some("https://github.com/owner/repo"),
             style::DEFAULT_CSS,
+            "",
         )
         .expect("render");
         let page = &rendered.pages[0];
@@ -1028,7 +1076,7 @@ kind: service\n\
         );
 
         let evidence = HashMap::new();
-        let rendered = render_graph(&g, &evidence, None, style::DEFAULT_CSS).expect("render");
+        let rendered = render_graph(&g, &evidence, None, style::DEFAULT_CSS, "").expect("render");
 
         // Deepest node should have heading clamped at h6
         let deepest = rendered.pages.iter().find(|p| p.id == "r11").unwrap();
@@ -1058,6 +1106,7 @@ kind: service\n\
             &numbering,
             None,
             style::DEFAULT_CSS,
+            "",
         );
         assert!(
             html.contains("Table of Contents"),
@@ -1170,6 +1219,7 @@ kind: service\n\
             &numbering,
             None,
             style::DEFAULT_CSS,
+            "",
         );
         // The index node body should appear after the TOC (the <ul>)
         let ul_pos = html.find("<ul").unwrap();
@@ -1179,32 +1229,85 @@ kind: service\n\
 
     #[test]
     fn relative_link_same_kind() {
-        assert_eq!(relative_link("service", "service", "svc-1"), "svc-1.html");
+        assert_eq!(relative_link("", "service", "service", "svc-1"), "svc-1.html");
     }
 
     #[test]
     fn relative_link_diff_kind() {
         assert_eq!(
-            relative_link("service", "adr", "adr-1"),
+            relative_link("", "service", "adr", "adr-1"),
             "../adr/adr-1.html"
         );
     }
 
     #[test]
     fn relative_index_same_kind() {
-        assert_eq!(relative_index_link("service", "service"), "index.html");
+        assert_eq!(relative_index_link("", "service", "service"), "index.html");
     }
 
     #[test]
     fn relative_index_diff_kind() {
-        assert_eq!(relative_index_link("service", "adr"), "../adr/index.html");
+        assert_eq!(relative_index_link("", "service", "adr"), "../adr/index.html");
     }
 
     #[test]
     fn relative_index_to_root() {
         // to_kind == "index" means the root index page at output root
-        assert_eq!(relative_index_link("service", "index"), "../index.html");
-        assert_eq!(relative_index_link("adr", "index"), "../index.html");
+        assert_eq!(relative_index_link("", "service", "index"), "../index.html");
+        assert_eq!(relative_index_link("", "adr", "index"), "../index.html");
+    }
+
+    #[test]
+    fn relative_link_with_base_url() {
+        assert_eq!(
+            relative_link("/base", "service", "service", "svc-1"),
+            "/base/service/svc-1.html"
+        );
+        assert_eq!(
+            relative_link("/base/", "service", "adr", "adr-1"),
+            "/base/adr/adr-1.html"
+        );
+    }
+
+    #[test]
+    fn relative_index_link_with_base_url() {
+        assert_eq!(
+            relative_index_link("/base", "service", "service"),
+            "/base/service/index.html"
+        );
+        assert_eq!(
+            relative_index_link("/base/", "service", "adr"),
+            "/base/adr/index.html"
+        );
+        assert_eq!(
+            relative_index_link("/base", "service", "index"),
+            "/base/index.html"
+        );
+    }
+
+    #[test]
+    fn rendered_pages_have_base_url_prefix() {
+        let g = sample_graph();
+        let evidence = HashMap::new();
+        let rendered =
+            render_graph(&g, &evidence, None, style::DEFAULT_CSS, "/test/").expect("render");
+        // Node page with [edge:root] — cross-kind link from service to index
+        let svc = rendered.pages.iter().find(|p| p.id == "svc").unwrap();
+        assert!(
+            svc.html.contains(r#"href="/test/index/root.html""#),
+            "cross-kind edge ref should include base_url prefix: {}",
+            svc.html
+        );
+        assert!(
+            svc.html.contains(r#"href="/test/service/index.html""#),
+            "toc link should include base_url prefix"
+        );
+        // Kind index page
+        let svc_idx = rendered.pages.iter().find(|p| p.id == "svc-index").unwrap();
+        assert!(
+            svc_idx.html.contains(r#"href="/test/service/index.html""#),
+            "index node toc link should use base_url"
+        );
     }
 
     #[test]
@@ -1214,7 +1317,7 @@ kind: service\n\
         let numbering = compute_node_numbering(&g);
         let schema = &g.schema;
 
-        let html = render_root_index(&g, &depths, schema, &numbering, None, style::DEFAULT_CSS);
+        let html = render_root_index(&g, &depths, schema, &numbering, None, style::DEFAULT_CSS, "");
         // Should say "Table of Contents"
         assert!(
             html.contains("Table of Contents"),
@@ -1293,6 +1396,7 @@ Body\n",
             &numbering,
             None,
             style::DEFAULT_CSS,
+            "",
         );
 
         assert!(
@@ -1320,7 +1424,7 @@ Body\n",
         );
 
         let evidence = HashMap::new();
-        let rendered = render_graph(&g, &evidence, None, style::DEFAULT_CSS).expect("render");
+        let rendered = render_graph(&g, &evidence, None, style::DEFAULT_CSS, "").expect("render");
         let page = rendered
             .pages
             .iter()
@@ -1366,7 +1470,7 @@ kind: service\n\
         let numbering = compute_node_numbering(&g);
         // svc is contained by root (kind: index) — root should NOT appear
         // as a backlink because index-kind nodes are skipped.
-        let html = render_backlinks(&g, "svc", "service", &numbering);
+        let html = render_backlinks(&g, "svc", "service", &numbering, "");
         assert!(
             !html.contains("Referenced by"),
             "backlinks for svc should be empty (only root contains it): {}",
@@ -1417,7 +1521,7 @@ kind: service\n\
         );
 
         let evidence = HashMap::new();
-        let rendered = render_graph(&g, &evidence, None, style::DEFAULT_CSS).expect("render");
+        let rendered = render_graph(&g, &evidence, None, style::DEFAULT_CSS, "").expect("render");
 
         // The svc-index node (kind: index, of_kind: service) should have
         // a TOC link pointing to the service kind index page.

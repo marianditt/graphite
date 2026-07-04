@@ -1114,7 +1114,7 @@ fn cmd_render(graph_dir: &str, output: &str, style_arg: &str, config: &Config) {
         },
     };
 
-    if let Err(d) = graphite_render::render_to_dir(&graph, &evidence, output_path, repo_url, &css) {
+    if let Err(d) = graphite_render::render_to_dir(&graph, &evidence, output_path, repo_url, &css, &config.base_url) {
         let sev = match d.severity {
             Severity::Error => "error",
             Severity::Warning => "warning",
@@ -1266,7 +1266,7 @@ The compiler must parse and validate [edge:compiler] and [edge:compiler-tests].
         let graph = load_graph(graph_dir.to_str().unwrap()).expect("integration: load graph");
         let evidence = resolve_evidence(&config.scan, root);
         let output_dir = root.join("html");
-        graphite_render::render_to_dir(&graph, &evidence, &output_dir, None, style::DEFAULT_CSS)
+        graphite_render::render_to_dir(&graph, &evidence, &output_dir, None, style::DEFAULT_CSS, "")
             .expect("integration: render should succeed");
 
         assert!(

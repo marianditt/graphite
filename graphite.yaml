@@ -4,3 +4,7 @@ scan:
   - graphite-render/src
   - graphite-core
   - graphite-cli
+
+# Base URL prefix for rendered links.
+# Set to /graphite/ for GitHub Pages project site at /graphite/
+base_url: /graphite/
