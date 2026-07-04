@@ -666,8 +666,8 @@ fn render_kind_index(
             } else {
                 let base = base_url.trim_end_matches('/');
                 format!(
-                    r#"{}<li><a href="{}/{}.html">{}</a></li>"#,
-                    indent, base, n.id, label
+                    r#"{}<li><a href="{}/{}/{}.html">{}</a></li>"#,
+                    indent, base, kind, n.id, label
                 )
             }
         })
@@ -1307,6 +1307,36 @@ kind: service\n\
         assert!(
             svc_idx.html.contains(r#"href="/test/service/index.html""#),
             "index node toc link should use base_url"
+        );
+    }
+
+    #[test]
+    fn kind_index_toc_links_include_kind_in_base_url() {
+        let g = sample_graph();
+        let depths = compute_depths(&g);
+        let numbering = compute_node_numbering(&g);
+        let schema = &g.schema;
+        let nodes_by_kind = group_by_kind(&g);
+        let service_nodes = nodes_by_kind.get("service").expect("service nodes");
+        let html = render_kind_index(
+            "service",
+            service_nodes,
+            &depths,
+            &g,
+            schema,
+            &numbering,
+            None,
+            style::DEFAULT_CSS,
+            "/base/",
+        );
+        assert!(
+            html.contains(r#"href="/base/service/svc.html""#),
+            "kind index TOC link should include kind dir in base_url path: {}",
+            html
+        );
+        assert!(
+            html.contains(r#"href="/base/index.html""#),
+            "root link should use base_url"
         );
     }
 
