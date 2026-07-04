@@ -2,6 +2,7 @@ kinds:
   requirement: { key: REQ }
   architecture: { key: ARC }
   adr: { key: ADR }
+  guide: { key: GDE }
 edges:
   addressed_by: { from: requirement, to: architecture }
   justified_by: { from: architecture, to: adr }

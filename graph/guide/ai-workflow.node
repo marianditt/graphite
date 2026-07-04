@@ -1,0 +1,146 @@
+---
+id: ai-workflow
+kind: guide
+edges:
+  references:
+    - schema-flexibility-req
+    - cli-simplicity-req
+    - schema-driven-graph
+    - clap-cli
+    - serde-yaml-schema-adr
+    - clap-ergonomics-adr
+---
+# AI Knowledge Graph Contributor Guide
+
+## Role
+
+The AI knowledge graph contributor is any agent (AI or human) who creates or modifies nodes in the Graphite knowledge graph. This guide defines the standards and workflows for contributing to the graph.
+
+## Ways of Working
+
+### Discovery Phase
+
+Before modifying any node, the contributor SHALL obtain context:
+
+- `graphite context <node-id>` for the target node and its dependencies
+- `graphite plan <node-id>` for an ordered work breakdown
+- Review connected nodes via edge traversal (incoming and outgoing)
+
+### Editing Phase
+
+1. Edit the `.node` file's YAML frontmatter (id, kind, edges) and Markdown body
+2. Add `@graphite:evidence` anchors in source code when a node requires evidence
+3. Update edges to maintain traceability (REQ → ARC via `addressed_by`, ARC → ADR via `justified_by`)
+
+### Validation Phase
+
+1. Run `graphite validate graph` — verify the graph is consistent
+2. Fix all diagnostics: reachability, tree constraint, schema conformance, body-edge usage, evidence resolution
+3. Iterate until validation passes with zero errors
+
+## Writing Standards
+
+### Requirement Nodes (REQ)
+
+**Format**: EARS (Easy Approach to Requirements Syntax) + Given/When/Then scenarios.
+
+**Structure**:
+
+| Section | Content |
+|---------|---------|
+| Statement | EARS keyword pattern: WHEN \<trigger\> THE system SHALL \<response\> |
+| Rationale | Why this requirement exists |
+| Acceptance Criteria | One or more GIVEN/WHEN/THEN scenarios covering normal, edge, and error cases |
+
+**RFC 2119 keywords**: MUST, SHALL, SHOULD, MAY, MUST NOT, SHALL NOT.
+
+See [edge:schema-flexibility-req] and [edge:cli-simplicity-req] for worked examples.
+
+**Example**:
+```
+## Statement
+
+WHEN a user invokes a command without required arguments,
+THE system SHALL display an error message identifying the missing argument.
+
+## Acceptance Criteria
+
+### Scenario: Missing required argument
+GIVEN a command that requires a path argument
+WHEN the user omits the argument
+THEN the system SHALL print the argument name in the error message.
+```
+
+### Architecture Nodes (ARC)
+
+**Format**: RFC-style specification.
+
+**Structure**:
+
+| Section | Content |
+|---------|---------|
+| Abstract | One-paragraph summary |
+| Context | Why this architecture exists and what problem it solves |
+| Architecture | Numbered list of design decisions and principles |
+| Components | Key components with their responsibilities |
+| Interfaces | API shapes, data structures, configuration surfaces |
+| Operational Characteristics | Error handling, performance characteristics, evolution |
+
+**RFC 2119 keywords**: MUST, SHALL, SHOULD, MAY.
+
+See [edge:schema-driven-graph] and [edge:clap-cli] for worked examples.
+
+**Example**:
+```
+## Architecture
+
+1. Schema Loading — On startup, Graphite SHALL parse `graph.schema` using serde_yaml.
+2. Node Validation — Every node MUST be validated against the schema.
+3. Schema-Driven Enforcement — The compiler MUST NOT assume specific edge names.
+```
+
+### Architecture Decision Records (ADR)
+
+**Format**: MADR (Markdown Architecture Decision Records) style.
+
+**Structure**:
+
+| Section | Content |
+|---------|---------|
+| Status | Proposed, Accepted, Deprecated, or Superseded |
+| Context | The problem, constraints, and forces |
+| Considered Options | Each option with Result (Accepted/Rejected) and Reason |
+| Decision | The chosen approach, stated with RFC 2119 language |
+| Consequences | Positive and negative effects |
+| Evidence | References to source code evidence anchors |
+
+**RFC 2119 keywords**: MUST, SHALL, SHOULD, MAY.
+
+See [edge:serde-yaml-schema-adr] and [edge:clap-ergonomics-adr] for worked examples.
+
+**Example**:
+```
+## Considered Options
+
+### Option 1: Manual parsing
+**Result:** Rejected
+**Reason:** No type safety, no help generation, every command parses manually.
+
+### Option 2: clap with derive macros
+**Result:** Accepted
+**Reason:** Derive API, automatic help, subcommand support, ecosystem standard.
+
+## Decision
+
+The system SHALL use `clap` with `#[derive(Parser)]` and `#[derive(Subcommand)]`.
+```
+
+## Node Kind Reference
+
+| Kind | Key | Directory | Format | Edges |
+|------|-----|-----------|--------|-------|
+| Index | — | kind index dir | Metadata + containment | `contains` only |
+| Requirement | REQ | `graph/requirement/` | EARS + GWT | `addressed_by` → ARC |
+| Architecture | ARC | `graph/architecture/` | RFC style | `justified_by` → ADR, `evidence` → evidence |
+| ADR | ADR | `graph/adr/` | MADR style | `evidence` → evidence |
+| Guide | GDE | `graph/guide/` | Reference style | `references` → any |

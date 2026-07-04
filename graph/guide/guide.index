@@ -1,0 +1,12 @@
+---
+id: guide
+kind: index
+metadata:
+  of_kind: guide
+edges:
+  contains:
+    - ai-workflow
+---
+# Guides
+
+Guides define roles, ways of working, and standards for contributors to the knowledge graph.

@@ -382,7 +382,7 @@ impl ValidationEngine {
         let mut diagnostics = Vec::new();
 
         for node in graph.nodes.values() {
-            if node.kind == "index" || node.body.is_empty() {
+            if node.kind == "index" || node.kind == "evidence" || node.kind == "guide" {
                 continue;
             }
 
@@ -572,7 +572,7 @@ impl ValidationEngine {
         }
 
         for node in graph.nodes.values() {
-            if node.kind == "index" || node.kind == "evidence" {
+            if node.kind == "index" || node.kind == "evidence" || node.kind == "guide" {
                 continue;
             }
 
