@@ -12,8 +12,6 @@ use graphite_core::validation::ValidationEngine;
 use graphite_core::{Diagnostic, Graph, Severity};
 use graphite_render::style;
 
-// @graphite:evidence cli-simple-req-ev
-// @graphite:evidence clap-cli-arc-ev
 #[derive(Parser)]
 #[command(
     name = "graphite",
@@ -300,6 +298,7 @@ fn resolve_evidence(
 // validate
 // ---------------------------------------------------------------------------
 
+// @graphite:evidence spec-validate
 fn cmd_validate(
     graph_dir: &str,
     focus: Option<&str>,
@@ -325,6 +324,8 @@ fn cmd_validate(
         .unwrap_or_else(|| Path::new("."));
     let evidence = resolve_evidence(&config.scan, base_dir);
     diagnostics.extend(engine.check_evidence_anchors(&graph, &evidence));
+    diagnostics.extend(engine.check_unused_anchors(&graph, &evidence));
+    diagnostics.extend(engine.check_node_file_size(&graph, config.node_max_chars));
     diagnostics.extend(check_compatibility(&graph, compat));
 
     if strict {
@@ -421,6 +422,7 @@ fn output_diagnostics(diags: &[Diagnostic], focus: Option<&str>, first: bool, js
 // init
 // ---------------------------------------------------------------------------
 
+// @graphite:evidence spec-init
 fn cmd_init(path: &str, force: bool) {
     let root = Path::new(path);
     let graph_dir = root.join("graph");
@@ -641,6 +643,7 @@ struct DiffOutput {
     removed: Vec<String>,
 }
 
+// @graphite:evidence spec-diff
 fn cmd_diff(from: &str, json: bool) {
     let repo_root = match git_root() {
         Some(r) => r,
@@ -723,6 +726,7 @@ struct StatsOutput {
     nodes_with_evidence_pct: f64,
 }
 
+// @graphite:evidence spec-stats
 fn cmd_stats(graph_dir: &str, json: bool, config: &Config) {
     let graph = match load_graph(graph_dir) {
         Ok(g) => g,
@@ -836,6 +840,7 @@ struct ContextNode {
     body: String,
 }
 
+// @graphite:evidence spec-context
 fn cmd_context(id: &str, phase: Option<&str>, graph_dir: &str) {
     let graph = match load_graph(graph_dir) {
         Ok(g) => g,
@@ -980,6 +985,7 @@ struct WorkStep {
     why: String,
 }
 
+// @graphite:evidence spec-plan
 fn cmd_plan(id: &str, graph_dir: &str) {
     let graph = match load_graph(graph_dir) {
         Ok(g) => g,
@@ -1076,6 +1082,7 @@ fn cmd_plan(id: &str, graph_dir: &str) {
 // render
 // ---------------------------------------------------------------------------
 
+// @graphite:evidence spec-render
 fn cmd_render(graph_dir: &str, output: &str, style_arg: &str, config: &Config) {
     let graph = match load_graph(graph_dir) {
         Ok(g) => g,
@@ -1218,10 +1225,11 @@ mod tests {
         fs::create_dir_all(&src_dir).unwrap();
         fs::write(
             src_dir.join("compiler.rs"),
-            "// @graphite:evidence compiler-impl\nfn compile() {}\n",
+            "// @graphite:evidence compiler-impl\n// @graphite:evidence compiler-tests-impl\n// @graphite:evidence pipeline-impl\n// @graphite:evidence policy-impl\n// @graphite:evidence runbook-impl\n// @graphite:evidence distro-impl\nfn compile() {}\n",
         )
         .unwrap();
 
+        // Update all nodes created by init to have evidence edges
         let req_path = graph_dir.join("requirement/compiler-requirement.node");
         fs::write(
             &req_path,
@@ -1229,6 +1237,8 @@ mod tests {
 id: compiler-requirement
 kind: requirement
 edges:
+  evidence:
+    - compiler-impl
   implemented_by:
     - compiler
   verified_by:
@@ -1237,6 +1247,111 @@ edges:
 # Compiler Requirement
 
 The compiler must parse and validate [edge:compiler] and [edge:compiler-tests].
+"#,
+        )
+        .unwrap();
+
+        fs::write(
+            graph_dir.join("adr/compiler-pipeline.node"),
+            r#"---
+id: compiler-pipeline
+kind: adr
+edges:
+  evidence:
+    - pipeline-impl
+  relates_to:
+    - compiler-requirement
+---
+# Compiler Pipeline
+
+The compiler pipeline has four stages:
+
+1. **Parse**: Read .node files into a Graph
+2. **Validate**: Run structural checks
+3. **Resolve**: Match evidence anchors to source
+4. **Render**: Generate static HTML
+
+Related: [edge:compiler-requirement]
+"#,
+        )
+        .unwrap();
+
+        fs::write(
+            graph_dir.join("service/compiler.node"),
+            r#"---
+id: compiler
+kind: service
+edges:
+  evidence:
+    - compiler-impl
+---
+# Compiler
+
+A Rust CLI that implements the graphite compiler pipeline.
+"#,
+        )
+        .unwrap();
+
+        fs::write(
+            graph_dir.join("test/compiler-tests.node"),
+            r#"---
+id: compiler-tests
+kind: test
+edges:
+  evidence:
+    - compiler-tests-impl
+---
+# Compiler Tests
+
+Tests for the graphite compiler pipeline.
+"#,
+        )
+        .unwrap();
+
+        fs::write(
+            graph_dir.join("compliance/traceability-policy.node"),
+            r#"---
+id: traceability-policy
+kind: compliance
+edges:
+  evidence:
+    - policy-impl
+---
+# Traceability Policy
+
+Requirements should be linked to implementation, tests, and evidence.
+"#,
+        )
+        .unwrap();
+
+        fs::write(
+            graph_dir.join("runbook/validation-runbook.node"),
+            r#"---
+id: validation-runbook
+kind: runbook
+edges:
+  evidence:
+    - runbook-impl
+---
+# Validation Runbook
+
+Run graphite validate before shipping graph changes.
+"#,
+        )
+        .unwrap();
+
+        fs::write(
+            graph_dir.join("infra/distribution-pipeline.node"),
+            r#"---
+id: distribution-pipeline
+kind: infra
+edges:
+  evidence:
+    - distro-impl
+---
+# Distribution Pipeline
+
+The package and binary distribution path for graphite.
 "#,
         )
         .unwrap();

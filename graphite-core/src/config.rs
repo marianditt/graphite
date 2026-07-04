@@ -18,6 +18,10 @@ pub struct Config {
     /// Base URL prefix for rendered links (e.g. `/graphite/` for GitHub Pages).
     /// Empty string means use relative links.
     pub base_url: String,
+
+    /// Maximum allowed characters per `.node` file. Files exceeding this
+    /// threshold produce a validation error. Default: 1000.
+    pub node_max_chars: usize,
 }
 
 impl Default for Config {
@@ -27,6 +31,7 @@ impl Default for Config {
             output_dir: "docs".into(),
             scan: vec!["src".into(), "tests".into()],
             base_url: String::new(),
+            node_max_chars: 1000,
         }
     }
 }
@@ -62,6 +67,9 @@ impl Config {
         if let Some(bu) = raw.base_url {
             config.base_url = bu;
         }
+        if let Some(nmc) = raw.node_max_chars {
+            config.node_max_chars = nmc;
+        }
 
         Ok(Some(config))
     }
@@ -87,6 +95,8 @@ struct RawConfig {
     scan: Option<Vec<String>>,
     #[serde(default)]
     base_url: Option<String>,
+    #[serde(default)]
+    node_max_chars: Option<usize>,
 }
 
 #[cfg(test)]
@@ -152,5 +162,48 @@ graph_dir: custom
         let config = Config::load_or_default(dir.path()).unwrap();
         assert_eq!(config.graph_dir, "graph");
         assert_eq!(config.output_dir, "docs");
+    }
+
+    #[test]
+    fn test_node_max_chars_default() {
+        let dir = tempfile::tempdir().unwrap();
+        let config = Config::load_or_default(dir.path()).unwrap();
+        assert_eq!(config.node_max_chars, 1000);
+    }
+
+    #[test]
+    fn test_node_max_chars_custom() {
+        let dir = tempfile::tempdir().unwrap();
+        fs::write(
+            dir.path().join("graphite.yaml"),
+            r#"
+node_max_chars: 500
+"#,
+        )
+        .unwrap();
+
+        let config = Config::load(dir.path()).unwrap().unwrap();
+        assert_eq!(config.node_max_chars, 500);
+    }
+
+    #[test]
+    fn test_node_max_chars_with_other_fields() {
+        let dir = tempfile::tempdir().unwrap();
+        fs::write(
+            dir.path().join("graphite.yaml"),
+            r#"
+graph_dir: custom-graph
+node_max_chars: 2000
+scan:
+  - lib
+"#,
+        )
+        .unwrap();
+
+        let config = Config::load(dir.path()).unwrap().unwrap();
+        assert_eq!(config.graph_dir, "custom-graph");
+        assert_eq!(config.node_max_chars, 2000);
+        assert_eq!(config.scan, vec!["lib"]);
+        assert_eq!(config.output_dir, "docs"); // default
     }
 }

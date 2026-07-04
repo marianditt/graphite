@@ -1,0 +1,38 @@
+---
+id: spec-markdown-extension
+kind: spec
+edges:
+  evidence:
+    - spec-markdown-extension
+---
+# Markdown Extension
+
+## Definition
+
+A Markdown Extension is additional syntax beyond standard CommonMark used in Graphite Documents.
+
+## Specification
+
+The edge reference syntax SHALL use the form: left-bracket, "edge:", ID, right-bracket.
+
+The ID MUST be a valid Node ID in the Graph.
+
+References SHALL be validated: every edge reference in the body MUST have a corresponding edge declaration in the frontmatter.
+
+A dangling reference (body mentions an edge ID with no declaration) MUST produce an error.
+
+An edge declared in frontmatter but not used in the body SHOULD produce a warning.
+
+## Example
+
+```
+Body text referencing other-node.
+```
+
+Corresponding frontmatter:
+
+```
+edges:
+  references:
+    - other-node
+```

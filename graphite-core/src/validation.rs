@@ -3,11 +3,13 @@ use std::path::PathBuf;
 
 use crate::{Diagnostic, Graph, Severity};
 
+// @graphite:evidence spec-validate
 /// A map from evidence ID to resolved file locations.
 ///
 /// Produced by merging results from `AnchorScanner` and `SidecarResolver`.
 pub type ResolvedEvidence = HashMap<String, Vec<(PathBuf, usize)>>;
 
+// @graphite:evidence spec-validate
 /// Validates a [`Graph`] against structural and schema constraints.
 ///
 /// Checks run in order:
@@ -720,6 +722,89 @@ impl ValidationEngine {
 
         diagnostics
     }
+    /// Check that every resolved evidence anchor is referenced by at least
+    /// one node's `evidence` edge. Unused anchors indicate orphan annotations
+    /// that should either be wired to a node or removed.
+    ///
+    /// Rule: `"unused-evidence-anchor"`
+    pub fn check_unused_anchors(
+        &self,
+        graph: &Graph,
+        resolved: &ResolvedEvidence,
+    ) -> Vec<Diagnostic> {
+        let mut diagnostics = Vec::new();
+
+        let mut used: HashSet<&str> = HashSet::new();
+        for node in graph.nodes.values() {
+            if let Some(ids) = node.edges.get("evidence") {
+                for id in ids {
+                    used.insert(id.as_str());
+                }
+            }
+        }
+
+        for ev_id in resolved.keys() {
+            if !used.contains(ev_id.as_str()) {
+                diagnostics.push(Diagnostic {
+                    rule: "unused-evidence-anchor".to_string(),
+                    severity: Severity::Error,
+                    node_id: None,
+                    file: None,
+                    detail: format!(
+                        "Evidence anchor '@graphite:evidence {ev_id}' has no corresponding \
+                         'evidence' edge on any node."
+                    ),
+                    fix: format!(
+                        "Either add an `evidence` edge referencing '{ev_id}' to the appropriate \
+                         node, or remove the @graphite:evidence annotation."
+                    ),
+                    example: Some(format!(
+                        "In a node frontmatter:\n\nedges:\n  evidence:\n    - {ev_id}"
+                    )),
+                    hint: "Every @graphite:evidence anchor must be referenced by at \
+                           least one node's evidence edge."
+                        .to_string(),
+                });
+            }
+        }
+
+        diagnostics
+    }
+
+    /// Check that no node's file exceeds the configured maximum character count.
+    /// Rule: `"node-file-too-large"`
+    pub fn check_node_file_size(&self, graph: &Graph, max_chars: usize) -> Vec<Diagnostic> {
+        graph
+            .nodes
+            .values()
+            .filter(|n| n.content_len > max_chars)
+            .map(|n| Diagnostic {
+                rule: "node-file-too-large".to_string(),
+                severity: Severity::Error,
+                node_id: Some(n.id.clone()),
+                file: None,
+                detail: format!(
+                    "Node '{}' has {} characters, which exceeds the maximum of {}. \
+                     Split this node into multiple smaller nodes.",
+                    n.id, n.content_len, max_chars
+                ),
+                fix: format!(
+                    "Reduce the node body below {} characters by splitting content \
+                     across multiple nodes.",
+                    max_chars
+                ),
+                example: Some(
+                    "Split your content into separate `.node` files, each covering \
+                     one concept, and connect them with edges."
+                        .to_string(),
+                ),
+                hint: "Large nodes indicate too much information in one place. \
+                       Split them into smaller, focused nodes connected by edges."
+                    .to_string(),
+            })
+            .collect()
+    }
+
     ///
     /// `resolved` is the merged output of `AnchorScanner` and `SidecarResolver`:
     /// a map from evidence ID to its file+line locations.
@@ -778,6 +863,7 @@ impl ValidationEngine {
 // Helper: extract [edge:X] references from body text
 // ---------------------------------------------------------------------------
 
+// @graphite:evidence spec-markdown-extension
 /// Scan `body` for markers of the form `[edge:<id>]` and return the
 /// captured `<id>` values in order of appearance.
 fn extract_edge_refs(body: &str) -> Vec<String> {
@@ -899,6 +985,7 @@ kind: test\n\
             } else {
                 None
             },
+            content_len: body.len(),
         }
     }
 
@@ -1123,7 +1210,6 @@ kind: test\n\
         );
     }
 
-    #[test]
     // ------------------------------------------------------------------
     // Schema conformance
     // ------------------------------------------------------------------

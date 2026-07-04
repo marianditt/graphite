@@ -6,8 +6,7 @@ use crate::{Diagnostic, EdgeDef, KindDef, Schema, Severity};
 
 const BUILT_IN_KINDS: [&str; 3] = ["any", "index", "evidence"];
 
-// @graphite:evidence schema-flex-req-ev
-// @graphite:evidence schema-driven-arc-ev
+// @graphite:evidence spec-schema
 pub struct SchemaParser;
 
 #[derive(Deserialize)]
@@ -35,7 +34,6 @@ impl SchemaParser {
         check_yaml_section_duplicates(yaml, "kinds")?;
         check_yaml_section_duplicates(yaml, "edges")?;
 
-        // @graphite:evidence serde-yaml-ev
         let raw: RawSchema = serde_yaml::from_str(yaml).map_err(|e| Diagnostic {
             rule: "schema-parse-error".to_string(),
             severity: Severity::Error,

@@ -21,6 +21,7 @@ fn test_node_serde_roundtrip() {
         edges,
         metadata,
         index: Some(index),
+        content_len: 22,
     };
 
     let json = serde_json::to_string_pretty(&node).expect("serialize node");

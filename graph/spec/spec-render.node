@@ -1,0 +1,32 @@
+---
+id: spec-render
+kind: spec
+edges:
+  evidence:
+    - spec-render
+---
+# Render
+
+## Definition
+
+The `render` command generates static HTML documentation from the Graph.
+
+## Specification
+
+`graphite render` SHALL traverse the Graph and generate HTML pages.
+
+It SHALL produce one page per Node and one index page per Node Kind.
+
+Pages SHALL include: the Node body rendered as HTML, evidence anchor links, edge navigation, and breadcrumb trails.
+
+An optional `--output` flag SHALL specify the output directory.
+
+An optional `--style` flag SHALL allow custom CSS.
+
+The output SHALL be a self-contained static site.
+
+## Example
+
+```bash
+graphite render --output docs/
+```

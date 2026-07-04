@@ -1,0 +1,32 @@
+---
+id: spec-body
+kind: spec
+edges:
+  evidence:
+    - spec-body
+---
+# Body
+
+## Definition
+
+A Body is the Markdown content portion of a Document.
+
+## Specification
+
+A Body SHALL follow the closing `---` of the frontmatter.
+
+A Body SHALL be valid CommonMark Markdown.
+
+A Body MAY contain edge references to other Nodes (syntax: left-bracket, "edge:", id, right-bracket).
+
+A Body MAY be empty.
+
+The Body SHALL be captured verbatim as written.
+
+## Example
+
+```
+# My Node
+
+This implements the related specification.
+```

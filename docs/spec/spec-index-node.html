@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<head><meta charset="utf-8"><title>??-0 Graphite Specification — graphite</title>
+<head><meta charset="utf-8"><title>SPC-10 Index Node — graphite</title>
 <style>
 
 :root {
@@ -293,10 +293,28 @@ th {
 </head>
 <body>
 <p class="brand">Graphite</p>
-<p class="node-meta"><strong>??-0 Graphite Specification</strong> · <a href="/graphite/spec/index.html">↑ index</a></p>
-<h2>??-0 Graphite Specification</h2>
+<p class="node-meta"><strong>SPC-10 Index Node</strong> · <a href="/graphite/spec/index.html">↑ spec</a></p>
+<h3>SPC-10 Index Node</h3>
+<h4>Definition</h4>
+<p>An Index Node is a Node whose purpose is organizing graph navigation.</p>
+<h4>Specification</h4>
+<p>An Index Node SHALL connect related Nodes into a meaningful knowledge hierarchy.</p>
+<p>An Index Node MUST NOT introduce product behavior or implementation decisions.</p>
+<p>An Index Node MAY reference other Index Nodes.</p>
+<p>An Index Node MUST follow all normal Node validation rules.</p>
+<h4>Example</h4>
+<pre><code>---
+id: requirements
+kind: index
 
+edges:
+  contains:
+    - checkout-payment
+---
+</code></pre>
 
-
+<div class="evidence"><h3>Evidence</h3><ul><li><code>graphite-core/src/lib.rs</code> line 68</li><li><code>graphite-core/src/node_parser.rs</code> line 21</li><li><code>graphite-core/src/lib.rs</code> line 68</li><li><code>graphite-core/src/node_parser.rs</code> line 21</li></ul></div>
+<div class="backlinks"><h3>Referenced by</h3><ul><li><a href="/graphite/spec/spec-index-node.html">SPC-10 Index Node</a></li>
+<li><a href="/graphite/spec/spec-graph.html">SPC-8 Graph</a></li></ul></div>
 </body>
 </html>

@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<head><meta charset="utf-8"><title>??-0 Graphite Specification — graphite</title>
+<head><meta charset="utf-8"><title>SPC-14 Node ID — graphite</title>
 <style>
 
 :root {
@@ -293,10 +293,27 @@ th {
 </head>
 <body>
 <p class="brand">Graphite</p>
-<p class="node-meta"><strong>??-0 Graphite Specification</strong> · <a href="/graphite/spec/index.html">↑ index</a></p>
-<h2>??-0 Graphite Specification</h2>
+<p class="node-meta"><strong>SPC-14 Node ID</strong> · <a href="/graphite/spec/index.html">↑ spec</a></p>
+<h3>SPC-14 Node ID</h3>
+<h4>Definition</h4>
+<p>A Node ID uniquely identifies a Node.</p>
+<h4>Specification</h4>
+<p>Every Node MUST define exactly one Node ID.</p>
+<p>A Node ID MUST be globally unique inside a Graph.</p>
+<p>A Node ID MUST NOT depend on:</p>
+<ul>
+<li>filename</li>
+<li>directory</li>
+<li>repository location</li>
+</ul>
+<p>References between Nodes SHALL use Node IDs.</p>
+<p>Duplicate Node IDs MUST fail validation.</p>
+<h4>Example</h4>
+<pre><code>id: payment-authorization
+</code></pre>
 
-
-
+<div class="evidence"><h3>Evidence</h3><ul><li><code>graphite-core/src/lib.rs</code> line 76</li><li><code>graphite-core/src/lib.rs</code> line 76</li></ul></div>
+<div class="backlinks"><h3>Referenced by</h3><ul><li><a href="/graphite/spec/spec-node-id.html">SPC-14 Node ID</a></li>
+<li><a href="/graphite/spec/spec-graph.html">SPC-8 Graph</a></li></ul></div>
 </body>
 </html>

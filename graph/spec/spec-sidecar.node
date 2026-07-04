@@ -1,8 +1,11 @@
 ---
-id: spec-01-09-sidecar
+id: spec-sidecar
 kind: spec
+edges:
+  evidence:
+    - spec-sidecar
 ---
-# SPEC-01-09 Sidecar
+# Sidecar
 
 ## Definition
 

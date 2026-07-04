@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<head><meta charset="utf-8"><title>??-0 Graphite Specification — graphite</title>
+<head><meta charset="utf-8"><title>SPC-1 Anchor — graphite</title>
 <style>
 
 :root {
@@ -293,10 +293,24 @@ th {
 </head>
 <body>
 <p class="brand">Graphite</p>
-<p class="node-meta"><strong>??-0 Graphite Specification</strong> · <a href="/graphite/spec/index.html">↑ index</a></p>
-<h2>??-0 Graphite Specification</h2>
+<p class="node-meta"><strong>SPC-1 Anchor</strong> · <a href="/graphite/spec/index.html">↑ spec</a></p>
+<h3>SPC-1 Anchor</h3>
+<h4>Definition</h4>
+<p>An Anchor connects knowledge to implementation evidence.</p>
+<h4>Specification</h4>
+<p>An Anchor SHALL identify a location inside a source artifact.</p>
+<p>An Anchor MUST have a stable identifier.</p>
+<p>An Anchor MUST NOT depend on line numbers.</p>
+<p>The compiler SHALL resolve Anchors to physical locations.</p>
+<p>Anchors MAY exist in any supported text artifact.</p>
+<h4>Example</h4>
+<pre><code>// graphite:anchor checkout.validation
 
+validateCheckout()
+</code></pre>
 
-
+<div class="evidence"><h3>Evidence</h3><ul><li><code>graphite-core/src/anchor_scanner.rs</code> line 8</li><li><code>graphite-core/src/anchor_scanner.rs</code> line 15</li><li><code>graphite-core/src/anchor_scanner.rs</code> line 207</li><li><code>graphite-core/src/anchor_scanner.rs</code> line 277</li><li><code>graphite-core/src/anchor_scanner.rs</code> line 8</li><li><code>graphite-core/src/anchor_scanner.rs</code> line 15</li><li><code>graphite-core/src/anchor_scanner.rs</code> line 207</li><li><code>graphite-core/src/anchor_scanner.rs</code> line 277</li></ul></div>
+<div class="backlinks"><h3>Referenced by</h3><ul><li><a href="/graphite/spec/spec-graph.html">SPC-8 Graph</a></li>
+<li><a href="/graphite/spec/spec-anchor.html">SPC-1 Anchor</a></li></ul></div>
 </body>
 </html>

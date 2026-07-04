@@ -5,12 +5,14 @@ use std::path::{Path, PathBuf};
 use crate::Diagnostic;
 use crate::Severity;
 
+// @graphite:evidence spec-anchor
+// @graphite:evidence spec-comments
 /// Scans source files for `@graphite:evidence` annotations.
 ///
 /// Three comment syntaxes are supported:
-/// - `// @graphite:evidence <id>` (line-comment languages)
-/// - `# @graphite:evidence <id>`  (hash-comment languages)
-/// - `<!-- @graphite:evidence <id> -->` (HTML/XML)
+/// - `// @graphite:evidence spec-anchor` (line-comment languages)
+/// - `# @graphite:evidence spec-anchor`  (hash-comment languages)
+/// - `<!-- @graphite:evidence spec-anchor -->` (HTML/XML)
 pub struct AnchorScanner;
 
 /// The result of scanning a single root for evidence anchors.
@@ -202,7 +204,7 @@ impl AnchorScanner {
     }
 
     /// Extract an evidence ID from an HTML-style comment:
-    /// `<!-- @graphite:evidence <id> -->`
+    /// `<!-- @graphite:evidence spec-anchor -->`
     fn extract_html_comment(line: &str) -> Option<String> {
         let marker = "<!-- @graphite:evidence ";
         let line = line.trim();
@@ -272,11 +274,11 @@ mod tests {
         write_temp(
             &dir,
             "page.html",
-            "<!-- @graphite:evidence homepage -->\n<body></body>\n",
+            "<!-- @graphite:evidence spec-anchor -->\n<body></body>\n",
         );
 
         let map = AnchorScanner::scan(dir.path()).unwrap();
-        let locations = map.get("homepage").unwrap();
+        let locations = map.get("spec-anchor").unwrap();
         assert_eq!(locations.len(), 1);
     }
 

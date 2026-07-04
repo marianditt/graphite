@@ -1,8 +1,11 @@
 ---
-id: spec-01-07-schema
+id: spec-schema
 kind: spec
+edges:
+  evidence:
+    - spec-schema
 ---
-# SPEC-01-07 Schema
+# Schema
 
 ## Definition
 

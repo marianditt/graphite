@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<head><meta charset="utf-8"><title>??-0 Graphite Specification — graphite</title>
+<head><meta charset="utf-8"><title>SPC-4 Context — graphite</title>
 <style>
 
 :root {
@@ -293,10 +293,21 @@ th {
 </head>
 <body>
 <p class="brand">Graphite</p>
-<p class="node-meta"><strong>??-0 Graphite Specification</strong> · <a href="/graphite/spec/index.html">↑ index</a></p>
-<h2>??-0 Graphite Specification</h2>
+<p class="node-meta"><strong>SPC-4 Context</strong> · <a href="/graphite/spec/index.html">↑ spec</a></p>
+<h3>SPC-4 Context</h3>
+<h4>Definition</h4>
+<p>The <code>context</code> command shows the relevant subgraph for a specific Node.</p>
+<h4>Specification</h4>
+<p><code>graphite context &lt;id&gt;</code> SHALL retrieve a Node by its ID.</p>
+<p>It SHALL return the Node's body and its immediate edges.</p>
+<p>An optional <code>--phase</code> filter SHALL restrict context to edges relevant to a specific workflow phase (e.g., <code>implement</code>, <code>test</code>, <code>review</code>).</p>
+<p>The output SHALL be formatted as JSON for machine consumption.</p>
+<p>Missing or invalid Node IDs MUST produce an error.</p>
+<h4>Example</h4>
+<pre><code class="language-bash">graphite context payment-service --phase implement
+</code></pre>
 
-
-
+<div class="evidence"><h3>Evidence</h3><ul><li><code>graphite-cli/src/main.rs</code> line 843</li><li><code>graphite-cli/src/main.rs</code> line 843</li></ul></div>
+<div class="backlinks"><h3>Referenced by</h3><ul><li><a href="/graphite/spec/spec-context.html">SPC-4 Context</a></li></ul></div>
 </body>
 </html>

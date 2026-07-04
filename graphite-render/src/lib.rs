@@ -26,6 +26,7 @@ pub struct RenderedGraph {
 /// Per-kind sequential numbering: kind → node_id → 1-based index.
 type NodeNumbering = HashMap<String, HashMap<String, usize>>;
 
+// @graphite:evidence spec-render
 /// Errors produced during rendering.
 #[allow(clippy::result_large_err)]
 pub fn render_to_dir(

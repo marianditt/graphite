@@ -7,6 +7,7 @@ use serde::Deserialize;
 use crate::Diagnostic;
 use crate::Severity;
 
+// @graphite:evidence spec-sidecar
 /// Resolves evidence anchors from `.graphite` sidecar files.
 ///
 /// Sidecar files map evidence IDs to patterns (substring or JSONPath) that

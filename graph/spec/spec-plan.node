@@ -1,0 +1,28 @@
+---
+id: spec-plan
+kind: spec
+edges:
+  evidence:
+    - spec-plan
+---
+# Plan
+
+## Definition
+
+The `plan` command computes a work order for implementing or modifying a Node.
+
+## Specification
+
+`graphite plan <id>` SHALL compute an ordered list of work items.
+
+It SHALL traverse the Node's outgoing edges to identify related Nodes that need creation or modification.
+
+The plan SHALL include: required changes, affected Nodes, and implementation order.
+
+The output SHALL be formatted as JSON.
+
+## Example
+
+```bash
+graphite plan checkout-service
+```

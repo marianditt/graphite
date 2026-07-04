@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<head><meta charset="utf-8"><title>??-0 Graphite Specification — graphite</title>
+<head><meta charset="utf-8"><title>SPC-21 Validate — graphite</title>
 <style>
 
 :root {
@@ -293,10 +293,30 @@ th {
 </head>
 <body>
 <p class="brand">Graphite</p>
-<p class="node-meta"><strong>??-0 Graphite Specification</strong> · <a href="/graphite/spec/index.html">↑ index</a></p>
-<h2>??-0 Graphite Specification</h2>
+<p class="node-meta"><strong>SPC-21 Validate</strong> · <a href="/graphite/spec/index.html">↑ spec</a></p>
+<h3>SPC-21 Validate</h3>
+<h4>Definition</h4>
+<p>The <code>validate</code> command checks a Graph for structural and semantic correctness.</p>
+<h4>Specification</h4>
+<p><code>graphite validate</code> SHALL run the full validation suite:</p>
+<ul>
+<li>reachability: every node reachable from root</li>
+<li>tree constraint: no multiple parents</li>
+<li>cycle detection: containment DAG</li>
+<li>dependency cycles: semantic edges acyclic</li>
+<li>schema conformance: edges match schema</li>
+<li>edge targets exist</li>
+<li>body-edge usage: edges referenced in body</li>
+<li>evidence coverage: all nodes have evidence</li>
+<li>unused anchors: all <code>@graphite:evidence</code> annotations referenced</li>
+<li>node size: <code>.node</code> files ≤ configured limit (default 1000 chars)</li>
+</ul>
+<p>Diagnostics include rule, severity, detail, fix, hint. Errors block rendering.</p>
+<h4>Example</h4>
+<pre><code class="language-bash">graphite validate
+</code></pre>
 
-
-
+<div class="evidence"><h3>Evidence</h3><ul><li><code>graphite-core/src/validation.rs</code> line 6</li><li><code>graphite-core/src/validation.rs</code> line 12</li><li><code>graphite-cli/src/main.rs</code> line 301</li><li><code>graphite-core/src/validation.rs</code> line 6</li><li><code>graphite-core/src/validation.rs</code> line 12</li><li><code>graphite-cli/src/main.rs</code> line 301</li></ul></div>
+<div class="backlinks"><h3>Referenced by</h3><ul><li><a href="/graphite/spec/spec-validate.html">SPC-21 Validate</a></li></ul></div>
 </body>
 </html>

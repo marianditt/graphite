@@ -5,6 +5,7 @@ use serde::Deserialize;
 use crate::{Diagnostic, Index, Node, Severity};
 
 /// Deserialization-only struct matching the YAML frontmatter shape.
+// @graphite:evidence spec-header
 #[derive(Deserialize)]
 struct Frontmatter {
     id: Option<String>,
@@ -13,6 +14,11 @@ struct Frontmatter {
     metadata: Option<HashMap<String, String>>,
 }
 
+// @graphite:evidence spec-document-format
+// @graphite:evidence spec-header
+// @graphite:evidence spec-body
+// @graphite:evidence spec-markdown-extension
+// @graphite:evidence spec-index-node
 /// Parses `.node` files (YAML frontmatter + Markdown body) into [`Node`] structs.
 ///
 /// # Errors
@@ -29,6 +35,8 @@ impl NodeParser {
     /// `---`, then the Markdown body.
     #[allow(clippy::result_large_err)]
     pub fn parse(source: &str) -> Result<Node, Diagnostic> {
+        // @graphite:evidence spec-header
+        // @graphite:evidence spec-body
         if !source.starts_with("---") {
             return Err(Self::no_frontmatter_diagnostic());
         }
@@ -137,6 +145,7 @@ impl NodeParser {
             edges,
             metadata,
             index,
+            content_len: source.len(),
         })
     }
 

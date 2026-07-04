@@ -1,8 +1,11 @@
 ---
-id: spec-01-08-anchor
+id: spec-anchor
 kind: spec
+edges:
+  evidence:
+    - spec-anchor
 ---
-# SPEC-01-08 Anchor
+# Anchor
 
 ## Definition
 

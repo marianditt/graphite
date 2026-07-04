@@ -1,0 +1,35 @@
+---
+id: spec-document-format
+kind: spec
+edges:
+  evidence:
+    - spec-document-format
+---
+# Document Format
+
+## Definition
+
+A Document is the on-disk representation of a Graphite Node.
+
+## Specification
+
+A Document SHALL consist of a YAML frontmatter header followed by a Markdown body.
+
+The frontmatter SHALL be delimited by `---` on its own line, both before and after.
+
+The body SHALL follow the closing `---` delimiter.
+
+The frontmatter MUST contain at minimum an `id` and `kind` field.
+
+The body MAY be empty.
+
+## Example
+
+```
+---
+id: example-node
+kind: spec
+---
+
+Body content.
+```

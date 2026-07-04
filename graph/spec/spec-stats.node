@@ -1,0 +1,30 @@
+---
+id: spec-stats
+kind: spec
+edges:
+  evidence:
+    - spec-stats
+---
+# Stats
+
+## Definition
+
+The `stats` command reports aggregate metrics about the Graph.
+
+## Specification
+
+`graphite stats` SHALL compute and display:
+
+- Total Node count
+- Total Edge count
+- Diagnostic count
+- Percentage of requirements traced through to evidence
+- Percentage of Nodes with evidence
+
+The output SHALL be human-readable by default and formatted as JSON when `--json` is passed.
+
+## Example
+
+```bash
+graphite stats --json
+```

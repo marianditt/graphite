@@ -5,14 +5,26 @@ metadata:
   of_kind: spec
 edges:
   contains:
-    - spec-01-01-graph
-    - spec-01-02-node
-    - spec-01-03-index-node
-    - spec-01-04-node-id
-    - spec-01-05-node-kind
-    - spec-01-06-edge
-    - spec-01-07-schema
-    - spec-01-08-anchor
-    - spec-01-09-sidecar
+    - spec-graph
+    - spec-node
+    - spec-index-node
+    - spec-node-id
+    - spec-node-kind
+    - spec-edge
+    - spec-schema
+    - spec-anchor
+    - spec-sidecar
+    - spec-document-format
+    - spec-header
+    - spec-body
+    - spec-markdown-extension
+    - spec-comments
+    - spec-init
+    - spec-validate
+    - spec-context
+    - spec-plan
+    - spec-diff
+    - spec-render
+    - spec-stats
 ---
-# Graphite Specification (Language Model)
+# Graphite Specification

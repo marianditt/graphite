@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<head><meta charset="utf-8"><title>??-0 Graphite Specification — graphite</title>
+<head><meta charset="utf-8"><title>SPC-16 Plan — graphite</title>
 <style>
 
 :root {
@@ -293,10 +293,20 @@ th {
 </head>
 <body>
 <p class="brand">Graphite</p>
-<p class="node-meta"><strong>??-0 Graphite Specification</strong> · <a href="/graphite/spec/index.html">↑ index</a></p>
-<h2>??-0 Graphite Specification</h2>
+<p class="node-meta"><strong>SPC-16 Plan</strong> · <a href="/graphite/spec/index.html">↑ spec</a></p>
+<h3>SPC-16 Plan</h3>
+<h4>Definition</h4>
+<p>The <code>plan</code> command computes a work order for implementing or modifying a Node.</p>
+<h4>Specification</h4>
+<p><code>graphite plan &lt;id&gt;</code> SHALL compute an ordered list of work items.</p>
+<p>It SHALL traverse the Node's outgoing edges to identify related Nodes that need creation or modification.</p>
+<p>The plan SHALL include: required changes, affected Nodes, and implementation order.</p>
+<p>The output SHALL be formatted as JSON.</p>
+<h4>Example</h4>
+<pre><code class="language-bash">graphite plan checkout-service
+</code></pre>
 
-
-
+<div class="evidence"><h3>Evidence</h3><ul><li><code>graphite-cli/src/main.rs</code> line 988</li><li><code>graphite-cli/src/main.rs</code> line 988</li></ul></div>
+<div class="backlinks"><h3>Referenced by</h3><ul><li><a href="/graphite/spec/spec-plan.html">SPC-16 Plan</a></li></ul></div>
 </body>
 </html>

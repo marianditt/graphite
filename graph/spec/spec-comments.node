@@ -1,0 +1,33 @@
+---
+id: spec-comments
+kind: spec
+edges:
+  evidence:
+    - spec-comments
+---
+# Comments
+
+## Definition
+
+A Comment is a `@graphite:evidence` annotation embedded in source files to link code to Graphite Nodes.
+
+## Specification
+
+Three comment syntaxes SHALL be supported:
+
+- `// @graphite:evidence <id>` for line-comment languages (Rust, TypeScript, C, Go)
+- `# @graphite:evidence <id>` for hash-comment languages (Python, Ruby, YAML)
+- `<!-- @graphite:evidence <id> -->` for HTML/XML
+
+The `<id>` MUST match an evidence edge target on a Node.
+
+Multiple comments with the same `<id>` MAY appear across different files.
+
+The scanner SHALL collect all occurrences and their line numbers.
+
+## Example
+
+```
+// @graphite:evidence auth-service
+fn authenticate() {}
+```

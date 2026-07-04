@@ -1,0 +1,30 @@
+---
+id: spec-diff
+kind: spec
+edges:
+  evidence:
+    - spec-diff
+---
+# Diff
+
+## Definition
+
+The `diff` command shows knowledge-level changes since a git reference.
+
+## Specification
+
+`graphite diff` SHALL compare the current Graph state against a specified git ref.
+
+It SHALL report added, removed, and modified Nodes.
+
+It SHALL report added and removed Edges.
+
+The output SHALL be formatted as JSON when `--json` is passed.
+
+It SHALL default to comparing against HEAD.
+
+## Example
+
+```bash
+graphite diff HEAD~3
+```

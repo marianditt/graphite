@@ -1,8 +1,11 @@
 ---
-id: spec-01-05-node-kind
+id: spec-node-kind
 kind: spec
+edges:
+  evidence:
+    - spec-node-kind
 ---
-# SPEC-01-05 Node Kind
+# Node Kind
 
 ## Definition
 

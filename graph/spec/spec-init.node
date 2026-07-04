@@ -1,0 +1,30 @@
+---
+id: spec-init
+kind: spec
+edges:
+  evidence:
+    - spec-init
+---
+# Init
+
+## Definition
+
+The `init` command creates a new Graphite project scaffold.
+
+## Specification
+
+`graphite init` SHALL create the initial graph directory structure.
+
+It SHALL create a `graph/` directory with a `root/` subdirectory and a root node.
+
+It SHALL write a default `graph.schema` file.
+
+It SHALL create a `graphite.yaml` configuration file if one does not exist.
+
+Running `init` on an existing project SHALL be safe (no overwrite without `--force`).
+
+## Example
+
+```bash
+graphite init
+```

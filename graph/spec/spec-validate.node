@@ -1,0 +1,35 @@
+---
+id: spec-validate
+kind: spec
+edges:
+  evidence:
+    - spec-validate
+---
+# Validate
+
+## Definition
+
+The `validate` command checks a Graph for structural and semantic correctness.
+
+## Specification
+
+`graphite validate` SHALL run the full validation suite:
+
+- reachability: every node reachable from root
+- tree constraint: no multiple parents
+- cycle detection: containment DAG
+- dependency cycles: semantic edges acyclic
+- schema conformance: edges match schema
+- edge targets exist
+- body-edge usage: edges referenced in body
+- evidence coverage: all nodes have evidence
+- unused anchors: all `@graphite:evidence` annotations referenced
+- node size: `.node` files ≤ configured limit (default 1000 chars)
+
+Diagnostics include rule, severity, detail, fix, hint. Errors block rendering.
+
+## Example
+
+```bash
+graphite validate
+```

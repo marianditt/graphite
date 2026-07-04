@@ -1,20 +1,22 @@
 ---
-id: spec-01-01-graph
+id: spec-graph
 kind: spec
 edges:
   references:
-    - spec-01-02-node
-    - spec-01-03-index-node
-    - spec-01-04-node-id
-    - spec-01-05-node-kind
-    - spec-01-06-edge
-    - spec-01-07-schema
-    - spec-01-08-anchor
-    - spec-01-09-sidecar
+    - spec-node
+    - spec-index-node
+    - spec-node-id
+    - spec-node-kind
+    - spec-edge
+    - spec-schema
+    - spec-anchor
+    - spec-sidecar
+  evidence:
+    - spec-graph
 ---
-# SPEC-01-01 Graph
+# Graph
 
-This specification introduces [edge:spec-01-02-node], [edge:spec-01-03-index-node], [edge:spec-01-04-node-id], [edge:spec-01-05-node-kind], [edge:spec-01-06-edge], [edge:spec-01-07-schema], [edge:spec-01-08-anchor], and [edge:spec-01-09-sidecar].
+This specification introduces [edge:spec-node], [edge:spec-index-node], [edge:spec-node-id], [edge:spec-node-kind], [edge:spec-edge], [edge:spec-schema], [edge:spec-anchor], and [edge:spec-sidecar].
 
 ## Definition
 

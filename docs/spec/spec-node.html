@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<head><meta charset="utf-8"><title>??-0 Graphite Specification — graphite</title>
+<head><meta charset="utf-8"><title>SPC-13 Node — graphite</title>
 <style>
 
 :root {
@@ -293,10 +293,32 @@ th {
 </head>
 <body>
 <p class="brand">Graphite</p>
-<p class="node-meta"><strong>??-0 Graphite Specification</strong> · <a href="/graphite/spec/index.html">↑ index</a></p>
-<h2>??-0 Graphite Specification</h2>
+<p class="node-meta"><strong>SPC-13 Node</strong> · <a href="/graphite/spec/index.html">↑ spec</a></p>
+<h3>SPC-13 Node</h3>
+<h4>Definition</h4>
+<p>A Node represents one independently addressable unit of knowledge.</p>
+<h4>Specification</h4>
+<p>A Node MUST contain:</p>
+<ul>
+<li>identifier</li>
+<li>kind</li>
+<li>body</li>
+</ul>
+<p>A Node MAY define outgoing Edges.</p>
+<p>A Node SHALL describe exactly one knowledge concept.</p>
+<p>A Node MUST be addressable through its identifier.</p>
+<p>A Node identifier SHALL remain stable when files are moved.</p>
+<h4>Example</h4>
+<pre><code>---
+id: checkout-payment
+kind: requirement
+---
 
+Users can pay during checkout.
+</code></pre>
 
-
+<div class="evidence"><h3>Evidence</h3><ul><li><code>graphite-core/src/lib.rs</code> line 75</li><li><code>graphite-core/src/lib.rs</code> line 75</li></ul></div>
+<div class="backlinks"><h3>Referenced by</h3><ul><li><a href="/graphite/spec/spec-node.html">SPC-13 Node</a></li>
+<li><a href="/graphite/spec/spec-graph.html">SPC-8 Graph</a></li></ul></div>
 </body>
 </html>

@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<head><meta charset="utf-8"><title>??-0 Graphite Specification — graphite</title>
+<head><meta charset="utf-8"><title>SPC-3 Comments — graphite</title>
 <style>
 
 :root {
@@ -293,10 +293,26 @@ th {
 </head>
 <body>
 <p class="brand">Graphite</p>
-<p class="node-meta"><strong>??-0 Graphite Specification</strong> · <a href="/graphite/spec/index.html">↑ index</a></p>
-<h2>??-0 Graphite Specification</h2>
+<p class="node-meta"><strong>SPC-3 Comments</strong> · <a href="/graphite/spec/index.html">↑ spec</a></p>
+<h3>SPC-3 Comments</h3>
+<h4>Definition</h4>
+<p>A Comment is a <code>@graphite:evidence</code> annotation embedded in source files to link code to Graphite Nodes.</p>
+<h4>Specification</h4>
+<p>Three comment syntaxes SHALL be supported:</p>
+<ul>
+<li><code>// @graphite:evidence &lt;id&gt;</code> for line-comment languages (Rust, TypeScript, C, Go)</li>
+<li><code># @graphite:evidence &lt;id&gt;</code> for hash-comment languages (Python, Ruby, YAML)</li>
+<li><code>&lt;!-- @graphite:evidence &lt;id&gt; --&gt;</code> for HTML/XML</li>
+</ul>
+<p>The <code>&lt;id&gt;</code> MUST match an evidence edge target on a Node.</p>
+<p>Multiple comments with the same <code>&lt;id&gt;</code> MAY appear across different files.</p>
+<p>The scanner SHALL collect all occurrences and their line numbers.</p>
+<h4>Example</h4>
+<pre><code>// @graphite:evidence auth-service
+fn authenticate() {}
+</code></pre>
 
-
-
+<div class="evidence"><h3>Evidence</h3><ul><li><code>graphite-core/src/anchor_scanner.rs</code> line 9</li><li><code>graphite-core/src/anchor_scanner.rs</code> line 9</li></ul></div>
+<div class="backlinks"><h3>Referenced by</h3><ul><li><a href="/graphite/spec/spec-comments.html">SPC-3 Comments</a></li></ul></div>
 </body>
 </html>

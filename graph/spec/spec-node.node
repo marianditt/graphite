@@ -1,8 +1,11 @@
 ---
-id: spec-01-02-node
+id: spec-node
 kind: spec
+edges:
+  evidence:
+    - spec-node
 ---
-# SPEC-01-02 Node
+# Node
 
 ## Definition
 

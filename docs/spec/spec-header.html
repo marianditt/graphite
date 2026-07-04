@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<head><meta charset="utf-8"><title>??-0 Graphite Specification — graphite</title>
+<head><meta charset="utf-8"><title>SPC-9 Header — graphite</title>
 <style>
 
 :root {
@@ -293,10 +293,34 @@ th {
 </head>
 <body>
 <p class="brand">Graphite</p>
-<p class="node-meta"><strong>??-0 Graphite Specification</strong> · <a href="/graphite/spec/index.html">↑ index</a></p>
-<h2>??-0 Graphite Specification</h2>
+<p class="node-meta"><strong>SPC-9 Header</strong> · <a href="/graphite/spec/index.html">↑ spec</a></p>
+<h3>SPC-9 Header</h3>
+<h4>Definition</h4>
+<p>A Header is the YAML frontmatter section of a Document.</p>
+<h4>Specification</h4>
+<p>A Header SHALL be valid YAML placed between <code>---</code> delimiters.</p>
+<p>A Header MUST contain:</p>
+<ul>
+<li><code>id</code>: the Node ID (required)</li>
+<li><code>kind</code>: the Node Kind (required)</li>
+</ul>
+<p>A Header MAY contain:</p>
+<ul>
+<li><code>edges</code>: outgoing edge declarations</li>
+<li><code>metadata</code>: additional key-value pairs</li>
+</ul>
+<p>Invalid YAML in the Header MUST produce a parse error.</p>
+<h4>Example</h4>
+<pre><code>---
+id: my-node
+kind: spec
+edges:
+  references:
+    - other-node
+---
+</code></pre>
 
-
-
+<div class="evidence"><h3>Evidence</h3><ul><li><code>graphite-core/src/lib.rs</code> line 78</li><li><code>graphite-core/src/node_parser.rs</code> line 8</li><li><code>graphite-core/src/node_parser.rs</code> line 18</li><li><code>graphite-core/src/node_parser.rs</code> line 38</li><li><code>graphite-core/src/lib.rs</code> line 78</li><li><code>graphite-core/src/node_parser.rs</code> line 8</li><li><code>graphite-core/src/node_parser.rs</code> line 18</li><li><code>graphite-core/src/node_parser.rs</code> line 38</li></ul></div>
+<div class="backlinks"><h3>Referenced by</h3><ul><li><a href="/graphite/spec/spec-header.html">SPC-9 Header</a></li></ul></div>
 </body>
 </html>

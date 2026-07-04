@@ -1,0 +1,38 @@
+---
+id: spec-header
+kind: spec
+edges:
+  evidence:
+    - spec-header
+---
+# Header
+
+## Definition
+
+A Header is the YAML frontmatter section of a Document.
+
+## Specification
+
+A Header SHALL be valid YAML placed between `---` delimiters.
+
+A Header MUST contain:
+- `id`: the Node ID (required)
+- `kind`: the Node Kind (required)
+
+A Header MAY contain:
+- `edges`: outgoing edge declarations
+- `metadata`: additional key-value pairs
+
+Invalid YAML in the Header MUST produce a parse error.
+
+## Example
+
+```
+---
+id: my-node
+kind: spec
+edges:
+  references:
+    - other-node
+---
+```

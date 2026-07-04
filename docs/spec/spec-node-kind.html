@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<head><meta charset="utf-8"><title>??-0 Graphite Specification — graphite</title>
+<head><meta charset="utf-8"><title>SPC-15 Node Kind — graphite</title>
 <style>
 
 :root {
@@ -293,10 +293,21 @@ th {
 </head>
 <body>
 <p class="brand">Graphite</p>
-<p class="node-meta"><strong>??-0 Graphite Specification</strong> · <a href="/graphite/spec/index.html">↑ index</a></p>
-<h2>??-0 Graphite Specification</h2>
+<p class="node-meta"><strong>SPC-15 Node Kind</strong> · <a href="/graphite/spec/index.html">↑ spec</a></p>
+<h3>SPC-15 Node Kind</h3>
+<h4>Definition</h4>
+<p>A Node Kind describes the semantic category of a Node.</p>
+<h4>Specification</h4>
+<p>Every Node MUST declare exactly one Kind.</p>
+<p>The declared Kind MUST exist in the Schema.</p>
+<p>The Kind determines which Edge types are valid for the Node.</p>
+<p>A Kind SHOULD describe the purpose of the knowledge, not its storage location.</p>
+<h4>Example</h4>
+<pre><code>kind: requirement
+</code></pre>
 
-
-
+<div class="evidence"><h3>Evidence</h3><ul><li><code>graphite-core/src/lib.rs</code> line 41</li><li><code>graphite-core/src/lib.rs</code> line 50</li><li><code>graphite-core/src/lib.rs</code> line 77</li><li><code>graphite-core/src/lib.rs</code> line 41</li><li><code>graphite-core/src/lib.rs</code> line 50</li><li><code>graphite-core/src/lib.rs</code> line 77</li></ul></div>
+<div class="backlinks"><h3>Referenced by</h3><ul><li><a href="/graphite/spec/spec-graph.html">SPC-8 Graph</a></li>
+<li><a href="/graphite/spec/spec-node-kind.html">SPC-15 Node Kind</a></li></ul></div>
 </body>
 </html>

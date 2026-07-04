@@ -1,8 +1,11 @@
 ---
-id: spec-01-03-index-node
+id: spec-index-node
 kind: spec
+edges:
+  evidence:
+    - spec-index-node
 ---
-# SPEC-01-03 Index Node
+# Index Node
 
 ## Definition
 

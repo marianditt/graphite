@@ -1,8 +1,11 @@
 ---
-id: spec-01-06-edge
+id: spec-edge
 kind: spec
+edges:
+  evidence:
+    - spec-edge
 ---
-# SPEC-01-06 Edge
+# Edge
 
 ## Definition
 
