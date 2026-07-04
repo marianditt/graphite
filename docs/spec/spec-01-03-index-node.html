@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<head><meta charset="utf-8"><title>Table of Contents — graphite</title>
+<head><meta charset="utf-8"><title>SPC-3 SPEC-01-03 Index Node — graphite</title>
 <style>
 
 :root {
@@ -293,17 +293,27 @@ th {
 </head>
 <body>
 <p class="brand">Graphite</p>
-<h1>Table of Contents</h1>
+<p class="node-meta"><strong>SPC-3 SPEC-01-03 Index Node</strong> · <a href="/graphite/spec/index.html">↑ spec</a></p>
+<h3>SPC-3 SPEC-01-03 Index Node</h3>
+<h4>Definition</h4>
+<p>An Index Node is a Node whose purpose is organizing graph navigation.</p>
+<h4>Specification</h4>
+<p>An Index Node SHALL connect related Nodes into a meaningful knowledge hierarchy.</p>
+<p>An Index Node MUST NOT introduce product behavior or implementation decisions.</p>
+<p>An Index Node MAY reference other Index Nodes.</p>
+<p>An Index Node MUST follow all normal Node validation rules.</p>
+<h4>Example</h4>
+<pre><code>---
+id: requirements
+kind: index
 
-<ul>
-<li><a href="/graphite/spec/index.html">SPC-1 Graphite Specification (Language Model)</a></li>
-</ul>
+edges:
+  contains:
+    - checkout-payment
+---
+</code></pre>
 
-<div class="index-body">
-<h1>Graphite</h1>
-<p>A compiled knowledge graph for software engineering.</p>
 
-</div>
-
+<div class="backlinks"><h3>Referenced by</h3><ul><li><a href="/graphite/spec/spec-01-01-graph.html">SPC-1 SPEC-01-01 Graph</a></li></ul></div>
 </body>
 </html>

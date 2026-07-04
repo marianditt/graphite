@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<head><meta charset="utf-8"><title>Table of Contents — graphite</title>
+<head><meta charset="utf-8"><title>SPC-8 SPEC-01-08 Anchor — graphite</title>
 <style>
 
 :root {
@@ -293,17 +293,23 @@ th {
 </head>
 <body>
 <p class="brand">Graphite</p>
-<h1>Table of Contents</h1>
+<p class="node-meta"><strong>SPC-8 SPEC-01-08 Anchor</strong> · <a href="/graphite/spec/index.html">↑ spec</a></p>
+<h3>SPC-8 SPEC-01-08 Anchor</h3>
+<h4>Definition</h4>
+<p>An Anchor connects knowledge to implementation evidence.</p>
+<h4>Specification</h4>
+<p>An Anchor SHALL identify a location inside a source artifact.</p>
+<p>An Anchor MUST have a stable identifier.</p>
+<p>An Anchor MUST NOT depend on line numbers.</p>
+<p>The compiler SHALL resolve Anchors to physical locations.</p>
+<p>Anchors MAY exist in any supported text artifact.</p>
+<h4>Example</h4>
+<pre><code>// graphite:anchor checkout.validation
 
-<ul>
-<li><a href="/graphite/spec/index.html">SPC-1 Graphite Specification (Language Model)</a></li>
-</ul>
+validateCheckout()
+</code></pre>
 
-<div class="index-body">
-<h1>Graphite</h1>
-<p>A compiled knowledge graph for software engineering.</p>
 
-</div>
-
+<div class="backlinks"><h3>Referenced by</h3><ul><li><a href="/graphite/spec/spec-01-01-graph.html">SPC-1 SPEC-01-01 Graph</a></li></ul></div>
 </body>
 </html>

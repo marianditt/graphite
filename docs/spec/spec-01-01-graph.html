@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<head><meta charset="utf-8"><title>Table of Contents — graphite</title>
+<head><meta charset="utf-8"><title>SPC-1 SPEC-01-01 Graph — graphite</title>
 <style>
 
 :root {
@@ -293,17 +293,29 @@ th {
 </head>
 <body>
 <p class="brand">Graphite</p>
-<h1>Table of Contents</h1>
+<p class="node-meta"><strong>SPC-1 SPEC-01-01 Graph</strong> · <a href="/graphite/spec/index.html">↑ spec</a></p>
+<h3>SPC-1 SPEC-01-01 Graph</h3>
+<p>This specification introduces <a href="/graphite/spec/spec-01-02-node.html">SPC-2 SPEC-01-02 Node</a>, <a href="/graphite/spec/spec-01-03-index-node.html">SPC-3 SPEC-01-03 Index Node</a>, <a href="/graphite/spec/spec-01-04-node-id.html">SPC-4 SPEC-01-04 Node ID</a>, <a href="/graphite/spec/spec-01-05-node-kind.html">SPC-5 SPEC-01-05 Node Kind</a>, <a href="/graphite/spec/spec-01-06-edge.html">SPC-6 SPEC-01-06 Edge</a>, <a href="/graphite/spec/spec-01-07-schema.html">SPC-7 SPEC-01-07 Schema</a>, <a href="/graphite/spec/spec-01-08-anchor.html">SPC-8 SPEC-01-08 Anchor</a>, and <a href="/graphite/spec/spec-01-09-sidecar.html">SPC-9 SPEC-01-09 Sidecar</a>.</p>
+<h4>Definition</h4>
+<p>A Graph is the complete directed knowledge model of a Graphite project.</p>
+<h4>Specification</h4>
+<p>A Graph SHALL consist of Nodes connected by Edges.</p>
+<p>A Graph MUST contain exactly one Root Node.</p>
+<p>A Graph MUST include every discovered Knowledge Node, Index Node, and Anchor.</p>
+<p>A Graph MUST be validated before it is used for rendering or analysis.</p>
+<p>A Graph MUST NOT contain unresolved references.</p>
+<p>The physical file structure SHALL NOT define graph relationships.</p>
+<h4>Example</h4>
+<pre><code>Root
+ |
+Requirement
+ |
+Architecture
+ |
+Evidence Anchor
+</code></pre>
 
-<ul>
-<li><a href="/graphite/spec/index.html">SPC-1 Graphite Specification (Language Model)</a></li>
-</ul>
 
-<div class="index-body">
-<h1>Graphite</h1>
-<p>A compiled knowledge graph for software engineering.</p>
-
-</div>
 
 </body>
 </html>

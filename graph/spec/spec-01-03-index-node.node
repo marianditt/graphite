@@ -1,0 +1,32 @@
+---
+id: spec-01-03-index-node
+kind: spec
+---
+# SPEC-01-03 Index Node
+
+## Definition
+
+An Index Node is a Node whose purpose is organizing graph navigation.
+
+## Specification
+
+An Index Node SHALL connect related Nodes into a meaningful knowledge hierarchy.
+
+An Index Node MUST NOT introduce product behavior or implementation decisions.
+
+An Index Node MAY reference other Index Nodes.
+
+An Index Node MUST follow all normal Node validation rules.
+
+## Example
+
+```
+---
+id: requirements
+kind: index
+
+edges:
+  contains:
+    - checkout-payment
+---
+```

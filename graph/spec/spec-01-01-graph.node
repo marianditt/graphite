@@ -1,0 +1,47 @@
+---
+id: spec-01-01-graph
+kind: spec
+edges:
+  references:
+    - spec-01-02-node
+    - spec-01-03-index-node
+    - spec-01-04-node-id
+    - spec-01-05-node-kind
+    - spec-01-06-edge
+    - spec-01-07-schema
+    - spec-01-08-anchor
+    - spec-01-09-sidecar
+---
+# SPEC-01-01 Graph
+
+This specification introduces [edge:spec-01-02-node], [edge:spec-01-03-index-node], [edge:spec-01-04-node-id], [edge:spec-01-05-node-kind], [edge:spec-01-06-edge], [edge:spec-01-07-schema], [edge:spec-01-08-anchor], and [edge:spec-01-09-sidecar].
+
+## Definition
+
+A Graph is the complete directed knowledge model of a Graphite project.
+
+## Specification
+
+A Graph SHALL consist of Nodes connected by Edges.
+
+A Graph MUST contain exactly one Root Node.
+
+A Graph MUST include every discovered Knowledge Node, Index Node, and Anchor.
+
+A Graph MUST be validated before it is used for rendering or analysis.
+
+A Graph MUST NOT contain unresolved references.
+
+The physical file structure SHALL NOT define graph relationships.
+
+## Example
+
+```
+Root
+ |
+Requirement
+ |
+Architecture
+ |
+Evidence Anchor
+```

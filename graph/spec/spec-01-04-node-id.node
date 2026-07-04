@@ -1,0 +1,31 @@
+---
+id: spec-01-04-node-id
+kind: spec
+---
+# SPEC-01-04 Node ID
+
+## Definition
+
+A Node ID uniquely identifies a Node.
+
+## Specification
+
+Every Node MUST define exactly one Node ID.
+
+A Node ID MUST be globally unique inside a Graph.
+
+A Node ID MUST NOT depend on:
+
+- filename
+- directory
+- repository location
+
+References between Nodes SHALL use Node IDs.
+
+Duplicate Node IDs MUST fail validation.
+
+## Example
+
+```
+id: payment-authorization
+```

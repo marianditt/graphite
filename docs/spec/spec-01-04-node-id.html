@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<head><meta charset="utf-8"><title>Table of Contents — graphite</title>
+<head><meta charset="utf-8"><title>SPC-4 SPEC-01-04 Node ID — graphite</title>
 <style>
 
 :root {
@@ -293,17 +293,26 @@ th {
 </head>
 <body>
 <p class="brand">Graphite</p>
-<h1>Table of Contents</h1>
-
+<p class="node-meta"><strong>SPC-4 SPEC-01-04 Node ID</strong> · <a href="/graphite/spec/index.html">↑ spec</a></p>
+<h3>SPC-4 SPEC-01-04 Node ID</h3>
+<h4>Definition</h4>
+<p>A Node ID uniquely identifies a Node.</p>
+<h4>Specification</h4>
+<p>Every Node MUST define exactly one Node ID.</p>
+<p>A Node ID MUST be globally unique inside a Graph.</p>
+<p>A Node ID MUST NOT depend on:</p>
 <ul>
-<li><a href="/graphite/spec/index.html">SPC-1 Graphite Specification (Language Model)</a></li>
+<li>filename</li>
+<li>directory</li>
+<li>repository location</li>
 </ul>
+<p>References between Nodes SHALL use Node IDs.</p>
+<p>Duplicate Node IDs MUST fail validation.</p>
+<h4>Example</h4>
+<pre><code>id: payment-authorization
+</code></pre>
 
-<div class="index-body">
-<h1>Graphite</h1>
-<p>A compiled knowledge graph for software engineering.</p>
 
-</div>
-
+<div class="backlinks"><h3>Referenced by</h3><ul><li><a href="/graphite/spec/spec-01-01-graph.html">SPC-1 SPEC-01-01 Graph</a></li></ul></div>
 </body>
 </html>

@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<head><meta charset="utf-8"><title>Table of Contents — graphite</title>
+<head><meta charset="utf-8"><title>SPC-7 SPEC-01-07 Schema — graphite</title>
 <style>
 
 :root {
@@ -293,17 +293,30 @@ th {
 </head>
 <body>
 <p class="brand">Graphite</p>
-<h1>Table of Contents</h1>
-
+<p class="node-meta"><strong>SPC-7 SPEC-01-07 Schema</strong> · <a href="/graphite/spec/index.html">↑ spec</a></p>
+<h3>SPC-7 SPEC-01-07 Schema</h3>
+<h4>Definition</h4>
+<p>A Schema defines the valid structure of a Graph.</p>
+<h4>Specification</h4>
+<p>A Schema SHALL define:</p>
 <ul>
-<li><a href="/graphite/spec/index.html">SPC-1 Graphite Specification (Language Model)</a></li>
+<li>available Node Kinds</li>
+<li>available Edge types</li>
+<li>validation rules</li>
 </ul>
+<p>The compiler MUST validate Nodes and Edges against the active Schema.</p>
+<p>A Graph violating its Schema MUST be rejected.</p>
+<h4>Example</h4>
+<pre><code>kinds:
+  requirement:
 
-<div class="index-body">
-<h1>Graphite</h1>
-<p>A compiled knowledge graph for software engineering.</p>
+edges:
+  verified_by:
+    from: requirement
+    to: test
+</code></pre>
 
-</div>
 
+<div class="backlinks"><h3>Referenced by</h3><ul><li><a href="/graphite/spec/spec-01-01-graph.html">SPC-1 SPEC-01-01 Graph</a></li></ul></div>
 </body>
 </html>

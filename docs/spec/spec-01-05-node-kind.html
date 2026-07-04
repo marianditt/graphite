@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<head><meta charset="utf-8"><title>Table of Contents — graphite</title>
+<head><meta charset="utf-8"><title>SPC-5 SPEC-01-05 Node Kind — graphite</title>
 <style>
 
 :root {
@@ -293,17 +293,20 @@ th {
 </head>
 <body>
 <p class="brand">Graphite</p>
-<h1>Table of Contents</h1>
+<p class="node-meta"><strong>SPC-5 SPEC-01-05 Node Kind</strong> · <a href="/graphite/spec/index.html">↑ spec</a></p>
+<h3>SPC-5 SPEC-01-05 Node Kind</h3>
+<h4>Definition</h4>
+<p>A Node Kind describes the semantic category of a Node.</p>
+<h4>Specification</h4>
+<p>Every Node MUST declare exactly one Kind.</p>
+<p>The declared Kind MUST exist in the Schema.</p>
+<p>The Kind determines which Edge types are valid for the Node.</p>
+<p>A Kind SHOULD describe the purpose of the knowledge, not its storage location.</p>
+<h4>Example</h4>
+<pre><code>kind: requirement
+</code></pre>
 
-<ul>
-<li><a href="/graphite/spec/index.html">SPC-1 Graphite Specification (Language Model)</a></li>
-</ul>
 
-<div class="index-body">
-<h1>Graphite</h1>
-<p>A compiled knowledge graph for software engineering.</p>
-
-</div>
-
+<div class="backlinks"><h3>Referenced by</h3><ul><li><a href="/graphite/spec/spec-01-01-graph.html">SPC-1 SPEC-01-01 Graph</a></li></ul></div>
 </body>
 </html>

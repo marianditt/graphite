@@ -5,10 +5,7 @@ metadata:
   of_kind: general
 edges:
   contains:
-    - requirement
-    - architecture
-    - adr
-    - guide
+    - spec
 ---
 # Graphite
 

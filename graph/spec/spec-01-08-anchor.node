@@ -1,0 +1,29 @@
+---
+id: spec-01-08-anchor
+kind: spec
+---
+# SPEC-01-08 Anchor
+
+## Definition
+
+An Anchor connects knowledge to implementation evidence.
+
+## Specification
+
+An Anchor SHALL identify a location inside a source artifact.
+
+An Anchor MUST have a stable identifier.
+
+An Anchor MUST NOT depend on line numbers.
+
+The compiler SHALL resolve Anchors to physical locations.
+
+Anchors MAY exist in any supported text artifact.
+
+## Example
+
+```
+// graphite:anchor checkout.validation
+
+validateCheckout()
+```

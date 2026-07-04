@@ -1,0 +1,25 @@
+---
+id: spec-01-05-node-kind
+kind: spec
+---
+# SPEC-01-05 Node Kind
+
+## Definition
+
+A Node Kind describes the semantic category of a Node.
+
+## Specification
+
+Every Node MUST declare exactly one Kind.
+
+The declared Kind MUST exist in the Schema.
+
+The Kind determines which Edge types are valid for the Node.
+
+A Kind SHOULD describe the purpose of the knowledge, not its storage location.
+
+## Example
+
+```
+kind: requirement
+```

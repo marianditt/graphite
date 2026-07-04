@@ -1,0 +1,33 @@
+---
+id: spec-01-07-schema
+kind: spec
+---
+# SPEC-01-07 Schema
+
+## Definition
+
+A Schema defines the valid structure of a Graph.
+
+## Specification
+
+A Schema SHALL define:
+
+- available Node Kinds
+- available Edge types
+- validation rules
+
+The compiler MUST validate Nodes and Edges against the active Schema.
+
+A Graph violating its Schema MUST be rejected.
+
+## Example
+
+```
+kinds:
+  requirement:
+
+edges:
+  verified_by:
+    from: requirement
+    to: test
+```

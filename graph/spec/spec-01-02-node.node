@@ -1,0 +1,36 @@
+---
+id: spec-01-02-node
+kind: spec
+---
+# SPEC-01-02 Node
+
+## Definition
+
+A Node represents one independently addressable unit of knowledge.
+
+## Specification
+
+A Node MUST contain:
+
+- identifier
+- kind
+- body
+
+A Node MAY define outgoing Edges.
+
+A Node SHALL describe exactly one knowledge concept.
+
+A Node MUST be addressable through its identifier.
+
+A Node identifier SHALL remain stable when files are moved.
+
+## Example
+
+```
+---
+id: checkout-payment
+kind: requirement
+---
+
+Users can pay during checkout.
+```

@@ -1,10 +1,7 @@
 kinds:
-  requirement: { key: REQ }
-  architecture: { key: ARC }
-  adr: { key: ADR }
-  guide: { key: GDE }
+  spec: { key: SPC }
 edges:
-  addressed_by: { from: requirement, to: architecture }
-  justified_by: { from: architecture, to: adr }
+  contains: { from: index, to: any }
+  part_of: { from: any, to: any }
   references: { from: any, to: any }
   evidence: { from: any, to: evidence }

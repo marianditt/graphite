@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<head><meta charset="utf-8"><title>Table of Contents — graphite</title>
+<head><meta charset="utf-8"><title>SPC-6 SPEC-01-06 Edge — graphite</title>
 <style>
 
 :root {
@@ -293,17 +293,28 @@ th {
 </head>
 <body>
 <p class="brand">Graphite</p>
-<h1>Table of Contents</h1>
-
+<p class="node-meta"><strong>SPC-6 SPEC-01-06 Edge</strong> · <a href="/graphite/spec/index.html">↑ spec</a></p>
+<h3>SPC-6 SPEC-01-06 Edge</h3>
+<h4>Definition</h4>
+<p>An Edge is a directed semantic relationship between Nodes.</p>
+<h4>Specification</h4>
+<p>An Edge MUST contain:</p>
 <ul>
-<li><a href="/graphite/spec/index.html">SPC-1 Graphite Specification (Language Model)</a></li>
+<li>edge type</li>
+<li>source Node</li>
+<li>target Node</li>
 </ul>
+<p>The Edge type MUST exist in the Schema.</p>
+<p>Edges MUST reference targets by Node ID.</p>
+<p>Edges MUST be explicitly authored.</p>
+<p>Implicit relationships from folders or filenames MUST NOT create Edges.</p>
+<h4>Example</h4>
+<pre><code>edges:
+  verified_by:
+    - checkout-test
+</code></pre>
 
-<div class="index-body">
-<h1>Graphite</h1>
-<p>A compiled knowledge graph for software engineering.</p>
 
-</div>
-
+<div class="backlinks"><h3>Referenced by</h3><ul><li><a href="/graphite/spec/spec-01-01-graph.html">SPC-1 SPEC-01-01 Graph</a></li></ul></div>
 </body>
 </html>

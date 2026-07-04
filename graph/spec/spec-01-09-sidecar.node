@@ -1,0 +1,32 @@
+---
+id: spec-01-09-sidecar
+kind: spec
+---
+# SPEC-01-09 Sidecar
+
+## Definition
+
+A Sidecar defines Graphite metadata for artifacts that cannot contain Graphite syntax.
+
+## Specification
+
+A Sidecar SHALL reference an external artifact.
+
+A Sidecar MAY define Anchors for that artifact.
+
+Sidecar Anchors MUST follow normal Anchor validation rules.
+
+Sidecars MUST NOT change the original artifact content.
+
+## Example
+
+```
+{
+  "anchors": [
+    {
+      "id": "feature.checkout",
+      "path": "$.features.checkout"
+    }
+  ]
+}
+```
