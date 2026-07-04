@@ -6,12 +6,8 @@ metadata:
 edges:
   contains:
     - requirement
+    - architecture
     - adr
-    - service
-    - test
-    - compliance
-    - runbook
-    - infra
 ---
 # Graphite
 

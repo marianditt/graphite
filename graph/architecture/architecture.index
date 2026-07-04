@@ -1,0 +1,11 @@
+---
+id: architecture
+kind: index
+metadata:
+  of_kind: architecture
+edges:
+  contains:
+    - schema-driven-graph
+    - clap-cli
+---
+# Architecture

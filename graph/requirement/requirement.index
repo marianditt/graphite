@@ -5,6 +5,7 @@ metadata:
   of_kind: requirement
 edges:
   contains:
-    - compiler-requirement
+    - schema-flexibility-req
+    - cli-simplicity-req
 ---
-# Requirement Index
+# Requirements

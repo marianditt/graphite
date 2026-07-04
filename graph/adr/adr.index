@@ -5,6 +5,7 @@ metadata:
   of_kind: adr
 edges:
   contains:
-    - compiler-pipeline
+    - serde-yaml-schema-adr
+    - clap-ergonomics-adr
 ---
 # Architecture Decision Records
