@@ -1,15 +1,9 @@
 kinds:
   requirement: { key: REQ }
+  architecture: { key: ARC }
   adr: { key: ADR }
-  service: { key: SVC }
-  test: { key: TST }
-  compliance: { key: CPL }
-  runbook: { key: RBK }
-  infra: { key: INF }
 edges:
-  implemented_by: { from: requirement, to: service }
-  verified_by: { from: requirement, to: test }
-  describes: { from: adr, to: service }
+  addressed_by: { from: requirement, to: architecture }
+  justified_by: { from: architecture, to: adr }
   references: { from: any, to: any }
-  relates_to: { from: any, to: any }
   evidence: { from: any, to: evidence }
