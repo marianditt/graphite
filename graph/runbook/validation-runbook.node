@@ -1,7 +1,0 @@
----
-id: validation-runbook
-kind: runbook
----
-# Validation Runbook
-
-Run graphite validate before shipping graph changes.

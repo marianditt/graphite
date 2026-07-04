@@ -1,7 +1,0 @@
----
-id: compiler-tests
-kind: test
----
-# Compiler Tests
-
-Tests for the graphite compiler pipeline.

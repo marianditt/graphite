@@ -1,7 +1,0 @@
----
-id: distribution-pipeline
-kind: infra
----
-# Distribution Pipeline
-
-The package and binary distribution path for graphite.

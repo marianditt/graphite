@@ -1,7 +1,0 @@
----
-id: traceability-policy
-kind: compliance
----
-# Traceability Policy
-
-Requirements should be linked to implementation, tests, and evidence.

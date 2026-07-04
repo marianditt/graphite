@@ -1,7 +1,0 @@
----
-id: compiler
-kind: service
----
-# Compiler
-
-A Rust CLI that implements the graphite compiler pipeline.
