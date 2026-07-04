@@ -4,6 +4,8 @@ kind: requirement
 edges:
   addressed_by:
     - clap-cli
+  evidence:
+    - cli-simple-req-ev
 ---
 # CLI Simplicity
 

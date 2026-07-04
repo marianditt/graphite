@@ -12,6 +12,7 @@ use graphite_core::validation::ValidationEngine;
 use graphite_core::{Diagnostic, Graph, Severity};
 use graphite_render::style;
 
+// @graphite:evidence cli-simple-req-ev
 // @graphite:evidence clap-cli-arc-ev
 #[derive(Parser)]
 #[command(

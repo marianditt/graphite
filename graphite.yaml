@@ -1,0 +1,6 @@
+scan:
+  - graphite-core/src
+  - graphite-cli/src
+  - graphite-render/src
+  - graphite-core
+  - graphite-cli

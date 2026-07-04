@@ -6,6 +6,7 @@ use crate::{Diagnostic, EdgeDef, KindDef, Schema, Severity};
 
 const BUILT_IN_KINDS: [&str; 3] = ["any", "index", "evidence"];
 
+// @graphite:evidence schema-flex-req-ev
 // @graphite:evidence schema-driven-arc-ev
 pub struct SchemaParser;
 

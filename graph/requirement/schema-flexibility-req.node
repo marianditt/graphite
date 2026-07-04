@@ -4,6 +4,8 @@ kind: requirement
 edges:
   addressed_by:
     - schema-driven-graph
+  evidence:
+    - schema-flex-req-ev
 ---
 # Schema Flexibility
 

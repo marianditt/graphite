@@ -1,7 +1,0 @@
----
-id: compiler-requirement
-kind: requirement
----
-# Compiler Requirement
-
-The compiler must parse .node files, validate the graph, resolve evidence anchors, and render HTML documentation.
