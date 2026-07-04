@@ -1,7 +1,4 @@
 /// Default minimal style — clean, fast, readable.
-// @graphite:evidence compiler-service-def
-// @graphite:evidence ai-protocol-adr
-// @graphite:evidence anchor-syntax-adr
 pub const DEFAULT_CSS: &str = r#"
 body { font-family: system-ui, sans-serif; max-width: 800px; margin: 0 auto; padding: 1em; line-height: 1.6; }
 a { color: #0066cc; }

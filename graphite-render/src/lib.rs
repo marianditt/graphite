@@ -5,11 +5,6 @@ use std::path::{Path, PathBuf};
 use graphite_core::{Diagnostic, Graph, Node, Schema, Severity};
 use pulldown_cmark::HeadingLevel;
 
-// @graphite:evidence rendering-adr
-// @graphite:evidence heading-depth-adr
-// @graphite:evidence stable-identity-adr
-// @graphite:evidence index-pattern-adr
-
 pub mod style;
 
 /// Output of rendering a single node page.

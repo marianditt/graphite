@@ -3,11 +3,6 @@ use std::path::PathBuf;
 
 use crate::{Diagnostic, Graph, Severity};
 
-// @graphite:evidence compiler-requirement-def
-// @graphite:evidence compiler-pipeline-adr
-// @graphite:evidence edge-narrative-adr
-// @graphite:evidence tutoring-errors-adr
-
 /// A map from evidence ID to resolved file locations.
 ///
 /// Produced by merging results from `AnchorScanner` and `SidecarResolver`.

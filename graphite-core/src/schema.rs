@@ -4,8 +4,6 @@ use serde::Deserialize;
 
 use crate::{Diagnostic, EdgeDef, KindDef, Schema, Severity};
 
-// @graphite:evidence schema-design-adr
-
 const BUILT_IN_KINDS: [&str; 3] = ["any", "index", "evidence"];
 
 pub struct SchemaParser;

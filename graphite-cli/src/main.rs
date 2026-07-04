@@ -12,16 +12,6 @@ use graphite_core::validation::ValidationEngine;
 use graphite_core::{Diagnostic, Graph, Severity};
 use graphite_render::style;
 
-// @graphite:evidence cli-service-def
-// @graphite:evidence audience-requirement-def
-// @graphite:evidence self-hosting-requirement-def
-// @graphite:evidence compiler-tests-def
-// @graphite:evidence compatibility-analysis-def
-// @graphite:evidence effectiveness-measurement-def
-// @graphite:evidence runbook-validation-def
-// @graphite:evidence infra-distribution-def
-// @graphite:evidence compliance-traceability-def
-
 #[derive(Parser)]
 #[command(
     name = "graphite",
