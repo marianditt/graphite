@@ -52,7 +52,6 @@ impl ValidationEngine {
         diagnostics.extend(self.check_cycles(graph));
         diagnostics.extend(self.check_dependency_cycles(graph));
         diagnostics.extend(self.check_schema_conformance(graph));
-        diagnostics.extend(self.check_requirement_completeness(graph));
         diagnostics.extend(self.check_body_edge_usage(graph));
         diagnostics.extend(self.check_evidence_coverage(graph));
         diagnostics.extend(self.check_index_body_has_title(graph));
@@ -607,61 +606,6 @@ impl ValidationEngine {
         diagnostics
     }
 
-    fn check_requirement_completeness(&self, graph: &Graph) -> Vec<Diagnostic> {
-        let mut diagnostics = Vec::new();
-
-        for node in graph.nodes.values() {
-            if node.kind != "requirement" {
-                continue;
-            }
-
-            let has_implementation = node
-                .edges
-                .get("implemented_by")
-                .map(|v| !v.is_empty())
-                .unwrap_or(false);
-            let has_tests = node
-                .edges
-                .get("verified_by")
-                .map(|v| !v.is_empty())
-                .unwrap_or(false);
-
-            if !has_implementation {
-                diagnostics.push(diag_err(
-                    "missing-implementation",
-                    &node.id,
-                    &format!(
-                        "Requirement '{}' is missing an 'implemented_by' edge.",
-                        node.id
-                    ),
-                    &format!(
-                        "Add 'implemented_by' targets to '{}', pointing to service nodes that realize the requirement.",
-                        node.id
-                    ),
-                    "Every requirement must trace to implementation.",
-                ));
-            }
-
-            if !has_tests {
-                diagnostics.push(diag_err(
-                    "missing-tests",
-                    &node.id,
-                    &format!(
-                        "Requirement '{}' is missing a 'verified_by' edge.",
-                        node.id
-                    ),
-                    &format!(
-                        "Add 'verified_by' targets to '{}', pointing to test nodes that validate the requirement.",
-                        node.id
-                    ),
-                    "Every requirement must trace to validation tests.",
-                ));
-            }
-        }
-
-        diagnostics
-    }
-
     /// Check that every index node body has at least one markdown heading (# title).
     /// Rule: "index-body-title"
     fn check_index_body_has_title(&self, graph: &Graph) -> Vec<Diagnostic> {
@@ -1142,61 +1086,6 @@ kind: test\n\
     }
 
     #[test]
-    fn missing_implementation_detected() {
-        let schema = SchemaParser::default_schema();
-        let mut g = Graph::new(schema);
-
-        g.add_node(make_node(
-            "idx",
-            "index",
-            HashMap::from([("contains".into(), vec!["req".into(), "tst".into()])]),
-            "# Index\n",
-        ));
-        g.add_node(make_node(
-            "req",
-            "requirement",
-            HashMap::from([("verified_by".into(), vec!["tst".into()])]),
-            "# Requirement\n\nVerified by [edge:tst].",
-        ));
-        g.add_node(make_node("tst", "test", HashMap::new(), "# Test\n"));
-
-        let engine = ValidationEngine;
-        let diags = engine.validate(&g);
-        assert!(
-            diags.iter().any(|d| d.rule == "missing-implementation"),
-            "should detect missing implementation: {:?}",
-            diags
-        );
-    }
-
-    #[test]
-    fn missing_tests_detected() {
-        let schema = SchemaParser::default_schema();
-        let mut g = Graph::new(schema);
-
-        g.add_node(make_node(
-            "idx",
-            "index",
-            HashMap::from([("contains".into(), vec!["req".into(), "svc".into()])]),
-            "# Index\n",
-        ));
-        g.add_node(make_node(
-            "req",
-            "requirement",
-            HashMap::from([("implemented_by".into(), vec!["svc".into()])]),
-            "# Requirement\n\nImplemented by [edge:svc].",
-        ));
-        g.add_node(make_node("svc", "service", HashMap::new(), "# Service\n"));
-
-        let engine = ValidationEngine;
-        let diags = engine.validate(&g);
-        assert!(
-            diags.iter().any(|d| d.rule == "missing-tests"),
-            "should detect missing tests: {:?}",
-            diags
-        );
-    }
-
     // ------------------------------------------------------------------
     // Schema conformance
     // ------------------------------------------------------------------

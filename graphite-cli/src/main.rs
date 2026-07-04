@@ -728,10 +728,6 @@ struct StatsOutput {
     diagnostics_total: usize,
     diagnostics_by_rule: HashMap<String, usize>,
     diagnostics_by_severity: HashMap<String, usize>,
-    requirements_total: usize,
-    requirements_with_implementation: usize,
-    requirements_with_tests: usize,
-    requirements_fully_traced_pct: f64,
     nodes_with_evidence_pct: f64,
 }
 
@@ -755,9 +751,6 @@ fn cmd_stats(graph_dir: &str, json: bool, config: &Config) {
     let mut nodes_by_kind: HashMap<String, usize> = HashMap::new();
     let mut edges_by_kind: HashMap<String, usize> = HashMap::new();
     let mut edges_total = 0usize;
-    let mut requirements_total = 0usize;
-    let mut requirements_with_implementation = 0usize;
-    let mut requirements_with_tests = 0usize;
     let mut nodes_with_evidence = 0usize;
 
     for node in graph.nodes.values() {
@@ -770,26 +763,6 @@ fn cmd_stats(graph_dir: &str, json: bool, config: &Config) {
             .unwrap_or(false)
         {
             nodes_with_evidence += 1;
-        }
-
-        if node.kind == "requirement" {
-            requirements_total += 1;
-            if node
-                .edges
-                .get("implemented_by")
-                .map(|v| !v.is_empty())
-                .unwrap_or(false)
-            {
-                requirements_with_implementation += 1;
-            }
-            if node
-                .edges
-                .get("verified_by")
-                .map(|v| !v.is_empty())
-                .unwrap_or(false)
-            {
-                requirements_with_tests += 1;
-            }
         }
 
         for (edge_kind, targets) in &node.edges {
@@ -809,12 +782,6 @@ fn cmd_stats(graph_dir: &str, json: bool, config: &Config) {
         *diagnostics_by_severity.entry(sev).or_insert(0) += 1;
     }
 
-    let requirements_fully_traced = requirements_with_implementation.min(requirements_with_tests);
-    let requirements_fully_traced_pct = if requirements_total == 0 {
-        100.0
-    } else {
-        (requirements_fully_traced as f64 / requirements_total as f64) * 100.0
-    };
     let nodes_with_evidence_pct = if graph.nodes.is_empty() {
         100.0
     } else {
@@ -829,10 +796,6 @@ fn cmd_stats(graph_dir: &str, json: bool, config: &Config) {
         diagnostics_total: diagnostics.len(),
         diagnostics_by_rule,
         diagnostics_by_severity,
-        requirements_total,
-        requirements_with_implementation,
-        requirements_with_tests,
-        requirements_fully_traced_pct,
         nodes_with_evidence_pct,
     };
 
@@ -845,10 +808,6 @@ fn cmd_stats(graph_dir: &str, json: bool, config: &Config) {
         println!("nodes: {}", out.nodes_total);
         println!("edges: {}", out.edges_total);
         println!("diagnostics: {}", out.diagnostics_total);
-        println!(
-            "requirements fully traced: {}/{} ({:.1}%)",
-            requirements_fully_traced, out.requirements_total, out.requirements_fully_traced_pct
-        );
         println!("nodes with evidence: {:.1}%", out.nodes_with_evidence_pct);
     }
 }
@@ -930,16 +889,6 @@ fn cmd_context(id: &str, phase: Option<&str>, graph_dir: &str) {
         }
     }
 
-    // Collect evidence-related nodes
-    let mut evidence_nodes: Vec<&graphite_core::Node> = Vec::new();
-    for node in graph.nodes.values() {
-        for (edge_kind, targets) in &node.edges {
-            if edge_kind == "verified_by" && targets.iter().any(|t| t == id) {
-                evidence_nodes.push(node);
-            }
-        }
-    }
-
     // Phase-specific slicing
     let ctx_node = |n: &graphite_core::Node| -> ContextNode {
         ContextNode {
@@ -981,7 +930,7 @@ fn cmd_context(id: &str, phase: Option<&str>, graph_dir: &str) {
             );
         }
         Some("validate") => {
-            let output: Vec<ContextNode> = evidence_nodes
+            let output: Vec<ContextNode> = dependents
                 .iter()
                 .copied()
                 .chain(dependents.iter().copied())
@@ -1002,7 +951,7 @@ fn cmd_context(id: &str, phase: Option<&str>, graph_dir: &str) {
             let output = ContextOutput {
                 read: deps.iter().copied().map(ctx_node).collect(),
                 modify: vec![ctx_node(target)],
-                validate: evidence_nodes
+                validate: dependents
                     .iter()
                     .copied()
                     .chain(dependents.iter().copied())
