@@ -1,8 +1,6 @@
-use std::collections::HashMap;
-
 use serde::Deserialize;
 
-use crate::{Diagnostic, Index, Node, Severity};
+use crate::{Diagnostic, Node, Severity};
 
 /// Deserialization-only struct matching the YAML frontmatter shape.
 // @graphite:evidence spec-header
@@ -10,22 +8,18 @@ use crate::{Diagnostic, Index, Node, Severity};
 struct Frontmatter {
     id: Option<String>,
     category: Option<String>,
-    edges: Option<HashMap<String, Vec<String>>>,
-    metadata: Option<HashMap<String, String>>,
 }
 
 // @graphite:evidence spec-document-format
 // @graphite:evidence spec-header
 // @graphite:evidence spec-body
 // @graphite:evidence spec-markdown-extension
-// @graphite:evidence spec-index-node
 /// Parses `.node` files (YAML frontmatter + Markdown body) into [`Node`] structs.
 ///
 /// # Errors
 ///
 /// Returns a tutoring [`Diagnostic`] with `rule = "node-parse-error"` for any
-/// parse failure (missing frontmatter, invalid YAML, missing required fields,
-/// or invalid edge constraints).
+/// parse failure (missing frontmatter, invalid YAML, missing required fields).
 pub struct NodeParser;
 
 impl NodeParser {
@@ -98,53 +92,10 @@ impl NodeParser {
             )
         })?;
 
-        let edges = frontmatter.edges.unwrap_or_default();
-        let metadata = frontmatter.metadata.unwrap_or_default();
-
-        // -- index-specific validation ----------------------------------------------
-        let index = if category == "index" {
-            let of_category = metadata
-                .get("of_category")
-                .ok_or_else(Self::missing_of_category_diagnostic)?;
-
-            // Ensure "contains" is the only allowed edge type.
-            for edge_kind in edges.keys() {
-                if edge_kind != "contains" {
-                    return Err(Self::forbidden_edge_diagnostic(
-                        edge_kind,
-                        "index",
-                        "Index nodes must use only `contains` edges. \
-                         For example:\n\n---\nid: my-index\ncategory: index\n\
-                         edges:\n  contains:\n    - child-node\n\
-                         metadata:\n  of_category: service\n---",
-                    ));
-                }
-            }
-
-            Some(Index {
-                of_category: of_category.clone(),
-            })
-        } else {
-            // Knowledge nodes must NOT have a "contains" edge.
-            if edges.contains_key("contains") {
-                return Err(Self::forbidden_edge_diagnostic(
-                    "contains",
-                    "knowledge",
-                    "The `contains` edge is reserved for index nodes. Remove it from this node. \
-                     For example:\n\n---\nid: my-node\ncategory: service\n\
-                     edges:\n  references:\n    - other-node\n---",
-                ));
-            }
-            None
-        };
-
         Ok(Node {
             id,
             category,
             body,
-            edges,
-            metadata,
-            index,
             content_len: source.len(),
         })
     }
@@ -160,8 +111,6 @@ impl NodeParser {
             Err(_) if yaml_str.trim().is_empty() => Ok(Frontmatter {
                 id: None,
                 category: None,
-                edges: None,
-                metadata: None,
             }),
             Err(e) => Err(Self::parse_error_diagnostic(&e.to_string())),
         }
@@ -219,22 +168,6 @@ impl NodeParser {
         )
     }
 
-    fn missing_of_category_diagnostic() -> Diagnostic {
-        Self::diagnostic(
-            "Index node is missing `of_category` in metadata. Index nodes require `of_category` to specify what category of nodes they index.",
-            "Add `of_category` to the metadata section, for example:\n\n\
-             ---\nid: my-index\ncategory: index\nmetadata:\n  of_category: service\n---",
-            "Index nodes must declare `of_category` in their metadata so the graph knows which node category this index targets.",
-        )
-    }
-
-    fn forbidden_edge_diagnostic(edge_kind: &str, node_type: &str, hint: &str) -> Diagnostic {
-        Self::diagnostic(
-            &format!("Edge type `{edge_kind}` is not allowed on {node_type} nodes."),
-            &format!("Remove the `{edge_kind}` edge from this {node_type} node."),
-            hint,
-        )
-    }
 }
 
 #[cfg(test)]
@@ -247,8 +180,6 @@ mod tests {
 ---\n\
 id: my-node\n\
 category: service\n\
-edges:\n  references:\n    - other-node\n\
-metadata:\n  key: value\n\
 ---\n\
 # My Node\n\n\
 Body content here.\n";
@@ -258,16 +189,6 @@ Body content here.\n";
         assert_eq!(node.id, "my-node");
         assert_eq!(node.category, "service");
         assert_eq!(node.body, "# My Node\n\nBody content here.\n");
-
-        let mut expected_edges: HashMap<String, Vec<String>> = HashMap::new();
-        expected_edges.insert("references".to_string(), vec!["other-node".to_string()]);
-        assert_eq!(node.edges, expected_edges);
-
-        let mut expected_metadata: HashMap<String, String> = HashMap::new();
-        expected_metadata.insert("key".to_string(), "value".to_string());
-        assert_eq!(node.metadata, expected_metadata);
-
-        assert!(node.index.is_none());
     }
 
     #[test]
@@ -311,65 +232,6 @@ Body content here.\n";
     }
 
     #[test]
-    fn test_knowledge_node_contains_rejected() {
-        let source =
-            "---\nid: my-node\ncategory: service\nedges:\n  contains:\n    - other-node\n---\n# Body";
-
-        let err = NodeParser::parse(source)
-            .expect_err("knowledge node with contains edge should be rejected");
-        assert_eq!(err.rule, "node-parse-error");
-        assert!(
-            err.detail.contains("contains"),
-            "error should mention contains: {}",
-            err.detail
-        );
-    }
-
-    #[test]
-    fn test_index_node_parses() {
-        let source = "\
----\n\
-id: my-index\n\
-category: index\n\
-edges:\n  contains:\n    - child-node\n\
-metadata:\n  of_category: service\n\
----\n\
-# Index Body\n";
-
-        let node = NodeParser::parse(source).expect("index node should parse");
-
-        assert_eq!(node.id, "my-index");
-        assert_eq!(node.category, "index");
-        assert_eq!(node.body, "# Index Body\n");
-
-        let mut expected_edges: HashMap<String, Vec<String>> = HashMap::new();
-        expected_edges.insert("contains".to_string(), vec!["child-node".to_string()]);
-        assert_eq!(node.edges, expected_edges);
-
-        let mut expected_metadata: HashMap<String, String> = HashMap::new();
-        expected_metadata.insert("of_category".to_string(), "service".to_string());
-        assert_eq!(node.metadata, expected_metadata);
-
-        let idx = node.index.expect("index node should have index set");
-        assert_eq!(idx.of_category, "service");
-    }
-
-    #[test]
-    fn test_index_node_without_of_kind_rejected() {
-        let source =
-            "---\nid: my-index\ncategory: index\nedges:\n  contains:\n    - child-node\n---\n# Body";
-
-        let err =
-            NodeParser::parse(source).expect_err("index node without of_category should be rejected");
-        assert_eq!(err.rule, "node-parse-error");
-        assert!(
-            err.detail.contains("of_category"),
-            "error should mention of_category: {}",
-            err.detail
-        );
-    }
-
-    #[test]
     fn test_missing_closing_delimiter_error() {
         let source = "---\nid: my-node\ncategory: service\n";
 
@@ -390,24 +252,6 @@ metadata:\n  of_category: service\n\
         assert_eq!(node.id, "my-node");
         assert_eq!(node.category, "service");
         assert_eq!(node.body, "");
-    }
-
-    #[test]
-    fn test_edges_optional() {
-        let source = "---\nid: my-node\ncategory: service\n---\n# Body";
-
-        let node = NodeParser::parse(source).expect("node without edges should parse");
-        assert_eq!(node.id, "my-node");
-        assert!(node.edges.is_empty());
-    }
-
-    #[test]
-    fn test_metadata_optional() {
-        let source = "---\nid: my-node\ncategory: service\n---\n# Body";
-
-        let node = NodeParser::parse(source).expect("node without metadata should parse");
-        assert_eq!(node.id, "my-node");
-        assert!(node.metadata.is_empty());
     }
 
     #[test]

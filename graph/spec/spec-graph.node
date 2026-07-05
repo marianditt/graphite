@@ -1,22 +1,10 @@
 ---
 id: spec-graph
 category: spec
-edges:
-  references:
-    - spec-node
-    - spec-index-node
-    - spec-node-id
-    - spec-node-category
-    - spec-edge
-    - spec-schema
-    - spec-anchor
-    - spec-sidecar
-  evidence:
-    - spec-graph
 ---
 # Graph
 
-This specification introduces [edge:spec-node], [edge:spec-index-node], [edge:spec-node-id], [edge:spec-node-category], [edge:spec-edge], [edge:spec-schema], [edge:spec-anchor], and [edge:spec-sidecar].
+This specification introduces [edge:spec-node], [edge:spec-node-id], [edge:spec-node-category], [edge:spec-edge], [edge:spec-schema], [edge:spec-anchor], and [edge:spec-sidecar].
 
 ## Definition
 
@@ -28,22 +16,12 @@ A Graph SHALL consist of Nodes connected by Edges.
 
 A Graph MUST contain exactly one Root Node.
 
-A Graph MUST include every discovered Knowledge Node, Index Node, and Anchor.
+A Graph MUST include every discovered Knowledge Node and Anchor.
 
-A Graph MUST be validated before it is used for rendering or analysis.
+A Graph MUST be validated before rendering or analysis.
 
 A Graph MUST NOT contain unresolved references.
 
 The physical file structure SHALL NOT define graph relationships.
 
-## Example
-
-```
-Root
- |
-Requirement
- |
-Architecture
- |
-Evidence Anchor
-```
+[evidence:spec-graph]

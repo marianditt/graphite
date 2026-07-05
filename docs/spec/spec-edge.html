@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<head><meta charset="utf-8"><title>SPC-7 Edge — graphite</title>
+<head><meta charset="utf-8"><title>SPC-9 Edge — graphite</title>
 <style>
 
 :root {
@@ -293,11 +293,11 @@ th {
 </head>
 <body>
 <p class="brand">Graphite</p>
-<p class="node-meta"><strong>SPC-7 Edge</strong> · <a href="/graphite/spec/index.html">↑ spec</a></p>
-<h3>SPC-7 Edge</h3>
-<h4>Definition</h4>
+<p class="node-meta"><strong>SPC-9 Edge</strong> · <a href="/graphite/index.html">↑ index</a></p>
+<h1>SPC-9 Edge</h1>
+<h2>Definition</h2>
 <p>An Edge is a directed semantic relationship between Nodes.</p>
-<h4>Specification</h4>
+<h2>Specification</h2>
 <p>An Edge MUST contain:</p>
 <ul>
 <li>edge type</li>
@@ -308,14 +308,14 @@ th {
 <p>Edges MUST reference targets by Node ID.</p>
 <p>Edges MUST be explicitly authored.</p>
 <p>Implicit relationships from folders or filenames MUST NOT create Edges.</p>
-<h4>Example</h4>
+<h2>Example</h2>
 <pre><code>edges:
   verified_by:
     - checkout-test
 </code></pre>
+<p>[evidence:spec-edge]</p>
 
-<div class="evidence"><h3>Evidence</h3><ul><li><a href="https://github.com/marianditt/graphite/blob/main/graphite-core/src/lib.rs#L11"><code>graphite-core/src/lib.rs</code> line 11</a></li><li><a href="https://github.com/marianditt/graphite/blob/main/graphite-core/src/lib.rs#L57"><code>graphite-core/src/lib.rs</code> line 57</a></li></ul></div>
-<div class="backlinks"><h3>Referenced by</h3><ul><li><a href="/graphite/spec/spec-edge.html">SPC-7 Edge</a></li>
-<li><a href="/graphite/spec/spec-graph.html">SPC-8 Graph</a></li></ul></div>
+<div class="backlinks"><h3>Referenced by</h3><ul><li><a href="/graphite/spec/spec.html">SPC-2 Graphite Specification</a></li>
+<li><a href="/graphite/spec/spec-graph.html">SPC-10 Graph</a></li></ul></div>
 </body>
 </html>

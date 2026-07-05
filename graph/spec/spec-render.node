@@ -1,9 +1,6 @@
 ---
 id: spec-render
 category: spec
-edges:
-  evidence:
-    - spec-render
 ---
 # Render
 
@@ -30,3 +27,5 @@ The output SHALL be a self-contained static site.
 ```bash
 graphite render --output docs/
 ```
+
+[evidence:spec-render]

@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<head><meta charset="utf-8"><title>SPC-8 Graph — graphite</title>
+<head><meta charset="utf-8"><title>SPC-10 Graph — graphite</title>
 <style>
 
 :root {
@@ -293,29 +293,20 @@ th {
 </head>
 <body>
 <p class="brand">Graphite</p>
-<p class="node-meta"><strong>SPC-8 Graph</strong> · <a href="/graphite/spec/index.html">↑ spec</a></p>
-<h3>SPC-8 Graph</h3>
-<p>This specification introduces <a href="/graphite/spec/spec-node.html">SPC-13 Node</a>, <a href="/graphite/spec/spec-index-node.html">SPC-10 Index Node</a>, <a href="/graphite/spec/spec-node-id.html">SPC-15 Node ID</a>, <a href="/graphite/spec/spec-node-category.html">SPC-14 Node Category</a>, <a href="/graphite/spec/spec-edge.html">SPC-7 Edge</a>, <a href="/graphite/spec/spec-schema.html">SPC-18 Schema</a>, <a href="/graphite/spec/spec-anchor.html">SPC-1 Anchor</a>, and <a href="/graphite/spec/spec-sidecar.html">SPC-19 Sidecar</a>.</p>
-<h4>Definition</h4>
+<p class="node-meta"><strong>SPC-10 Graph</strong> · <a href="/graphite/index.html">↑ index</a></p>
+<h1>SPC-10 Graph</h1>
+<p>This specification introduces <a href="/graphite/spec/spec-node.html">SPC-15 Node</a>, <a href="/graphite/spec/spec-node-id.html">SPC-17 Node ID</a>, <a href="/graphite/spec/spec-node-category.html">SPC-16 Node Category</a>, <a href="/graphite/spec/spec-edge.html">SPC-9 Edge</a>, <a href="/graphite/spec/spec-schema.html">SPC-20 Schema</a>, <a href="/graphite/spec/spec-anchor.html">SPC-3 Anchor</a>, and <a href="/graphite/spec/spec-sidecar.html">SPC-21 Sidecar</a>.</p>
+<h2>Definition</h2>
 <p>A Graph is the complete directed knowledge model of a Graphite project.</p>
-<h4>Specification</h4>
+<h2>Specification</h2>
 <p>A Graph SHALL consist of Nodes connected by Edges.</p>
 <p>A Graph MUST contain exactly one Root Node.</p>
-<p>A Graph MUST include every discovered Knowledge Node, Index Node, and Anchor.</p>
-<p>A Graph MUST be validated before it is used for rendering or analysis.</p>
+<p>A Graph MUST include every discovered Knowledge Node and Anchor.</p>
+<p>A Graph MUST be validated before rendering or analysis.</p>
 <p>A Graph MUST NOT contain unresolved references.</p>
 <p>The physical file structure SHALL NOT define graph relationships.</p>
-<h4>Example</h4>
-<pre><code>Root
- |
-Requirement
- |
-Architecture
- |
-Evidence Anchor
-</code></pre>
+<p>[evidence:spec-graph]</p>
 
-<div class="evidence"><h3>Evidence</h3><ul><li><a href="https://github.com/marianditt/graphite/blob/main/graphite-core/src/lib.rs#L96"><code>graphite-core/src/lib.rs</code> line 96</a></li><li><a href="https://github.com/marianditt/graphite/blob/main/graphite-core/src/lib.rs#L105"><code>graphite-core/src/lib.rs</code> line 105</a></li><li><a href="https://github.com/marianditt/graphite/blob/main/graphite-core/src/lib.rs#L113"><code>graphite-core/src/lib.rs</code> line 113</a></li></ul></div>
-<div class="backlinks"><h3>Referenced by</h3><ul><li><a href="/graphite/spec/spec-graph.html">SPC-8 Graph</a></li></ul></div>
+<div class="backlinks"><h3>Referenced by</h3><ul><li><a href="/graphite/spec/spec.html">SPC-2 Graphite Specification</a></li></ul></div>
 </body>
 </html>

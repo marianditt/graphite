@@ -1,9 +1,6 @@
 ---
 id: spec-comments
 category: spec
-edges:
-  evidence:
-    - spec-comments
 ---
 # Comments
 
@@ -31,3 +28,5 @@ The scanner SHALL collect all occurrences and their line numbers.
 // @graphite:evidence auth-service
 fn authenticate() {}
 ```
+
+[evidence:spec-comments]

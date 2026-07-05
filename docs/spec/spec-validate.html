@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<head><meta charset="utf-8"><title>SPC-21 Validate — graphite</title>
+<head><meta charset="utf-8"><title>SPC-23 Validate — graphite</title>
 <style>
 
 :root {
@@ -293,11 +293,11 @@ th {
 </head>
 <body>
 <p class="brand">Graphite</p>
-<p class="node-meta"><strong>SPC-21 Validate</strong> · <a href="/graphite/spec/index.html">↑ spec</a></p>
-<h3>SPC-21 Validate</h3>
-<h4>Definition</h4>
+<p class="node-meta"><strong>SPC-23 Validate</strong> · <a href="/graphite/index.html">↑ index</a></p>
+<h1>SPC-23 Validate</h1>
+<h2>Definition</h2>
 <p>The <code>validate</code> command checks a Graph for structural and semantic correctness.</p>
-<h4>Specification</h4>
+<h2>Specification</h2>
 <p><code>graphite validate</code> SHALL run the full validation suite:</p>
 <ul>
 <li>reachability: every node reachable from root</li>
@@ -309,11 +309,11 @@ th {
 <li>node size: <code>.node</code> files ≤ configured limit (default 1000 chars)</li>
 </ul>
 <p>Diagnostics include rule, severity, detail, fix, hint. Errors block rendering.</p>
-<h4>Example</h4>
+<h2>Example</h2>
 <pre><code class="language-bash">graphite validate
 </code></pre>
+<p>[evidence:spec-validate]</p>
 
-<div class="evidence"><h3>Evidence</h3><ul><li><a href="https://github.com/marianditt/graphite/blob/main/graphite-cli/src/main.rs#L334"><code>graphite-cli/src/main.rs</code> line 334</a></li><li><a href="https://github.com/marianditt/graphite/blob/main/graphite-core/src/validation.rs#L6"><code>graphite-core/src/validation.rs</code> line 6</a></li><li><a href="https://github.com/marianditt/graphite/blob/main/graphite-core/src/validation.rs#L12"><code>graphite-core/src/validation.rs</code> line 12</a></li></ul></div>
-<div class="backlinks"><h3>Referenced by</h3><ul><li><a href="/graphite/spec/spec-validate.html">SPC-21 Validate</a></li></ul></div>
+<div class="backlinks"><h3>Referenced by</h3><ul><li><a href="/graphite/spec/spec.html">SPC-2 Graphite Specification</a></li></ul></div>
 </body>
 </html>

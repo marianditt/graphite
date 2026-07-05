@@ -1,9 +1,6 @@
 ---
 id: spec-init
 category: spec
-edges:
-  evidence:
-    - spec-init
 ---
 # Init
 
@@ -28,3 +25,5 @@ Running `init` on an existing project SHALL be safe (no overwrite without `--for
 ```bash
 graphite init
 ```
+
+[evidence:spec-init]

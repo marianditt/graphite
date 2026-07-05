@@ -1,9 +1,6 @@
 ---
 id: spec-header
 category: spec
-edges:
-  evidence:
-    - spec-header
 ---
 # Header
 
@@ -36,3 +33,5 @@ edges:
     - other-node
 ---
 ```
+
+[evidence:spec-header]

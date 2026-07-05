@@ -1,9 +1,6 @@
 ---
 id: spec-edge
 category: spec
-edges:
-  evidence:
-    - spec-edge
 ---
 # Edge
 
@@ -34,3 +31,5 @@ edges:
   verified_by:
     - checkout-test
 ```
+
+[evidence:spec-edge]

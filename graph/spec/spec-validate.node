@@ -1,9 +1,6 @@
 ---
 id: spec-validate
 category: spec
-edges:
-  evidence:
-    - spec-validate
 ---
 # Validate
 
@@ -30,3 +27,5 @@ Diagnostics include rule, severity, detail, fix, hint. Errors block rendering.
 ```bash
 graphite validate
 ```
+
+[evidence:spec-validate]

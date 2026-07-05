@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<head><meta charset="utf-8"><title>SPC-18 Schema — graphite</title>
+<head><meta charset="utf-8"><title>SPC-20 Schema — graphite</title>
 <style>
 
 :root {
@@ -293,11 +293,11 @@ th {
 </head>
 <body>
 <p class="brand">Graphite</p>
-<p class="node-meta"><strong>SPC-18 Schema</strong> · <a href="/graphite/spec/index.html">↑ spec</a></p>
-<h3>SPC-18 Schema</h3>
-<h4>Definition</h4>
+<p class="node-meta"><strong>SPC-20 Schema</strong> · <a href="/graphite/index.html">↑ index</a></p>
+<h1>SPC-20 Schema</h1>
+<h2>Definition</h2>
 <p>A Schema defines the valid structure of a Graph.</p>
-<h4>Specification</h4>
+<h2>Specification</h2>
 <p>A Schema SHALL define:</p>
 <ul>
 <li>available Node Categories</li>
@@ -306,7 +306,7 @@ th {
 </ul>
 <p>The compiler MUST validate Nodes and Edges against the active Schema.</p>
 <p>A Graph violating its Schema MUST be rejected.</p>
-<h4>Example</h4>
+<h2>Example</h2>
 <pre><code>categories:
   requirement:
 
@@ -315,9 +315,9 @@ edges:
     from: requirement
     to: test
 </code></pre>
+<p>[evidence:spec-schema]</p>
 
-<div class="evidence"><h3>Evidence</h3><ul><li><a href="https://github.com/marianditt/graphite/blob/main/graphite-core/src/lib.rs#L40"><code>graphite-core/src/lib.rs</code> line 40</a></li><li><a href="https://github.com/marianditt/graphite/blob/main/graphite-core/src/schema.rs#L9"><code>graphite-core/src/schema.rs</code> line 9</a></li></ul></div>
-<div class="backlinks"><h3>Referenced by</h3><ul><li><a href="/graphite/spec/spec-schema.html">SPC-18 Schema</a></li>
-<li><a href="/graphite/spec/spec-graph.html">SPC-8 Graph</a></li></ul></div>
+<div class="backlinks"><h3>Referenced by</h3><ul><li><a href="/graphite/spec/spec.html">SPC-2 Graphite Specification</a></li>
+<li><a href="/graphite/spec/spec-graph.html">SPC-10 Graph</a></li></ul></div>
 </body>
 </html>

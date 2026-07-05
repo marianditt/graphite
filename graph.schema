@@ -1,7 +1,5 @@
 categories:
   spec: { key: SPC }
 edges:
-  contains: { from: index, to: any }
   part_of: { from: any, to: any }
   references: { from: any, to: any }
-  evidence: { from: any, to: evidence }

@@ -1,12 +1,9 @@
 ---
 id: root
-category: index
-metadata:
-  of_category: general
-edges:
-  contains:
-    - spec
+category: spec
 ---
 # Graphite
 
 A compiled knowledge graph for software engineering.
+
+[edge:spec]

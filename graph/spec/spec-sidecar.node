@@ -1,9 +1,6 @@
 ---
 id: spec-sidecar
 category: spec
-edges:
-  evidence:
-    - spec-sidecar
 ---
 # Sidecar
 
@@ -33,3 +30,5 @@ Sidecars MUST NOT change the original artifact content.
   ]
 }
 ```
+
+[evidence:spec-sidecar]

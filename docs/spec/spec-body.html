@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<head><meta charset="utf-8"><title>SPC-2 Body — graphite</title>
+<head><meta charset="utf-8"><title>SPC-4 Body — graphite</title>
 <style>
 
 :root {
@@ -293,23 +293,23 @@ th {
 </head>
 <body>
 <p class="brand">Graphite</p>
-<p class="node-meta"><strong>SPC-2 Body</strong> · <a href="/graphite/spec/index.html">↑ spec</a></p>
-<h3>SPC-2 Body</h3>
-<h4>Definition</h4>
+<p class="node-meta"><strong>SPC-4 Body</strong> · <a href="/graphite/index.html">↑ index</a></p>
+<h1>SPC-4 Body</h1>
+<h2>Definition</h2>
 <p>A Body is the Markdown content portion of a Document.</p>
-<h4>Specification</h4>
+<h2>Specification</h2>
 <p>A Body SHALL follow the closing <code>---</code> of the frontmatter.</p>
 <p>A Body SHALL be valid CommonMark Markdown.</p>
 <p>A Body MAY contain edge references to other Nodes (syntax: left-bracket, "edge:", id, right-bracket).</p>
 <p>A Body MAY be empty.</p>
 <p>The Body SHALL be captured verbatim as written.</p>
-<h4>Example</h4>
+<h2>Example</h2>
 <pre><code># My Node
 
 This implements the related specification.
 </code></pre>
+<p>[evidence:spec-body]</p>
 
-<div class="evidence"><h3>Evidence</h3><ul><li><a href="https://github.com/marianditt/graphite/blob/main/graphite-core/src/lib.rs#L80"><code>graphite-core/src/lib.rs</code> line 80</a></li><li><a href="https://github.com/marianditt/graphite/blob/main/graphite-core/src/node_parser.rs#L19"><code>graphite-core/src/node_parser.rs</code> line 19</a></li><li><a href="https://github.com/marianditt/graphite/blob/main/graphite-core/src/node_parser.rs#L39"><code>graphite-core/src/node_parser.rs</code> line 39</a></li></ul></div>
-<div class="backlinks"><h3>Referenced by</h3><ul><li><a href="/graphite/spec/spec-body.html">SPC-2 Body</a></li></ul></div>
+<div class="backlinks"><h3>Referenced by</h3><ul><li><a href="/graphite/spec/spec.html">SPC-2 Graphite Specification</a></li></ul></div>
 </body>
 </html>

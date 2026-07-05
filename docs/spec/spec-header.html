@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<head><meta charset="utf-8"><title>SPC-9 Header — graphite</title>
+<head><meta charset="utf-8"><title>SPC-11 Header — graphite</title>
 <style>
 
 :root {
@@ -293,11 +293,11 @@ th {
 </head>
 <body>
 <p class="brand">Graphite</p>
-<p class="node-meta"><strong>SPC-9 Header</strong> · <a href="/graphite/spec/index.html">↑ spec</a></p>
-<h3>SPC-9 Header</h3>
-<h4>Definition</h4>
+<p class="node-meta"><strong>SPC-11 Header</strong> · <a href="/graphite/index.html">↑ index</a></p>
+<h1>SPC-11 Header</h1>
+<h2>Definition</h2>
 <p>A Header is the YAML frontmatter section of a Document.</p>
-<h4>Specification</h4>
+<h2>Specification</h2>
 <p>A Header SHALL be valid YAML placed between <code>---</code> delimiters.</p>
 <p>A Header MUST contain:</p>
 <ul>
@@ -310,7 +310,7 @@ th {
 <li><code>metadata</code>: additional key-value pairs</li>
 </ul>
 <p>Invalid YAML in the Header MUST produce a parse error.</p>
-<h4>Example</h4>
+<h2>Example</h2>
 <pre><code>---
 id: my-node
 category: spec
@@ -319,8 +319,8 @@ edges:
     - other-node
 ---
 </code></pre>
+<p>[evidence:spec-header]</p>
 
-<div class="evidence"><h3>Evidence</h3><ul><li><a href="https://github.com/marianditt/graphite/blob/main/graphite-core/src/lib.rs#L79"><code>graphite-core/src/lib.rs</code> line 79</a></li><li><a href="https://github.com/marianditt/graphite/blob/main/graphite-core/src/node_parser.rs#L8"><code>graphite-core/src/node_parser.rs</code> line 8</a></li><li><a href="https://github.com/marianditt/graphite/blob/main/graphite-core/src/node_parser.rs#L18"><code>graphite-core/src/node_parser.rs</code> line 18</a></li><li><a href="https://github.com/marianditt/graphite/blob/main/graphite-core/src/node_parser.rs#L38"><code>graphite-core/src/node_parser.rs</code> line 38</a></li></ul></div>
-<div class="backlinks"><h3>Referenced by</h3><ul><li><a href="/graphite/spec/spec-header.html">SPC-9 Header</a></li></ul></div>
+<div class="backlinks"><h3>Referenced by</h3><ul><li><a href="/graphite/spec/spec.html">SPC-2 Graphite Specification</a></li></ul></div>
 </body>
 </html>

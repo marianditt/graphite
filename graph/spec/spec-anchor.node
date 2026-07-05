@@ -1,9 +1,6 @@
 ---
 id: spec-anchor
 category: spec
-edges:
-  evidence:
-    - spec-anchor
 ---
 # Anchor
 
@@ -30,3 +27,5 @@ Anchors MAY exist in any supported text artifact.
 
 validateCheckout()
 ```
+
+[evidence:spec-anchor]

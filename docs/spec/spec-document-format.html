@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<head><meta charset="utf-8"><title>SPC-6 Document Format — graphite</title>
+<head><meta charset="utf-8"><title>SPC-8 Document Format — graphite</title>
 <style>
 
 :root {
@@ -293,17 +293,17 @@ th {
 </head>
 <body>
 <p class="brand">Graphite</p>
-<p class="node-meta"><strong>SPC-6 Document Format</strong> · <a href="/graphite/spec/index.html">↑ spec</a></p>
-<h3>SPC-6 Document Format</h3>
-<h4>Definition</h4>
+<p class="node-meta"><strong>SPC-8 Document Format</strong> · <a href="/graphite/index.html">↑ index</a></p>
+<h1>SPC-8 Document Format</h1>
+<h2>Definition</h2>
 <p>A Document is the on-disk representation of a Graphite Node.</p>
-<h4>Specification</h4>
+<h2>Specification</h2>
 <p>A Document SHALL consist of a YAML frontmatter header followed by a Markdown body.</p>
 <p>The frontmatter SHALL be delimited by <code>---</code> on its own line, both before and after.</p>
 <p>The body SHALL follow the closing <code>---</code> delimiter.</p>
 <p>The frontmatter MUST contain at minimum an <code>id</code> and <code>category</code> field.</p>
 <p>The body MAY be empty.</p>
-<h4>Example</h4>
+<h2>Example</h2>
 <pre><code>---
 id: example-node
 category: spec
@@ -311,8 +311,8 @@ category: spec
 
 Body content.
 </code></pre>
+<p>[evidence:spec-document-format]</p>
 
-<div class="evidence"><h3>Evidence</h3><ul><li><a href="https://github.com/marianditt/graphite/blob/main/graphite-core/src/lib.rs#L42"><code>graphite-core/src/lib.rs</code> line 42</a></li><li><a href="https://github.com/marianditt/graphite/blob/main/graphite-core/src/node_parser.rs#L17"><code>graphite-core/src/node_parser.rs</code> line 17</a></li></ul></div>
-<div class="backlinks"><h3>Referenced by</h3><ul><li><a href="/graphite/spec/spec-document-format.html">SPC-6 Document Format</a></li></ul></div>
+<div class="backlinks"><h3>Referenced by</h3><ul><li><a href="/graphite/spec/spec.html">SPC-2 Graphite Specification</a></li></ul></div>
 </body>
 </html>

@@ -4,7 +4,7 @@ use graphite_core::schema::{DEFAULT_SCHEMA_YAML, SchemaParser};
 fn test_default_schema_parses() {
     let schema = SchemaParser::parse(DEFAULT_SCHEMA_YAML).expect("default schema should parse");
     assert_eq!(schema.categories.len(), 7, "default schema should have 7 categories");
-    assert_eq!(schema.edges.len(), 6, "default schema should have 6 edges");
+    assert_eq!(schema.edges.len(), 5, "default schema should have 5 edges");
 }
 
 #[test]
@@ -89,26 +89,19 @@ fn test_default_schema_contains_expected_edges() {
         names.contains(&"references"),
         "default schema should contain references edge"
     );
-    assert!(
-        names.contains(&"evidence"),
-        "default schema should contain evidence edge"
-    );
 }
 
 #[test]
 fn test_builtin_categories_allowed() {
-    // "evidence", "index", and "any" are always valid even without declaration
     let yaml = "\
 categories:
   requirement: { key: REQ }
 edges:
-  to_evidence: { from: requirement, to: evidence }
-  from_index: { from: index, to: requirement }
   wildcard: { from: any, to: any }
 ";
-    let schema = SchemaParser::parse(yaml).expect("built-ins evidence, index, any should be valid");
+    let schema = SchemaParser::parse(yaml).expect("built-in 'any' should be valid");
     assert_eq!(schema.categories.len(), 1, "only requirement should be in categories");
-    assert_eq!(schema.edges.len(), 3, "all 3 edges should parse");
+    assert_eq!(schema.edges.len(), 1, "wildcard edge should parse");
 }
 
 #[test]

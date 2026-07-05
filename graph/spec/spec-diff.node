@@ -1,9 +1,6 @@
 ---
 id: spec-diff
 category: spec
-edges:
-  evidence:
-    - spec-diff
 ---
 # Diff
 
@@ -28,3 +25,5 @@ It SHALL default to comparing against HEAD.
 ```bash
 graphite diff HEAD~3
 ```
+
+[evidence:spec-diff]

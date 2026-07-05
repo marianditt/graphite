@@ -65,14 +65,6 @@ pub struct EdgeDef {
     pub to: String,
 }
 
-// @graphite:evidence spec-index-node
-/// An index indicating a node belongs to a specific category.
-#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
-pub struct Index {
-    #[serde(alias = "of_kind")]
-    pub of_category: String,
-}
-
 // @graphite:evidence spec-node
 // @graphite:evidence spec-node-id
 // @graphite:evidence spec-node-category
@@ -83,12 +75,8 @@ pub struct Index {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Node {
     pub id: String,
-    #[serde(alias = "kind")]
     pub category: String,
     pub body: String,
-    pub edges: HashMap<String, Vec<String>>,
-    pub metadata: HashMap<String, String>,
-    pub index: Option<Index>,
     #[serde(default)]
     pub content_len: usize,
 }

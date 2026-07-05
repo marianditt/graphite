@@ -1,9 +1,6 @@
 ---
 id: spec-schema
 category: spec
-edges:
-  evidence:
-    - spec-schema
 ---
 # Schema
 
@@ -34,3 +31,5 @@ edges:
     from: requirement
     to: test
 ```
+
+[evidence:spec-schema]

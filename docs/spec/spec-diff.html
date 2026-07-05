@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<head><meta charset="utf-8"><title>SPC-5 Diff — graphite</title>
+<head><meta charset="utf-8"><title>SPC-7 Diff — graphite</title>
 <style>
 
 :root {
@@ -293,21 +293,21 @@ th {
 </head>
 <body>
 <p class="brand">Graphite</p>
-<p class="node-meta"><strong>SPC-5 Diff</strong> · <a href="/graphite/spec/index.html">↑ spec</a></p>
-<h3>SPC-5 Diff</h3>
-<h4>Definition</h4>
+<p class="node-meta"><strong>SPC-7 Diff</strong> · <a href="/graphite/index.html">↑ index</a></p>
+<h1>SPC-7 Diff</h1>
+<h2>Definition</h2>
 <p>The <code>diff</code> command shows knowledge-level changes since a git reference.</p>
-<h4>Specification</h4>
+<h2>Specification</h2>
 <p><code>graphite diff</code> SHALL compare the current Graph state against a specified git ref.</p>
 <p>It SHALL report added, removed, and modified Nodes.</p>
 <p>It SHALL report added and removed Edges.</p>
 <p>The output SHALL be formatted as JSON when <code>--json</code> is passed.</p>
 <p>It SHALL default to comparing against HEAD.</p>
-<h4>Example</h4>
+<h2>Example</h2>
 <pre><code class="language-bash">graphite diff HEAD~3
 </code></pre>
+<p>[evidence:spec-diff]</p>
 
-<div class="evidence"><h3>Evidence</h3><ul><li><a href="https://github.com/marianditt/graphite/blob/main/graphite-cli/src/main.rs#L679"><code>graphite-cli/src/main.rs</code> line 679</a></li></ul></div>
-<div class="backlinks"><h3>Referenced by</h3><ul><li><a href="/graphite/spec/spec-diff.html">SPC-5 Diff</a></li></ul></div>
+<div class="backlinks"><h3>Referenced by</h3><ul><li><a href="/graphite/spec/spec.html">SPC-2 Graphite Specification</a></li></ul></div>
 </body>
 </html>

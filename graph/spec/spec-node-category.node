@@ -1,9 +1,6 @@
 ---
 id: spec-node-category
 category: spec
-edges:
-  evidence:
-    - spec-node-category
 ---
 # Node Category
 
@@ -26,3 +23,5 @@ A Category SHOULD describe the purpose of the knowledge, not its storage locatio
 ```
 category: requirement
 ```
+
+[evidence:spec-node-category]

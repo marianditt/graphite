@@ -1,9 +1,6 @@
 ---
 id: spec-plan
 category: spec
-edges:
-  evidence:
-    - spec-plan
 ---
 # Plan
 
@@ -26,3 +23,5 @@ The output SHALL be formatted as JSON.
 ```bash
 graphite plan checkout-service
 ```
+
+[evidence:spec-plan]

@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<head><meta charset="utf-8"><title>SPC-17 Render — graphite</title>
+<head><meta charset="utf-8"><title>SPC-19 Render — graphite</title>
 <style>
 
 :root {
@@ -293,22 +293,22 @@ th {
 </head>
 <body>
 <p class="brand">Graphite</p>
-<p class="node-meta"><strong>SPC-17 Render</strong> · <a href="/graphite/spec/index.html">↑ spec</a></p>
-<h3>SPC-17 Render</h3>
-<h4>Definition</h4>
+<p class="node-meta"><strong>SPC-19 Render</strong> · <a href="/graphite/index.html">↑ index</a></p>
+<h1>SPC-19 Render</h1>
+<h2>Definition</h2>
 <p>The <code>render</code> command generates static HTML documentation from the Graph.</p>
-<h4>Specification</h4>
+<h2>Specification</h2>
 <p><code>graphite render</code> SHALL traverse the Graph and generate HTML pages.</p>
 <p>It SHALL produce one page per Node and one index page per Node Category.</p>
 <p>Pages SHALL include: the Node body rendered as HTML, evidence anchor links, edge navigation, and breadcrumb trails.</p>
 <p>An optional <code>--output</code> flag SHALL specify the output directory.</p>
 <p>An optional <code>--style</code> flag SHALL allow custom CSS.</p>
 <p>The output SHALL be a self-contained static site.</p>
-<h4>Example</h4>
+<h2>Example</h2>
 <pre><code class="language-bash">graphite render --output docs/
 </code></pre>
+<p>[evidence:spec-render]</p>
 
-<div class="evidence"><h3>Evidence</h3><ul><li><a href="https://github.com/marianditt/graphite/blob/main/graphite-cli/src/main.rs#L1103"><code>graphite-cli/src/main.rs</code> line 1103</a></li><li><a href="https://github.com/marianditt/graphite/blob/main/graphite-render/src/lib.rs#L29"><code>graphite-render/src/lib.rs</code> line 29</a></li></ul></div>
-<div class="backlinks"><h3>Referenced by</h3><ul><li><a href="/graphite/spec/spec-render.html">SPC-17 Render</a></li></ul></div>
+<div class="backlinks"><h3>Referenced by</h3><ul><li><a href="/graphite/spec/spec.html">SPC-2 Graphite Specification</a></li></ul></div>
 </body>
 </html>

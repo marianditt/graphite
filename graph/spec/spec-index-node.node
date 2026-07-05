@@ -1,9 +1,6 @@
 ---
 id: spec-index-node
 category: spec
-edges:
-  evidence:
-    - spec-index-node
 ---
 # Index Node
 

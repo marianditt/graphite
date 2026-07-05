@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<head><meta charset="utf-8"><title>SPC-12 Markdown Extension — graphite</title>
+<head><meta charset="utf-8"><title>SPC-14 Markdown Extension — graphite</title>
 <style>
 
 :root {
@@ -293,17 +293,17 @@ th {
 </head>
 <body>
 <p class="brand">Graphite</p>
-<p class="node-meta"><strong>SPC-12 Markdown Extension</strong> · <a href="/graphite/spec/index.html">↑ spec</a></p>
-<h3>SPC-12 Markdown Extension</h3>
-<h4>Definition</h4>
+<p class="node-meta"><strong>SPC-14 Markdown Extension</strong> · <a href="/graphite/index.html">↑ index</a></p>
+<h1>SPC-14 Markdown Extension</h1>
+<h2>Definition</h2>
 <p>A Markdown Extension is additional syntax beyond standard CommonMark used in Graphite Documents.</p>
-<h4>Specification</h4>
+<h2>Specification</h2>
 <p>The edge reference syntax SHALL use the form: left-bracket, "edge:", ID, right-bracket.</p>
 <p>The ID MUST be a valid Node ID in the Graph.</p>
 <p>References SHALL be validated: every edge reference in the body MUST have a corresponding edge declaration in the frontmatter.</p>
 <p>A dangling reference (body mentions an edge ID with no declaration) MUST produce an error.</p>
 <p>An edge declared in frontmatter but not used in the body SHOULD produce a warning.</p>
-<h4>Example</h4>
+<h2>Example</h2>
 <pre><code>Body text referencing other-node.
 </code></pre>
 <p>Corresponding frontmatter:</p>
@@ -311,8 +311,8 @@ th {
   references:
     - other-node
 </code></pre>
+<p>[evidence:spec-markdown-extension]</p>
 
-<div class="evidence"><h3>Evidence</h3><ul><li><a href="https://github.com/marianditt/graphite/blob/main/graphite-core/src/lib.rs#L81"><code>graphite-core/src/lib.rs</code> line 81</a></li><li><a href="https://github.com/marianditt/graphite/blob/main/graphite-core/src/node_parser.rs#L20"><code>graphite-core/src/node_parser.rs</code> line 20</a></li><li><a href="https://github.com/marianditt/graphite/blob/main/graphite-core/src/validation.rs#L644"><code>graphite-core/src/validation.rs</code> line 644</a></li></ul></div>
-<div class="backlinks"><h3>Referenced by</h3><ul><li><a href="/graphite/spec/spec-markdown-extension.html">SPC-12 Markdown Extension</a></li></ul></div>
+<div class="backlinks"><h3>Referenced by</h3><ul><li><a href="/graphite/spec/spec.html">SPC-2 Graphite Specification</a></li></ul></div>
 </body>
 </html>

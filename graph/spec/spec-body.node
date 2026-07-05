@@ -1,9 +1,6 @@
 ---
 id: spec-body
 category: spec
-edges:
-  evidence:
-    - spec-body
 ---
 # Body
 
@@ -30,3 +27,5 @@ The Body SHALL be captured verbatim as written.
 
 This implements the related specification.
 ```
+
+[evidence:spec-body]

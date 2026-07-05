@@ -1,9 +1,6 @@
 ---
 id: spec-stats
 category: spec
-edges:
-  evidence:
-    - spec-stats
 ---
 # Stats
 
@@ -28,3 +25,5 @@ The output SHALL be human-readable by default and formatted as JSON when `--json
 ```bash
 graphite stats --json
 ```
+
+[evidence:spec-stats]

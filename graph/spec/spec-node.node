@@ -1,9 +1,6 @@
 ---
 id: spec-node
 category: spec
-edges:
-  evidence:
-    - spec-node
 ---
 # Node
 
@@ -37,3 +34,5 @@ category: requirement
 
 Users can pay during checkout.
 ```
+
+[evidence:spec-node]

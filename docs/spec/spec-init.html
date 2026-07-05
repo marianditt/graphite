@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<head><meta charset="utf-8"><title>SPC-11 Init — graphite</title>
+<head><meta charset="utf-8"><title>SPC-13 Init — graphite</title>
 <style>
 
 :root {
@@ -293,21 +293,21 @@ th {
 </head>
 <body>
 <p class="brand">Graphite</p>
-<p class="node-meta"><strong>SPC-11 Init</strong> · <a href="/graphite/spec/index.html">↑ spec</a></p>
-<h3>SPC-11 Init</h3>
-<h4>Definition</h4>
+<p class="node-meta"><strong>SPC-13 Init</strong> · <a href="/graphite/index.html">↑ index</a></p>
+<h1>SPC-13 Init</h1>
+<h2>Definition</h2>
 <p>The <code>init</code> command creates a new Graphite project scaffold.</p>
-<h4>Specification</h4>
+<h2>Specification</h2>
 <p><code>graphite init</code> SHALL create the initial graph directory structure.</p>
 <p>It SHALL create a <code>graph/</code> directory with a <code>root/</code> subdirectory and a root node.</p>
 <p>It SHALL write a default <code>graph.schema</code> file.</p>
 <p>It SHALL create a <code>graphite.yaml</code> configuration file if one does not exist.</p>
 <p>Running <code>init</code> on an existing project SHALL be safe (no overwrite without <code>--force</code>).</p>
-<h4>Example</h4>
+<h2>Example</h2>
 <pre><code class="language-bash">graphite init
 </code></pre>
+<p>[evidence:spec-init]</p>
 
-<div class="evidence"><h3>Evidence</h3><ul><li><a href="https://github.com/marianditt/graphite/blob/main/graphite-cli/src/main.rs#L458"><code>graphite-cli/src/main.rs</code> line 458</a></li></ul></div>
-<div class="backlinks"><h3>Referenced by</h3><ul><li><a href="/graphite/spec/spec-init.html">SPC-11 Init</a></li></ul></div>
+<div class="backlinks"><h3>Referenced by</h3><ul><li><a href="/graphite/spec/spec.html">SPC-2 Graphite Specification</a></li></ul></div>
 </body>
 </html>

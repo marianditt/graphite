@@ -1,9 +1,6 @@
 ---
 id: spec-markdown-extension
 category: spec
-edges:
-  evidence:
-    - spec-markdown-extension
 ---
 # Markdown Extension
 
@@ -36,3 +33,5 @@ edges:
   references:
     - other-node
 ```
+
+[evidence:spec-markdown-extension]

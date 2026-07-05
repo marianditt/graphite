@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<head><meta charset="utf-8"><title>SPC-15 Node ID — graphite</title>
+<head><meta charset="utf-8"><title>SPC-17 Node ID — graphite</title>
 <style>
 
 :root {
@@ -293,11 +293,11 @@ th {
 </head>
 <body>
 <p class="brand">Graphite</p>
-<p class="node-meta"><strong>SPC-15 Node ID</strong> · <a href="/graphite/spec/index.html">↑ spec</a></p>
-<h3>SPC-15 Node ID</h3>
-<h4>Definition</h4>
+<p class="node-meta"><strong>SPC-17 Node ID</strong> · <a href="/graphite/index.html">↑ index</a></p>
+<h1>SPC-17 Node ID</h1>
+<h2>Definition</h2>
 <p>A Node ID uniquely identifies a Node.</p>
-<h4>Specification</h4>
+<h2>Specification</h2>
 <p>Every Node MUST define exactly one Node ID.</p>
 <p>A Node ID MUST be globally unique inside a Graph.</p>
 <p>A Node ID MUST NOT depend on:</p>
@@ -308,12 +308,12 @@ th {
 </ul>
 <p>References between Nodes SHALL use Node IDs.</p>
 <p>Duplicate Node IDs MUST fail validation.</p>
-<h4>Example</h4>
+<h2>Example</h2>
 <pre><code>id: payment-authorization
 </code></pre>
+<p>[evidence:spec-node-id]</p>
 
-<div class="evidence"><h3>Evidence</h3><ul><li><a href="https://github.com/marianditt/graphite/blob/main/graphite-core/src/lib.rs#L77"><code>graphite-core/src/lib.rs</code> line 77</a></li></ul></div>
-<div class="backlinks"><h3>Referenced by</h3><ul><li><a href="/graphite/spec/spec-node-id.html">SPC-15 Node ID</a></li>
-<li><a href="/graphite/spec/spec-graph.html">SPC-8 Graph</a></li></ul></div>
+<div class="backlinks"><h3>Referenced by</h3><ul><li><a href="/graphite/spec/spec.html">SPC-2 Graphite Specification</a></li>
+<li><a href="/graphite/spec/spec-graph.html">SPC-10 Graph</a></li></ul></div>
 </body>
 </html>

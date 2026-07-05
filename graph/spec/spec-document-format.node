@@ -1,9 +1,6 @@
 ---
 id: spec-document-format
 category: spec
-edges:
-  evidence:
-    - spec-document-format
 ---
 # Document Format
 
@@ -33,3 +30,5 @@ category: spec
 
 Body content.
 ```
+
+[evidence:spec-document-format]

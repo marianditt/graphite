@@ -4,23 +4,10 @@ use graphite_core::*;
 
 #[test]
 fn test_node_serde_roundtrip() {
-    let mut edges: HashMap<String, Vec<String>> = HashMap::new();
-    edges.insert("depends_on".to_string(), vec!["node_b".to_string()]);
-
-    let mut metadata: HashMap<String, String> = HashMap::new();
-    metadata.insert("source".to_string(), "test".to_string());
-
-    let index = Index {
-        of_category: "function".to_string(),
-    };
-
     let node = Node {
         id: "node_a".to_string(),
         category: "function".to_string(),
         body: "pub fn hello() {}".to_string(),
-        edges,
-        metadata,
-        index: Some(index),
         content_len: 22,
     };
 

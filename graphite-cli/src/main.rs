@@ -233,7 +233,7 @@ fn collect_node_files_inner(
     }
 
     let ext = path.extension().and_then(|e| e.to_str());
-    if ext != Some("node") && ext != Some("index") {
+    if ext != Some("node") {
         return;
     }
 
@@ -390,31 +390,8 @@ fn cmd_validate(
     false
 }
 
-fn check_compatibility(graph: &Graph, compat: Option<&str>) -> Vec<Diagnostic> {
-    let mut diagnostics = Vec::new();
-    if compat != Some("0.1.0") {
-        return diagnostics;
-    }
-
-    for node in graph.nodes.values() {
-        if node.edges.contains_key("evidence") {
-            diagnostics.push(Diagnostic {
-                rule: "compat-0.1.0".into(),
-                severity: Severity::Warning,
-                node_id: Some(node.id.clone()),
-                file: None,
-                detail: format!(
-                    "Node '{}' uses 'evidence' edges, which graphite 0.1.0 does not validate correctly.",
-                    node.id
-                ),
-                fix: "Use the local CLI wrapper (current repo version) for accurate evidence validation, or upgrade the installed binary.".into(),
-                example: None,
-                hint: "0.1.0 uses a fixed built-in schema path that misses newer edge types.".into(),
-            });
-        }
-    }
-
-    diagnostics
+fn check_compatibility(_graph: &Graph, _compat: Option<&str>) -> Vec<Diagnostic> {
+    Vec::new()
 }
 
 fn output_diagnostics(diags: &[Diagnostic], focus: Option<&str>, first: bool, json: bool) {
@@ -469,7 +446,7 @@ fn cmd_init(path: &str, force: bool) {
     }
 
     let dirs = [
-        "graph/root",
+        "graph/spec",
         "graph/requirement",
         "graph/adr",
         "graph/service",
@@ -485,182 +462,67 @@ fn cmd_init(path: &str, force: bool) {
     let schema_path = root.join("graph.schema");
     let _ = fs::write(&schema_path, DEFAULT_SCHEMA_YAML);
 
-    // root/root.node
     write_node(
-        &graph_dir.join("root/root.node"),
+        &graph_dir.join("spec/root.node"),
         "root",
-        "index",
-        &[(
-            "contains",
-            &[
-                "requirement",
-                "adr",
-                "service",
-                "test",
-                "compliance",
-                "runbook",
-                "infra",
-            ],
-        )],
-        "# Graphite\n\nA compiled knowledge graph for software engineering.",
-        Some("general"),
-    );
-
-    // requirement/requirement.index
-    write_node(
-        &graph_dir.join("requirement/requirement.index"),
-        "requirement",
-        "index",
-        &[("contains", &["compiler-requirement"])],
-        "# Requirement Index",
-        Some("requirement"),
+        "spec",
+        "# Graphite\n\nA compiled knowledge graph for software engineering.\n\n[edge:compiler-requirement] [edge:compiler]",
     );
 
     write_node(
         &graph_dir.join("requirement/compiler-requirement.node"),
         "compiler-requirement",
         "requirement",
-        &[],
-        "# Compiler Requirement\n\nThe compiler must parse .node files, validate the graph, resolve evidence anchors, and render HTML documentation.",
-        None,
-    );
-
-    // adr/adr.index
-    write_node(
-        &graph_dir.join("adr/adr.index"),
-        "adr",
-        "index",
-        &[("contains", &["compiler-pipeline"])],
-        "# Architecture Decision Records",
-        Some("adr"),
+        "# Compiler Requirement\n\nThe compiler must parse .node files, validate the graph, resolve evidence anchors, and render HTML documentation.\n\n[edge:compiler-pipeline] [edge:compiler]",
     );
 
     write_node(
         &graph_dir.join("adr/compiler-pipeline.node"),
         "compiler-pipeline",
         "adr",
-        &[("relates_to", &["compiler-requirement"])],
         "# Compiler Pipeline\n\nThe compiler pipeline has four stages:\n\n1. **Parse**: Read .node files into a Graph\n2. **Validate**: Run structural checks\n3. **Resolve**: Match evidence anchors to source\n4. **Render**: Generate static HTML\n\nRelated: [edge:compiler-requirement]",
-        None,
-    );
-
-    // service/service.index
-    write_node(
-        &graph_dir.join("service/service.index"),
-        "service",
-        "index",
-        &[("contains", &["compiler"])],
-        "# Service Index",
-        Some("service"),
     );
 
     write_node(
         &graph_dir.join("service/compiler.node"),
         "compiler",
         "service",
-        &[],
         "# Compiler\n\nA Rust CLI that implements the graphite compiler pipeline.",
-        None,
-    );
-
-    // test/test.index
-    write_node(
-        &graph_dir.join("test/test.index"),
-        "test",
-        "index",
-        &[("contains", &["compiler-tests"])],
-        "# Test Index",
-        Some("test"),
     );
 
     write_node(
         &graph_dir.join("test/compiler-tests.node"),
         "compiler-tests",
         "test",
-        &[],
         "# Compiler Tests\n\nTests for the graphite compiler pipeline.",
-        None,
-    );
-
-    write_node(
-        &graph_dir.join("compliance/compliance.index"),
-        "compliance",
-        "index",
-        &[("contains", &["traceability-policy"])],
-        "# Compliance Index",
-        Some("compliance"),
     );
 
     write_node(
         &graph_dir.join("compliance/traceability-policy.node"),
         "traceability-policy",
         "compliance",
-        &[],
         "# Traceability Policy\n\nRequirements should be linked to implementation, tests, and evidence.",
-        None,
-    );
-
-    write_node(
-        &graph_dir.join("runbook/runbook.index"),
-        "runbook",
-        "index",
-        &[("contains", &["validation-runbook"])],
-        "# Runbook Index",
-        Some("runbook"),
     );
 
     write_node(
         &graph_dir.join("runbook/validation-runbook.node"),
         "validation-runbook",
         "runbook",
-        &[],
         "# Validation Runbook\n\nRun graphite validate before shipping graph changes.",
-        None,
-    );
-
-    write_node(
-        &graph_dir.join("infra/infra.index"),
-        "infra",
-        "index",
-        &[("contains", &["distribution-pipeline"])],
-        "# Infra Index",
-        Some("infra"),
     );
 
     write_node(
         &graph_dir.join("infra/distribution-pipeline.node"),
         "distribution-pipeline",
         "infra",
-        &[],
         "# Distribution Pipeline\n\nThe package and binary distribution path for graphite.",
-        None,
     );
 
     println!("✓ created Graphite project at '{}'", root.display());
 }
 
-fn write_node(
-    path: &Path,
-    id: &str,
-    category: &str,
-    edges: &[(&str, &[&str])],
-    body: &str,
-    of_category: Option<&str>,
-) {
-    let mut frontmatter = format!("---\nid: {id}\ncategory: {category}\n");
-    if let Some(ok) = of_category {
-        frontmatter.push_str(&format!("metadata:\n  of_category: {ok}\n"));
-    }
-    if !edges.is_empty() {
-        frontmatter.push_str("edges:\n");
-        for (edge_kind, targets) in edges {
-            frontmatter.push_str(&format!("  {edge_kind}:\n"));
-            for t in *targets {
-                frontmatter.push_str(&format!("    - {t}\n"));
-            }
-        }
-    }
-    frontmatter.push_str("---\n");
+fn write_node(path: &Path, id: &str, category: &str, body: &str) {
+    let frontmatter = format!("---\nid: {id}\ncategory: {category}\n---\n");
     let content = format!("{frontmatter}{body}\n");
     let _ = fs::write(path, content);
 }
@@ -778,26 +640,9 @@ fn cmd_stats(graph_dir: &str, json: bool, config: &Config) {
     diagnostics.extend(engine.check_evidence_anchors(&graph, &evidence));
 
     let mut nodes_by_category: HashMap<String, usize> = HashMap::new();
-    let mut edges_by_kind: HashMap<String, usize> = HashMap::new();
-    let mut edges_total = 0usize;
-    let mut nodes_with_evidence = 0usize;
 
     for node in graph.nodes.values() {
         *nodes_by_category.entry(node.category.clone()).or_insert(0) += 1;
-
-        if node
-            .edges
-            .get("evidence")
-            .map(|v| !v.is_empty())
-            .unwrap_or(false)
-        {
-            nodes_with_evidence += 1;
-        }
-
-        for (edge_kind, targets) in &node.edges {
-            *edges_by_kind.entry(edge_kind.clone()).or_insert(0) += targets.len();
-            edges_total += targets.len();
-        }
     }
 
     let mut diagnostics_by_rule: HashMap<String, usize> = HashMap::new();
@@ -811,21 +656,15 @@ fn cmd_stats(graph_dir: &str, json: bool, config: &Config) {
         *diagnostics_by_severity.entry(sev).or_insert(0) += 1;
     }
 
-    let nodes_with_evidence_pct = if graph.nodes.is_empty() {
-        100.0
-    } else {
-        (nodes_with_evidence as f64 / graph.nodes.len() as f64) * 100.0
-    };
-
     let out = StatsOutput {
         nodes_total: graph.nodes.len(),
         nodes_by_category,
-        edges_total,
-        edges_by_kind,
+        edges_total: 0,
+        edges_by_kind: HashMap::new(),
         diagnostics_total: diagnostics.len(),
         diagnostics_by_rule,
         diagnostics_by_severity,
-        nodes_with_evidence_pct,
+        nodes_with_evidence_pct: 0.0,
     };
 
     if json {
@@ -852,6 +691,32 @@ fn git_root() -> Option<PathBuf> {
     } else {
         None
     }
+}
+
+fn extract_edge_refs_from_body(body: &str) -> Vec<String> {
+    extract_marker_refs(body, "[edge:")
+}
+
+fn extract_evidence_refs_from_body(body: &str) -> Vec<String> {
+    extract_marker_refs(body, "[evidence:")
+}
+
+fn extract_marker_refs(body: &str, marker: &str) -> Vec<String> {
+    let mut result = Vec::new();
+    let mut pos = 0;
+    while let Some(start) = body[pos..].find(marker) {
+        let content_start = pos + start + marker.len();
+        if let Some(rel_end) = body[content_start..].find(']') {
+            let id = body[content_start..content_start + rel_end].trim();
+            if !id.is_empty() {
+                result.push(id.to_string());
+            }
+            pos = content_start + rel_end + 1;
+        } else {
+            break;
+        }
+    }
+    result
 }
 
 // ---------------------------------------------------------------------------
@@ -906,13 +771,9 @@ fn cmd_context(id: &str, graph_dir: &str, scan: &[String]) {
 
     let mut node_map: HashMap<String, Vec<String>> = HashMap::new();
 
-    for (edge_kind, targets) in &target.edges {
-        for t in targets {
-            if t == id {
-                node_map.entry(t.clone()).or_default().push(edge_kind.clone());
-            } else if graph.nodes.contains_key(t.as_str()) {
-                node_map.entry(t.clone()).or_default().push(edge_kind.clone());
-            }
+    for target_ref in extract_edge_refs_from_body(&target.body) {
+        if graph.nodes.contains_key(target_ref.as_str()) {
+            node_map.entry(target_ref).or_default().push("forward".to_string());
         }
     }
 
@@ -920,11 +781,11 @@ fn cmd_context(id: &str, graph_dir: &str, scan: &[String]) {
         if node.id == id {
             continue;
         }
-        for (edge_kind, targets) in &node.edges {
-            if targets.iter().any(|t| t == id) {
+        for target_ref in extract_edge_refs_from_body(&node.body) {
+            if target_ref == id {
                 node_map.entry(node.id.clone())
                     .or_default()
-                    .push(format!("reverse:{}", edge_kind));
+                    .push("reverse".to_string());
             }
         }
     }
@@ -938,19 +799,17 @@ fn cmd_context(id: &str, graph_dir: &str, scan: &[String]) {
 
     let mut evidence_items: Vec<EvidenceItem> = Vec::new();
     let mut seen_evidence: HashSet<String> = HashSet::new();
-    if let Some(evidence_ids) = target.edges.get("evidence") {
-        for eid in evidence_ids {
-            if !seen_evidence.insert(eid.clone()) {
-                continue;
-            }
-            if let Some(locations) = evidence_map.get(eid.as_str()) {
-                for (file_path, line) in locations {
-                    evidence_items.push(EvidenceItem {
-                        id: eid.clone(),
-                        file: file_path.to_string_lossy().to_string(),
-                        line: *line,
-                    });
-                }
+    for eid in extract_evidence_refs_from_body(&target.body) {
+        if !seen_evidence.insert(eid.clone()) {
+            continue;
+        }
+        if let Some(locations) = evidence_map.get(eid.as_str()) {
+            for (file_path, line) in locations {
+                evidence_items.push(EvidenceItem {
+                    id: eid.clone(),
+                    file: file_path.to_string_lossy().to_string(),
+                    line: *line,
+                });
             }
         }
     }
@@ -1030,25 +889,22 @@ fn cmd_plan(id: &str, graph_dir: &str) {
     let mut work_order: Vec<WorkStep> = Vec::new();
     let mut order = 1;
 
-    // Phase 1: Read context nodes (dependencies)
     let mut seen = std::collections::HashSet::new();
-    for targets in target.edges.values() {
-        for t in targets {
-            if seen.insert(t.clone()) {
-                let source_file = graph
-                    .nodes
-                    .get(t.as_str())
-                    .map(|n| resolve_node_source_file(graph_dir, n))
-                    .unwrap_or_else(|| format!("graph/{category}/{t}.node", category = target.category));
-                work_order.push(WorkStep {
-                    order,
-                    action: "read".into(),
-                    node: t.clone(),
-                    source_file,
-                    why: format!("Understand context for '{}'", t),
-                });
-                order += 1;
-            }
+    for t in extract_edge_refs_from_body(&target.body) {
+        if seen.insert(t.clone()) {
+            let source_file = graph
+                .nodes
+                .get(t.as_str())
+                .map(|n| resolve_node_source_file(graph_dir, n))
+                .unwrap_or_else(|| format!("graph/{category}/{t}.node", category = target.category));
+            work_order.push(WorkStep {
+                order,
+                action: "read".into(),
+                node: t.clone(),
+                source_file,
+                why: format!("Understand context for '{}'", t),
+            });
+            order += 1;
         }
     }
 
@@ -1119,7 +975,7 @@ fn cmd_render(graph_dir: &str, output: &str, style_arg: &str, config: &Config) {
     let base_dir = Path::new(graph_dir)
         .parent()
         .unwrap_or_else(|| Path::new("."));
-    let evidence = resolve_evidence(&config.scan, base_dir);
+    let _evidence = resolve_evidence(&config.scan, base_dir);
     let output_path = Path::new(output);
 
     let repo_url = config.repo_url.as_deref();
@@ -1138,7 +994,7 @@ fn cmd_render(graph_dir: &str, output: &str, style_arg: &str, config: &Config) {
         },
     };
 
-    if let Err(d) = graphite_render::render_to_dir(&graph, &evidence, output_path, repo_url, &css, &config.base_url) {
+    if let Err(d) = graphite_render::render_to_dir(&graph, output_path, repo_url, &css, &config.base_url) {
         let sev = match d.severity {
             Severity::Error => "error",
             Severity::Warning => "warning",
@@ -1154,15 +1010,10 @@ fn cmd_render(graph_dir: &str, output: &str, style_arg: &str, config: &Config) {
 
 fn resolve_node_source_file(graph_dir: &str, node: &graphite_core::Node) -> String {
     let root = Path::new(graph_dir);
-    let preferred = [
-        root.join(&node.category).join(format!("{}.node", node.id)),
-        root.join(&node.category).join(format!("{}.index", node.id)),
-    ];
+    let preferred = root.join(&node.category).join(format!("{}.node", node.id));
 
-    for p in preferred {
-        if p.exists() {
-            return p.to_string_lossy().into();
-        }
+    if preferred.exists() {
+        return preferred.to_string_lossy().into();
     }
 
     if let Some(found) = find_node_file(root, &node.id) {
@@ -1190,11 +1041,9 @@ fn find_node_file(root: &Path, node_id: &str) -> Option<PathBuf> {
 
         if let Some(stem) = path.file_stem().and_then(|s| s.to_str())
             && stem == node_id
+            && path.extension().and_then(|s| s.to_str()) == Some("node")
         {
-            let ext = path.extension().and_then(|s| s.to_str());
-            if ext == Some("node") || ext == Some("index") {
-                return Some(path);
-            }
+            return Some(path);
         }
     }
     None
@@ -1253,17 +1102,12 @@ mod tests {
             r#"---
 id: compiler-requirement
 category: requirement
-edges:
-  evidence:
-    - compiler-impl
-  implemented_by:
-    - compiler
-  verified_by:
-    - compiler-tests
 ---
 # Compiler Requirement
 
 The compiler must parse and validate [edge:compiler] and [edge:compiler-tests].
+
+[evidence:compiler-impl]
 "#,
         )
         .unwrap();
@@ -1273,11 +1117,6 @@ The compiler must parse and validate [edge:compiler] and [edge:compiler-tests].
             r#"---
 id: compiler-pipeline
 category: adr
-edges:
-  evidence:
-    - pipeline-impl
-  relates_to:
-    - compiler-requirement
 ---
 # Compiler Pipeline
 
@@ -1289,6 +1128,8 @@ The compiler pipeline has four stages:
 4. **Render**: Generate static HTML
 
 Related: [edge:compiler-requirement]
+
+[evidence:pipeline-impl]
 "#,
         )
         .unwrap();
@@ -1298,13 +1139,12 @@ Related: [edge:compiler-requirement]
             r#"---
 id: compiler
 category: service
-edges:
-  evidence:
-    - compiler-impl
 ---
 # Compiler
 
 A Rust CLI that implements the graphite compiler pipeline.
+
+[evidence:compiler-impl]
 "#,
         )
         .unwrap();
@@ -1314,13 +1154,12 @@ A Rust CLI that implements the graphite compiler pipeline.
             r#"---
 id: compiler-tests
 category: test
-edges:
-  evidence:
-    - compiler-tests-impl
 ---
 # Compiler Tests
 
 Tests for the graphite compiler pipeline.
+
+[evidence:compiler-tests-impl]
 "#,
         )
         .unwrap();
@@ -1330,13 +1169,12 @@ Tests for the graphite compiler pipeline.
             r#"---
 id: traceability-policy
 category: compliance
-edges:
-  evidence:
-    - policy-impl
 ---
 # Traceability Policy
 
 Requirements should be linked to implementation, tests, and evidence.
+
+[evidence:policy-impl]
 "#,
         )
         .unwrap();
@@ -1346,13 +1184,12 @@ Requirements should be linked to implementation, tests, and evidence.
             r#"---
 id: validation-runbook
 category: runbook
-edges:
-  evidence:
-    - runbook-impl
 ---
 # Validation Runbook
 
 Run graphite validate before shipping graph changes.
+
+[evidence:runbook-impl]
 "#,
         )
         .unwrap();
@@ -1362,13 +1199,12 @@ Run graphite validate before shipping graph changes.
             r#"---
 id: distribution-pipeline
 category: infra
-edges:
-  evidence:
-    - distro-impl
 ---
 # Distribution Pipeline
 
 The package and binary distribution path for graphite.
+
+[evidence:distro-impl]
 "#,
         )
         .unwrap();
@@ -1398,16 +1234,12 @@ The package and binary distribution path for graphite.
         let graph = load_graph(graph_dir.to_str().unwrap()).expect("integration: load graph");
         let evidence = resolve_evidence(&config.scan, root);
         let output_dir = root.join("html");
-        graphite_render::render_to_dir(&graph, &evidence, &output_dir, None, style::DEFAULT_CSS, "")
+        graphite_render::render_to_dir(&graph, &output_dir, None, style::DEFAULT_CSS, "")
             .expect("integration: render should succeed");
 
         assert!(
             output_dir.join("index.html").exists(),
             "integration: root index.html should exist"
-        );
-        assert!(
-            output_dir.join("requirement/index.html").exists(),
-            "integration: requirement kind index should exist"
         );
         let compiler_page = output_dir.join("service/compiler.html");
         assert!(
@@ -1445,17 +1277,23 @@ The package and binary distribution path for graphite.
         let tmp = tempfile::tempdir().expect("temp dir");
         let root = tmp.path();
         let graph_dir = root.join("graph");
-        fs::create_dir_all(graph_dir.join("root")).expect("root dir");
-        fs::create_dir_all(graph_dir.join("adr")).expect("adr dir");
+        let dirs_test = ["graph/spec", "graph/adr"];
+        for d in &dirs_test {
+            fs::create_dir_all(root.join(d)).unwrap();
+        }
 
         fs::write(
-            graph_dir.join("root/root.node"),
-            "---\nid: root\ncategory: index\nmetadata:\n  of_category: general\nedges:\n  contains:\n    - svc\n---\n# Root\n",
+            &graph_dir.join("spec/root.node"),
+            r#"---
+id: root
+category: spec
+---
+"#,
         )
         .expect("write root");
         fs::write(
             graph_dir.join("adr/svc.node"),
-            "---\nid: svc\ncategory: adr\nedges:\n  references:\n    - root\n---\n# ADR\n",
+            "---\nid: svc\ncategory: adr\n---\n",
         )
         .expect("write service");
 

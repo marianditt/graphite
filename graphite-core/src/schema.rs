@@ -4,7 +4,7 @@ use serde::Deserialize;
 
 use crate::{CategoryDef, Diagnostic, EdgeDef, Schema, Severity};
 
-const BUILT_IN_CATEGORIES: [&str; 3] = ["any", "index", "evidence"];
+const BUILT_IN_CATEGORIES: [&str; 1] = ["any"];
 
 // @graphite:evidence spec-schema
 pub struct SchemaParser;
@@ -146,11 +146,6 @@ impl SchemaParser {
                     from: "any".to_string(),
                     to: "any".to_string(),
                 },
-                EdgeDef {
-                    name: "evidence".to_string(),
-                    from: "any".to_string(),
-                    to: "evidence".to_string(),
-                },
             ],
         }
     }
@@ -175,8 +170,7 @@ fn make_undefined_category_error(edge_name: &str, field: &str, category: &str) -
             edge_name, category, field
         ),
         fix: format!(
-            "Define category '{}' in the 'categories' section, use 'any' for a wildcard, \
-             or use a built-in category ('index', 'evidence').",
+            "Define category '{}' in the 'categories' section, or use 'any' for a wildcard.",
             category
         ),
         example: Some(format!(
@@ -185,7 +179,7 @@ fn make_undefined_category_error(edge_name: &str, field: &str, category: &str) -
             category.to_uppercase()
         )),
         hint: "All categories referenced in edges must be defined in the 'categories' section \
-               or be built-in categories (index, evidence, any)."
+               or use 'any' as a wildcard."
             .to_string(),
     }
 }
@@ -270,7 +264,6 @@ edges:
   describes: { from: adr, to: service }
   references: { from: any, to: any }
   relates_to: { from: any, to: any }
-  evidence: { from: any, to: evidence }
 ";
 
 #[cfg(test)]
@@ -281,14 +274,14 @@ mod tests {
     fn parse_default_schema_yaml() {
         let schema = SchemaParser::parse(DEFAULT_SCHEMA_YAML).expect("default schema should parse");
         assert_eq!(schema.categories.len(), 7, "should have 7 categories");
-        assert_eq!(schema.edges.len(), 6, "should have 6 edges");
+        assert_eq!(schema.edges.len(), 5, "should have 5 edges");
     }
 
     #[test]
     fn default_schema_struct_matches() {
         let schema = SchemaParser::default_schema();
         assert_eq!(schema.categories.len(), 7);
-        assert_eq!(schema.edges.len(), 6);
+        assert_eq!(schema.edges.len(), 5);
     }
 
     #[test]
@@ -356,28 +349,12 @@ edges:
 categories:
   requirement: { key: REQ }
 edges:
-  test_edge: { from: requirement, to: evidence }
-  idx_edge: { from: index, to: requirement }
   wild_edge: { from: any, to: any }
 ";
         let schema = SchemaParser::parse(yaml)
-            .expect("built-in categories (evidence, index, any) should be valid");
+            .expect("built-in category 'any' should be valid");
         assert_eq!(schema.categories.len(), 1);
-        assert_eq!(schema.edges.len(), 3);
-    }
-
-    #[test]
-    fn contains_edge_not_in_schema_is_builtin() {
-        let yaml = "\
-categories:
-  index: { key: IDX }
-  service: { key: SVC }
-edges:
-  contains: { from: index, to: service }
-";
-        let schema =
-            SchemaParser::parse(yaml).expect("edge named 'contains' with valid categories should parse");
-        assert!(schema.edges.iter().any(|e| e.name == "contains"));
+        assert_eq!(schema.edges.len(), 1);
     }
 
     #[test]

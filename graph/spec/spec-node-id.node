@@ -1,9 +1,6 @@
 ---
 id: spec-node-id
 category: spec
-edges:
-  evidence:
-    - spec-node-id
 ---
 # Node ID
 
@@ -32,3 +29,5 @@ Duplicate Node IDs MUST fail validation.
 ```
 id: payment-authorization
 ```
+
+[evidence:spec-node-id]

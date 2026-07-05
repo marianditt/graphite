@@ -1,9 +1,6 @@
 ---
 id: spec-context
 category: spec
-edges:
-  evidence:
-    - spec-context
 ---
 # Context
 
@@ -26,3 +23,5 @@ Missing or invalid Node IDs MUST produce an error.
 ```bash
 graphite context payment-service
 ```
+
+[evidence:spec-context]
