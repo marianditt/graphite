@@ -1,6 +1,6 @@
 ---
 id: spec-context
-kind: spec
+category: spec
 edges:
   evidence:
     - spec-context
@@ -17,8 +17,6 @@ The `context` command shows the relevant subgraph for a specific Node.
 
 It SHALL return the Node's body and its immediate edges.
 
-An optional `--phase` filter SHALL restrict context to edges relevant to a specific workflow phase (e.g., `implement`, `test`, `review`).
-
 The output SHALL be formatted as JSON for machine consumption.
 
 Missing or invalid Node IDs MUST produce an error.
@@ -26,5 +24,5 @@ Missing or invalid Node IDs MUST produce an error.
 ## Example
 
 ```bash
-graphite context payment-service --phase implement
+graphite context payment-service
 ```

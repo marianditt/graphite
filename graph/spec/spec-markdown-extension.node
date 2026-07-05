@@ -1,6 +1,6 @@
 ---
 id: spec-markdown-extension
-kind: spec
+category: spec
 edges:
   evidence:
     - spec-markdown-extension

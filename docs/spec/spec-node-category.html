@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
-<head><meta charset="utf-8"><title>Table of Contents: spec — graphite</title>
+<head><meta charset="utf-8"><title>SPC-14 Node Category — graphite</title>
 <style>
 
 :root {
@@ -293,35 +293,21 @@ th {
 </head>
 <body>
 <p class="brand">Graphite</p>
-<h1>Table of Contents: spec (SPC)</h1>
+<p class="node-meta"><strong>SPC-14 Node Category</strong> · <a href="/graphite/spec/index.html">↑ spec</a></p>
+<h3>SPC-14 Node Category</h3>
+<h4>Definition</h4>
+<p>A Node Category describes the semantic category of a Node.</p>
+<h4>Specification</h4>
+<p>Every Node MUST declare exactly one Category.</p>
+<p>The declared Category MUST exist in the Schema.</p>
+<p>The Category determines which Edge types are valid for the Node.</p>
+<p>A Category SHOULD describe the purpose of the knowledge, not its storage location.</p>
+<h4>Example</h4>
+<pre><code>category: requirement
+</code></pre>
 
-<ul>
-    <li><a href="/graphite/spec/spec-anchor.html">SPC-1 Anchor</a></li>
-    <li><a href="/graphite/spec/spec-body.html">SPC-2 Body</a></li>
-    <li><a href="/graphite/spec/spec-comments.html">SPC-3 Comments</a></li>
-    <li><a href="/graphite/spec/spec-context.html">SPC-4 Context</a></li>
-    <li><a href="/graphite/spec/spec-diff.html">SPC-5 Diff</a></li>
-    <li><a href="/graphite/spec/spec-document-format.html">SPC-6 Document Format</a></li>
-    <li><a href="/graphite/spec/spec-edge.html">SPC-7 Edge</a></li>
-    <li><a href="/graphite/spec/spec-graph.html">SPC-8 Graph</a></li>
-    <li><a href="/graphite/spec/spec-header.html">SPC-9 Header</a></li>
-    <li><a href="/graphite/spec/spec-index-node.html">SPC-10 Index Node</a></li>
-    <li><a href="/graphite/spec/spec-init.html">SPC-11 Init</a></li>
-    <li><a href="/graphite/spec/spec-markdown-extension.html">SPC-12 Markdown Extension</a></li>
-    <li><a href="/graphite/spec/spec-node-category.html">SPC-14 Node Category</a></li>
-    <li><a href="/graphite/spec/spec-node-id.html">SPC-15 Node ID</a></li>
-    <li><a href="/graphite/spec/spec-node.html">SPC-13 Node</a></li>
-    <li><a href="/graphite/spec/spec-plan.html">SPC-16 Plan</a></li>
-    <li><a href="/graphite/spec/spec-render.html">SPC-17 Render</a></li>
-    <li><a href="/graphite/spec/spec-schema.html">SPC-18 Schema</a></li>
-    <li><a href="/graphite/spec/spec-sidecar.html">SPC-19 Sidecar</a></li>
-    <li><a href="/graphite/spec/spec-stats.html">SPC-20 Stats</a></li>
-    <li><a href="/graphite/spec/spec-validate.html">SPC-21 Validate</a></li>
-</ul>
-
-<h1>Graphite Specification</h1>
-
-
-<a href="/graphite/index.html">← Graph root</a>
+<div class="evidence"><h3>Evidence</h3><ul><li><a href="https://github.com/marianditt/graphite/blob/main/graphite-core/src/lib.rs#L41"><code>graphite-core/src/lib.rs</code> line 41</a></li><li><a href="https://github.com/marianditt/graphite/blob/main/graphite-core/src/lib.rs#L50"><code>graphite-core/src/lib.rs</code> line 50</a></li><li><a href="https://github.com/marianditt/graphite/blob/main/graphite-core/src/lib.rs#L78"><code>graphite-core/src/lib.rs</code> line 78</a></li></ul></div>
+<div class="backlinks"><h3>Referenced by</h3><ul><li><a href="/graphite/spec/spec-graph.html">SPC-8 Graph</a></li>
+<li><a href="/graphite/spec/spec-node-category.html">SPC-14 Node Category</a></li></ul></div>
 </body>
 </html>

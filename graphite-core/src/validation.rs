@@ -45,9 +45,6 @@ impl ValidationEngine {
     pub fn validate(&self, graph: &Graph) -> Vec<Diagnostic> {
         let mut diagnostics = vec![];
         diagnostics.extend(self.check_reachability(graph));
-        diagnostics.extend(self.check_tree_constraint(graph));
-        diagnostics.extend(self.check_cycles(graph));
-        diagnostics.extend(self.check_dependency_cycles(graph));
         diagnostics.extend(self.check_schema_conformance(graph));
         diagnostics.extend(self.check_edge_targets_exist(graph));
         diagnostics.extend(self.check_body_edge_usage(graph));
@@ -118,137 +115,14 @@ impl ValidationEngine {
     }
 
     // ------------------------------------------------------------------
-    // Check 2: tree constraint  (rule: "multiple-parents")
-    // ------------------------------------------------------------------
-
-    fn check_tree_constraint(&self, graph: &Graph) -> Vec<Diagnostic> {
-        let mut incoming: HashMap<&str, Vec<&str>> = HashMap::new();
-
-        for node in graph.nodes.values() {
-            if let Some(targets) = node.edges.get("contains") {
-                for target in targets {
-                    incoming
-                        .entry(target.as_str())
-                        .or_default()
-                        .push(node.id.as_str());
-                }
-            }
-        }
-
-        incoming
-            .into_iter()
-            .filter(|(_, parents)| parents.len() > 1)
-            .map(|(child, parents)| {
-                diag_err(
-                    "multiple-parents",
-                    child,
-                    &format!(
-                        "Node '{child}' has {} incoming 'contains' edges: [{}]",
-                        parents.len(),
-                        parents.join(", ")
-                    ),
-                    "Remove duplicate 'contains' references so each node has at most one parent.",
-                    "The containment graph must be a tree. A node cannot be contained \
-                 by multiple index nodes.",
-                )
-            })
-            .collect()
-    }
-
-    // ------------------------------------------------------------------
-    // Check 3: cycles  (rule: "cycle-detected")
-    // ------------------------------------------------------------------
-
-    /// DFS with white/gray/black coloring on the `contains` subgraph.
-    /// A back edge to a gray node indicates a cycle.
-    fn check_cycles(&self, graph: &Graph) -> Vec<Diagnostic> {
-        // Map node IDs to dense indices so we can use flat arrays.
-        let node_ids: Vec<&str> = graph.nodes.keys().map(|s| s.as_str()).collect();
-        let id_to_idx: HashMap<&str, usize> = node_ids
-            .iter()
-            .enumerate()
-            .map(|(i, id)| (*id, i))
-            .collect();
-        let n = node_ids.len();
-
-        let mut adj: Vec<Vec<usize>> = vec![Vec::new(); n];
-        for node in graph.nodes.values() {
-            if let Some(targets) = node.edges.get("contains") {
-                let src = id_to_idx[node.id.as_str()];
-                for t in targets {
-                    if let Some(&tgt) = id_to_idx.get(t.as_str()) {
-                        adj[src].push(tgt);
-                    }
-                }
-            }
-        }
-
-        let mut color = vec![0u8; n]; // 0 = white, 1 = gray, 2 = black
-        let mut path = Vec::new();
-        let mut diagnostics = Vec::new();
-
-        for start in 0..n {
-            if color[start] == 0 {
-                Self::dfs_cycle(
-                    start,
-                    &adj,
-                    &mut color,
-                    &mut path,
-                    &node_ids,
-                    &mut diagnostics,
-                );
-            }
-        }
-
-        diagnostics
-    }
-
-    fn dfs_cycle(
-        idx: usize,
-        adj: &[Vec<usize>],
-        color: &mut [u8],
-        path: &mut Vec<usize>,
-        node_ids: &[&str],
-        diagnostics: &mut Vec<Diagnostic>,
-    ) {
-        color[idx] = 1; // gray
-        path.push(idx);
-
-        for &next in &adj[idx] {
-            if color[next] == 1 {
-                // Back edge: reconstruct cycle description
-                let mut cycle: Vec<&str> = path
-                    .iter()
-                    .skip_while(|&&i| i != next)
-                    .map(|&i| node_ids[i])
-                    .collect();
-                cycle.push(node_ids[next]);
-
-                diagnostics.push(diag_err(
-                    "cycle-detected",
-                    node_ids[idx],
-                    &format!("Cycle detected in containment graph: {}", cycle.join(" → ")),
-                    "Remove one of the 'contains' edges to break the cycle.",
-                    "The containment graph must be a tree (DAG).",
-                ));
-            } else if color[next] == 0 {
-                Self::dfs_cycle(next, adj, color, path, node_ids, diagnostics);
-            }
-        }
-
-        color[idx] = 2; // black
-        path.pop();
-    }
-
-    // ------------------------------------------------------------------
-    // Check 4: schema conformance  (rule: "schema-conformance")
+    // Check 2: schema conformance  (rule: "schema-conformance")
     // ------------------------------------------------------------------
 
     fn check_schema_conformance(&self, graph: &Graph) -> Vec<Diagnostic> {
         let mut diagnostics = Vec::new();
 
         for node in graph.nodes.values() {
-            let is_index = node.kind == "index";
+            let is_index = node.category == "index";
 
             for (edge_kind, targets) in &node.edges {
                 if is_index && edge_kind != "contains" {
@@ -261,8 +135,8 @@ impl ValidationEngine {
                             node.id, edge_kind
                         ),
                         &format!(
-                            "Remove the '{}' edge from index node '{}', \
-                             or change the node kind to a non-index kind.",
+                             "Remove the '{}' edge from index node '{}', \
+                              or change the node category to a non-index category.",
                             edge_kind, node.id
                         ),
                         "Index nodes organize other nodes via containment. \
@@ -322,25 +196,25 @@ impl ValidationEngine {
 
                 let source_ok = edge_defs
                     .iter()
-                    .any(|e| e.from == "any" || e.from == node.kind);
+                    .any(|e| e.from == "any" || e.from == node.category);
                 if !source_ok {
                     let allowed: Vec<&str> = edge_defs.iter().map(|e| e.from.as_str()).collect();
                     diagnostics.push(diag_err(
                         "schema-conformance",
                         &node.id,
                         &format!(
-                            "Node '{}' of kind '{}' cannot use edge '{}'. \
-                             Expected source kinds: [{}]",
+                            "Node '{}' of category '{}' cannot use edge '{}'. \
+                             Expected source categories: [{}]",
                             node.id,
-                            node.kind,
+                            node.category,
                             edge_kind,
                             allowed.join(", ")
                         ),
                         &format!(
-                            "Change the node's kind or use an edge that allows '{}' as the source.",
-                            node.kind
+                            "Change the node's category or use an edge that allows '{}' as the source.",
+                            node.category
                         ),
-                        "Each edge type specifies which kinds can be its source ('from' field).",
+                        "Each edge type specifies which categories can be its source ('from' field).",
                     ));
                 }
 
@@ -348,7 +222,7 @@ impl ValidationEngine {
                     if let Some(target_node) = graph.nodes.get(target) {
                         let target_ok = edge_defs
                             .iter()
-                            .any(|e| e.to == "any" || e.to == target_node.kind);
+                            .any(|e| e.to == "any" || e.to == target_node.category);
                         if !target_ok {
                             let allowed: Vec<&str> =
                                 edge_defs.iter().map(|e| e.to.as_str()).collect();
@@ -356,20 +230,20 @@ impl ValidationEngine {
                                 "schema-conformance",
                                 &node.id,
                                 &format!(
-                                    "Edge '{}' on node '{}' targets node '{}' of kind '{}'. \
-                                     Expected target kinds: [{}]",
+                                "Edge '{}' on node '{}' targets node '{}' of category '{}'. \
+                                 Expected target categories: [{}]",
                                     edge_kind,
                                     node.id,
                                     target,
-                                    target_node.kind,
+                                    target_node.category,
                                     allowed.join(", ")
                                 ),
                                 &format!(
                                     "Update the edge target or use an edge \
                                      that allows '{}' as the target.",
-                                    target_node.kind
+                                    target_node.category
                                 ),
-                                "Each edge type specifies which kinds can be \
+                                "Each edge type specifies which categories can be \
                                  its target ('to' field).",
                             ));
                         }
@@ -399,7 +273,7 @@ impl ValidationEngine {
                         );
                         let fix = format!(
                             "Either create a new node with id '{}' (in the appropriate \
-                             kind directory), or correct the edge target in node '{}' \
+                             category directory), or correct the edge target in node '{}' \
                              to point to an existing node ID.",
                             target, node.id
                         );
@@ -427,7 +301,7 @@ impl ValidationEngine {
         let mut diagnostics = Vec::new();
 
         for node in graph.nodes.values() {
-            if node.kind == "index" || node.kind == "evidence" || node.kind == "guide" {
+            if node.category == "index" || node.category == "evidence" || node.category == "guide" {
                 continue;
             }
 
@@ -503,106 +377,6 @@ impl ValidationEngine {
         diagnostics
     }
 
-    /// Check semantic dependency cycles (non-containment edges) among knowledge
-    /// nodes. Cycles in references/describes/etc. are disallowed.
-    fn check_dependency_cycles(&self, graph: &Graph) -> Vec<Diagnostic> {
-        let node_ids: Vec<&str> = graph
-            .nodes
-            .values()
-            .filter(|n| n.kind != "index" && n.kind != "evidence")
-            .map(|n| n.id.as_str())
-            .collect();
-        let id_to_idx: HashMap<&str, usize> = node_ids
-            .iter()
-            .enumerate()
-            .map(|(i, id)| (*id, i))
-            .collect();
-
-        let n = node_ids.len();
-        let mut adj: Vec<Vec<usize>> = vec![Vec::new(); n];
-
-        for node in graph.nodes.values() {
-            if node.kind == "index" || node.kind == "evidence" {
-                continue;
-            }
-            let Some(&src) = id_to_idx.get(node.id.as_str()) else {
-                continue;
-            };
-            for (edge_kind, targets) in &node.edges {
-                if edge_kind == "contains" || edge_kind == "evidence" || edge_kind == "describes" {
-                    continue;
-                }
-                for target in targets {
-                    if let Some(target_node) = graph.nodes.get(target)
-                        && target_node.kind != "index"
-                        && target_node.kind != "evidence"
-                        && let Some(&tgt) = id_to_idx.get(target.as_str())
-                    {
-                        adj[src].push(tgt);
-                    }
-                }
-            }
-        }
-
-        let mut color = vec![0u8; n];
-        let mut path = Vec::new();
-        let mut diagnostics = Vec::new();
-
-        for start in 0..n {
-            if color[start] == 0 {
-                Self::dfs_dependency_cycle(
-                    start,
-                    &adj,
-                    &mut color,
-                    &mut path,
-                    &node_ids,
-                    &mut diagnostics,
-                );
-            }
-        }
-
-        diagnostics
-    }
-
-    fn dfs_dependency_cycle(
-        idx: usize,
-        adj: &[Vec<usize>],
-        color: &mut [u8],
-        path: &mut Vec<usize>,
-        node_ids: &[&str],
-        diagnostics: &mut Vec<Diagnostic>,
-    ) {
-        color[idx] = 1;
-        path.push(idx);
-
-        for &next in &adj[idx] {
-            if color[next] == 1 {
-                let mut cycle: Vec<&str> = path
-                    .iter()
-                    .skip_while(|&&i| i != next)
-                    .map(|&i| node_ids[i])
-                    .collect();
-                cycle.push(node_ids[next]);
-
-                diagnostics.push(diag_err(
-                    "dependency-cycle",
-                    node_ids[idx],
-                    &format!(
-                        "Cycle detected in semantic dependencies: {}",
-                        cycle.join(" → ")
-                    ),
-                    "Remove one of the semantic edges to break the cycle.",
-                    "Knowledge-node dependencies must be acyclic.",
-                ));
-            } else if color[next] == 0 {
-                Self::dfs_dependency_cycle(next, adj, color, path, node_ids, diagnostics);
-            }
-        }
-
-        color[idx] = 2;
-        path.pop();
-    }
-
     fn check_evidence_coverage(&self, graph: &Graph) -> Vec<Diagnostic> {
         let mut diagnostics = Vec::new();
 
@@ -617,7 +391,7 @@ impl ValidationEngine {
         }
 
         for node in graph.nodes.values() {
-            if node.kind == "index" || node.kind == "evidence" || node.kind == "guide" {
+            if node.category == "index" || node.category == "evidence" || node.category == "guide" {
                 continue;
             }
 
@@ -652,7 +426,7 @@ impl ValidationEngine {
         let mut diagnostics = Vec::new();
 
         for node in graph.nodes.values() {
-            if node.kind != "index" {
+            if node.category != "index" {
                 continue;
             }
             let has_heading = node.body.lines().any(|l| l.trim().starts_with("# "));
@@ -672,7 +446,7 @@ impl ValidationEngine {
                          # {} Index",
                         node.id,
                         node.metadata
-                            .get("of_kind")
+                            .get("of_category")
                             .map(|s| s.as_str())
                             .unwrap_or("Nodes")
                     ),
@@ -692,7 +466,7 @@ impl ValidationEngine {
         let mut diagnostics = Vec::new();
 
         for node in graph.nodes.values() {
-            if node.kind == "index" || node.kind == "evidence" {
+            if node.category == "index" || node.category == "evidence" {
                 continue;
             }
             let has_heading = node.body.lines().any(|l| l.trim().starts_with("# "));
@@ -824,7 +598,11 @@ impl ValidationEngine {
                 continue;
             };
 
+            let mut seen_ids: HashSet<&str> = HashSet::new();
             for ev_id in evidence_ids {
+                if !seen_ids.insert(ev_id.as_str()) {
+                    continue;
+                }
                 if !resolved.contains_key(ev_id) {
                     diagnostics.push(Diagnostic {
                         rule: "unresolved-evidence".to_string(),
@@ -907,9 +685,9 @@ mod tests {
                 "\
 ---\n\
 id: idx\n\
-kind: index\n\
+category: index\n\
 edges:\n  contains:\n    - req-1\n    - adr-1\n    - svc-1\n    - tst-1\n\
-metadata:\n  of_kind: general\n\
+metadata:\n  of_category: general\n\
 ---\n",
             )
             .expect("sample index"),
@@ -920,7 +698,7 @@ metadata:\n  of_kind: general\n\
                 "\
 ---\n\
 id: req-1\n\
-kind: requirement\n\
+category: requirement\n\
 edges:\n  implemented_by:\n    - svc-1\n  verified_by:\n    - tst-1\n\
 ---\n\
 # Requirement\n\n\
@@ -934,7 +712,7 @@ Implemented by [edge:svc-1] and verified by [edge:tst-1].\n",
                 "\
 ---\n\
 id: adr-1\n\
-kind: adr\n\
+category: adr\n\
 edges:\n  references:\n    - svc-1\n\
 ---\n\
 # ADR\n\n\
@@ -948,7 +726,7 @@ Related: [edge:svc-1]\n",
                 "\
 ---\n\
 id: svc-1\n\
-kind: service\n\
+category: service\n\
 ---\n\
 # Service\n",
             )
@@ -960,7 +738,7 @@ kind: service\n\
                 "\
 ---\n\
 id: tst-1\n\
-kind: test\n\
+category: test\n\
 ---\n\
 # Test\n",
             )
@@ -971,16 +749,16 @@ kind: test\n\
     }
 
     /// Build a [`Node`] directly, skipping YAML frontmatter parsing.
-    fn make_node(id: &str, kind: &str, edges: HashMap<String, Vec<String>>, body: &str) -> Node {
+    fn make_node(id: &str, category: &str, edges: HashMap<String, Vec<String>>, body: &str) -> Node {
         Node {
             id: id.to_string(),
-            kind: kind.to_string(),
+            category: category.to_string(),
             body: body.to_string(),
             edges,
             metadata: HashMap::new(),
-            index: if kind == "index" {
+            index: if category == "index" {
                 Some(Index {
-                    of_kind: "general".to_string(),
+                    of_category: "general".to_string(),
                 })
             } else {
                 None
@@ -1052,132 +830,6 @@ kind: test\n\
         assert!(
             diags.iter().any(|d| d.rule == "unreachable-node"),
             "reachability error should fire for cyclic containment: {:?}",
-            diags
-        );
-        // Cycle detection also fires.
-        assert!(
-            diags.iter().any(|d| d.rule == "cycle-detected"),
-            "cycle should also be detected"
-        );
-    }
-
-    // ------------------------------------------------------------------
-    // Tree constraint
-    // ------------------------------------------------------------------
-
-    #[test]
-    fn multiple_parents_detected() {
-        let schema = SchemaParser::default_schema();
-        let mut g = Graph::new(schema);
-
-        g.add_node(make_node(
-            "idx-1",
-            "index",
-            HashMap::from([("contains".into(), vec!["svc".into()])]),
-            "",
-        ));
-        g.add_node(make_node(
-            "idx-2",
-            "index",
-            HashMap::from([("contains".into(), vec!["svc".into()])]),
-            "",
-        ));
-        g.add_node(make_node("svc", "service", HashMap::new(), ""));
-
-        let engine = ValidationEngine;
-        let diags = engine.validate(&g);
-        assert!(
-            diags.iter().any(|d| d.rule == "multiple-parents"),
-            "should detect multiple parents: {:?}",
-            diags
-        );
-        // "svc" has two parents: idx-1 and idx-2
-        let mp: Vec<&Diagnostic> = diags
-            .iter()
-            .filter(|d| d.rule == "multiple-parents")
-            .collect();
-        assert_eq!(mp.len(), 1, "exactly one multiple-parents diagnostic");
-        assert!(
-            mp[0].detail.contains("svc"),
-            "detail mentions svc: {}",
-            mp[0].detail
-        );
-    }
-
-    // ------------------------------------------------------------------
-    // Cycles
-    // ------------------------------------------------------------------
-
-    #[test]
-    fn cycle_detected() {
-        let schema = SchemaParser::default_schema();
-        let mut g = Graph::new(schema);
-
-        g.add_node(make_node(
-            "x",
-            "index",
-            HashMap::from([("contains".into(), vec!["y".into()])]),
-            "",
-        ));
-        g.add_node(make_node(
-            "y",
-            "index",
-            HashMap::from([("contains".into(), vec!["z".into()])]),
-            "",
-        ));
-        g.add_node(make_node(
-            "z",
-            "index",
-            HashMap::from([("contains".into(), vec!["x".into()])]),
-            "",
-        ));
-
-        let engine = ValidationEngine;
-        let diags = engine.validate(&g);
-        assert!(
-            diags.iter().any(|d| d.rule == "cycle-detected"),
-            "should detect cycle: {:?}",
-            diags
-        );
-    }
-
-    #[test]
-    fn dependency_cycle_detected() {
-        let schema = SchemaParser::default_schema();
-        let mut g = Graph::new(schema);
-
-        g.add_node(make_node(
-            "idx",
-            "index",
-            HashMap::from([("contains".into(), vec!["a".into(), "b".into()])]),
-            "# Index\n",
-        ));
-
-        g.add_node(make_node(
-            "a",
-            "service",
-            HashMap::from([
-                ("references".into(), vec!["b".into()]),
-                ("evidence".into(), vec!["ev-a".into()]),
-            ]),
-            "# A\n\n[edge:b]",
-        ));
-
-        g.add_node(make_node(
-            "b",
-            "service",
-            HashMap::from([
-                ("references".into(), vec!["a".into()]),
-                ("evidence".into(), vec!["ev-b".into()]),
-            ]),
-            "# B\n\n[edge:a]",
-        ));
-
-        let engine = ValidationEngine;
-        let diags = engine.validate(&g);
-        assert!(
-            diags.iter().any(|d| d.rule == "dependency-cycle"),
-            "should detect dependency cycle: {:?}",
             diags
         );
     }
@@ -1351,7 +1003,7 @@ kind: test\n\
                 "\
 ---\n\
 id: adr-1\n\
-kind: adr\n\
+category: adr\n\
 edges:\n  references:\n    - svc-1\n\
 ---\n\
 # ADR\n\n\
@@ -1364,7 +1016,7 @@ No edge reference here.\n",
                 "\
 ---\n\
 id: svc-1\n\
-kind: service\n\
+category: service\n\
 ---\n\
 # Service\n",
             )
@@ -1403,7 +1055,7 @@ kind: service\n\
                 "\
 ---\n\
 id: adr-1\n\
-kind: adr\n\
+category: adr\n\
 ---\n\
 # ADR\n\n\
 See also: [edge:unknown]\n",

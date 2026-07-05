@@ -1,4 +1,4 @@
-kinds:
+categories:
   spec: { key: SPC }
 edges:
   contains: { from: index, to: any }

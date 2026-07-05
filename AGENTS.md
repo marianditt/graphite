@@ -24,15 +24,11 @@ Follow the generated plan before editing files.
 
 ## During work
 
-Respect all Graphite-provided:
+Respect all Graphite-provided information.
 
-- requirements
-- architecture decisions
-- technical constraints
-- implementation guidance
-- validation expectations
+ALWAYS update affected knowledge nodes together with code changes.
 
-Update affected knowledge nodes together with code changes.
+If ANYTHING is unclear or ambiguous ASK! NEVER GUESS or ASSUME IMPLICIT KNOWLEDGE!
 
 ## Before finishing work
 

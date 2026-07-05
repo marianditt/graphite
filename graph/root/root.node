@@ -1,8 +1,8 @@
 ---
 id: root
-kind: index
+category: index
 metadata:
-  of_kind: general
+  of_category: general
 edges:
   contains:
     - spec

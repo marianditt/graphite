@@ -300,14 +300,14 @@ th {
 <h4>Specification</h4>
 <p>A Schema SHALL define:</p>
 <ul>
-<li>available Node Kinds</li>
+<li>available Node Categories</li>
 <li>available Edge types</li>
 <li>validation rules</li>
 </ul>
 <p>The compiler MUST validate Nodes and Edges against the active Schema.</p>
 <p>A Graph violating its Schema MUST be rejected.</p>
 <h4>Example</h4>
-<pre><code>kinds:
+<pre><code>categories:
   requirement:
 
 edges:
@@ -316,8 +316,8 @@ edges:
     to: test
 </code></pre>
 
-<div class="evidence"><h3>Evidence</h3><ul><li><code>graphite-core/src/lib.rs</code> line 40</li><li><code>graphite-core/src/schema.rs</code> line 9</li><li><code>graphite-core/src/lib.rs</code> line 40</li><li><code>graphite-core/src/schema.rs</code> line 9</li></ul></div>
-<div class="backlinks"><h3>Referenced by</h3><ul><li><a href="/graphite/spec/spec-schema.html">SPC-18 Schema</a></li>
-<li><a href="/graphite/spec/spec-graph.html">SPC-8 Graph</a></li></ul></div>
+<div class="evidence"><h3>Evidence</h3><ul><li><a href="https://github.com/marianditt/graphite/blob/main/graphite-core/src/lib.rs#L40"><code>graphite-core/src/lib.rs</code> line 40</a></li><li><a href="https://github.com/marianditt/graphite/blob/main/graphite-core/src/schema.rs#L9"><code>graphite-core/src/schema.rs</code> line 9</a></li></ul></div>
+<div class="backlinks"><h3>Referenced by</h3><ul><li><a href="/graphite/spec/spec-graph.html">SPC-8 Graph</a></li>
+<li><a href="/graphite/spec/spec-schema.html">SPC-18 Schema</a></li></ul></div>
 </body>
 </html>

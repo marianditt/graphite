@@ -1,6 +1,6 @@
 ---
 id: spec-body
-kind: spec
+category: spec
 edges:
   evidence:
     - spec-body

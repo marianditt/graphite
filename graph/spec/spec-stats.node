@@ -1,6 +1,6 @@
 ---
 id: spec-stats
-kind: spec
+category: spec
 edges:
   evidence:
     - spec-stats

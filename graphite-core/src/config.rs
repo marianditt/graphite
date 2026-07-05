@@ -22,6 +22,10 @@ pub struct Config {
     /// Maximum allowed characters per `.node` file. Files exceeding this
     /// threshold produce a validation error. Default: 1000.
     pub node_max_chars: usize,
+
+    /// Repository URL for evidence anchor links (e.g. GitHub source links).
+    /// When set, evidence anchors link directly to the source file and line.
+    pub repo_url: Option<String>,
 }
 
 impl Default for Config {
@@ -32,6 +36,7 @@ impl Default for Config {
             scan: vec!["src".into(), "tests".into()],
             base_url: String::new(),
             node_max_chars: 1000,
+            repo_url: None,
         }
     }
 }
@@ -70,6 +75,9 @@ impl Config {
         if let Some(nmc) = raw.node_max_chars {
             config.node_max_chars = nmc;
         }
+        if let Some(ru) = raw.repo_url {
+            config.repo_url = Some(ru);
+        }
 
         Ok(Some(config))
     }
@@ -97,6 +105,8 @@ struct RawConfig {
     base_url: Option<String>,
     #[serde(default)]
     node_max_chars: Option<usize>,
+    #[serde(default)]
+    repo_url: Option<String>,
 }
 
 #[cfg(test)]
@@ -205,5 +215,29 @@ scan:
         assert_eq!(config.node_max_chars, 2000);
         assert_eq!(config.scan, vec!["lib"]);
         assert_eq!(config.output_dir, "docs"); // default
+    }
+
+    #[test]
+    fn test_repo_url_parse() {
+        let dir = tempfile::tempdir().unwrap();
+        fs::write(
+            dir.path().join("graphite.yaml"),
+            r#"
+repo_url: https://github.com/example/project
+"#,
+        )
+        .unwrap();
+
+        let config = Config::load(dir.path()).unwrap().unwrap();
+        assert_eq!(
+            config.repo_url,
+            Some("https://github.com/example/project".into())
+        );
+    }
+
+    #[test]
+    fn test_repo_url_default_none() {
+        let config = Config::default();
+        assert_eq!(config.repo_url, None);
     }
 }

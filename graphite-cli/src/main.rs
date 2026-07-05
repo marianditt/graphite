@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -45,11 +45,9 @@ enum Commands {
         #[arg(long)]
         compat: Option<String>,
     },
-    /// Show context for a node (slice relevant for a specific phase)
+    /// Show context for a node
     Context {
         id: String,
-        #[arg(long)]
-        phase: Option<String>,
         #[arg(default_value = "graph")]
         graph_dir: String,
     },
@@ -110,12 +108,8 @@ fn main() {
                 std::process::exit(1);
             }
         }
-        Commands::Context {
-            id,
-            phase,
-            graph_dir,
-        } => {
-            cmd_context(&id, phase.as_deref(), &graph_dir);
+        Commands::Context { id, graph_dir } => {
+            cmd_context(&id, &graph_dir, &config.scan);
         }
         Commands::Plan { id, graph_dir } => cmd_plan(&id, &graph_dir),
         Commands::Diff { from, json } => cmd_diff(&from, json),
@@ -212,6 +206,17 @@ fn load_schema_for_graph_dir(graph_dir: &str) -> Result<graphite_core::Schema, D
 }
 
 fn collect_node_files(path: &Path, graph: &mut Graph, errors: &mut Vec<Diagnostic>) {
+    // Track file paths of loaded nodes (id → file path) for duplicate detection
+    let mut node_files: HashMap<String, String> = HashMap::new();
+    collect_node_files_inner(path, graph, errors, &mut node_files);
+}
+
+fn collect_node_files_inner(
+    path: &Path,
+    graph: &mut Graph,
+    errors: &mut Vec<Diagnostic>,
+    node_files: &mut HashMap<String, String>,
+) {
     if path.is_dir() {
         #[allow(clippy::collapsible_if)]
         if let Some(name) = path.file_name().and_then(|n| n.to_str()) {
@@ -221,7 +226,7 @@ fn collect_node_files(path: &Path, graph: &mut Graph, errors: &mut Vec<Diagnosti
         }
         if let Ok(entries) = fs::read_dir(path) {
             for entry in entries.flatten() {
-                collect_node_files(&entry.path(), graph, errors);
+                collect_node_files_inner(&entry.path(), graph, errors, node_files);
             }
         }
         return;
@@ -250,7 +255,28 @@ fn collect_node_files(path: &Path, graph: &mut Graph, errors: &mut Vec<Diagnosti
     };
 
     match NodeParser::parse(&content) {
-        Ok(node) => graph.add_node(node),
+        Ok(node) => {
+            let file_path = path.to_string_lossy().to_string();
+            // Check for duplicate ID
+            if let Some(prev_file) = node_files.get(&node.id) {
+                errors.push(Diagnostic {
+                    rule: "duplicate-node-id".into(),
+                    severity: Severity::Error,
+                    node_id: Some(node.id.clone()),
+                    file: Some(file_path),
+                    detail: format!(
+                        "Duplicate node ID '{}' — first defined in '{}'",
+                        node.id, prev_file
+                    ),
+                    fix: "Rename one of the nodes to have a unique ID.".into(),
+                    example: None,
+                    hint: "Every node ID must be globally unique across the graph.".into(),
+                });
+            } else {
+                node_files.insert(node.id.clone(), file_path);
+            }
+            graph.add_node(node);
+        }
         Err(diag) => {
             let mut with_file = diag;
             with_file.file = Some(path.to_string_lossy().into());
@@ -289,6 +315,13 @@ fn resolve_evidence(
                 evidence.entry(id).or_insert_with(Vec::new).extend(locs);
             }
         }
+    }
+
+    // Deduplicate locations within each evidence ID (overlapping scan roots
+    // can produce duplicate (path, line) pairs).
+    for locations in evidence.values_mut() {
+        locations.sort();
+        locations.dedup();
     }
 
     evidence
@@ -609,14 +642,14 @@ fn cmd_init(path: &str, force: bool) {
 fn write_node(
     path: &Path,
     id: &str,
-    kind: &str,
+    category: &str,
     edges: &[(&str, &[&str])],
     body: &str,
-    of_kind: Option<&str>,
+    of_category: Option<&str>,
 ) {
-    let mut frontmatter = format!("---\nid: {id}\nkind: {kind}\n");
-    if let Some(ok) = of_kind {
-        frontmatter.push_str(&format!("metadata:\n  of_kind: {ok}\n"));
+    let mut frontmatter = format!("---\nid: {id}\ncategory: {category}\n");
+    if let Some(ok) = of_category {
+        frontmatter.push_str(&format!("metadata:\n  of_category: {ok}\n"));
     }
     if !edges.is_empty() {
         frontmatter.push_str("edges:\n");
@@ -717,7 +750,7 @@ fn cmd_diff(from: &str, json: bool) {
 #[derive(serde::Serialize)]
 struct StatsOutput {
     nodes_total: usize,
-    nodes_by_kind: HashMap<String, usize>,
+    nodes_by_category: HashMap<String, usize>,
     edges_total: usize,
     edges_by_kind: HashMap<String, usize>,
     diagnostics_total: usize,
@@ -744,13 +777,13 @@ fn cmd_stats(graph_dir: &str, json: bool, config: &Config) {
     let evidence = resolve_evidence(&config.scan, base_dir);
     diagnostics.extend(engine.check_evidence_anchors(&graph, &evidence));
 
-    let mut nodes_by_kind: HashMap<String, usize> = HashMap::new();
+    let mut nodes_by_category: HashMap<String, usize> = HashMap::new();
     let mut edges_by_kind: HashMap<String, usize> = HashMap::new();
     let mut edges_total = 0usize;
     let mut nodes_with_evidence = 0usize;
 
     for node in graph.nodes.values() {
-        *nodes_by_kind.entry(node.kind.clone()).or_insert(0) += 1;
+        *nodes_by_category.entry(node.category.clone()).or_insert(0) += 1;
 
         if node
             .edges
@@ -786,7 +819,7 @@ fn cmd_stats(graph_dir: &str, json: bool, config: &Config) {
 
     let out = StatsOutput {
         nodes_total: graph.nodes.len(),
-        nodes_by_kind,
+        nodes_by_category,
         edges_total,
         edges_by_kind,
         diagnostics_total: diagnostics.len(),
@@ -826,22 +859,29 @@ fn git_root() -> Option<PathBuf> {
 // ---------------------------------------------------------------------------
 
 #[derive(serde::Serialize)]
+struct EvidenceItem {
+    id: String,
+    file: String,
+    line: usize,
+}
+
+#[derive(serde::Serialize)]
 struct ContextOutput {
-    read: Vec<ContextNode>,
-    modify: Vec<ContextNode>,
-    validate: Vec<ContextNode>,
+    nodes: Vec<ContextNode>,
+    evidence: Vec<EvidenceItem>,
 }
 
 #[derive(serde::Serialize)]
 struct ContextNode {
     id: String,
-    kind: String,
+    category: String,
     file: String,
     body: String,
+    relations: Vec<String>,
 }
 
 // @graphite:evidence spec-context
-fn cmd_context(id: &str, phase: Option<&str>, graph_dir: &str) {
+fn cmd_context(id: &str, graph_dir: &str, scan: &[String]) {
     let graph = match load_graph(graph_dir) {
         Ok(g) => g,
         Err(errors) => {
@@ -864,100 +904,78 @@ fn cmd_context(id: &str, phase: Option<&str>, graph_dir: &str) {
         }
     };
 
-    // Collect dependency nodes (incoming edges = this node depends on them)
-    let mut deps: Vec<&graphite_core::Node> = Vec::new();
-    for targets in target.edges.values() {
+    let mut node_map: HashMap<String, Vec<String>> = HashMap::new();
+
+    for (edge_kind, targets) in &target.edges {
         for t in targets {
-            if let Some(n) = graph.nodes.get(t.as_str())
-                && !deps.iter().any(|d| d.id == n.id)
-            {
-                deps.push(n);
+            if t == id {
+                node_map.entry(t.clone()).or_default().push(edge_kind.clone());
+            } else if graph.nodes.contains_key(t.as_str()) {
+                node_map.entry(t.clone()).or_default().push(edge_kind.clone());
             }
         }
     }
 
-    // Collect dependent nodes (outgoing edges = nodes that depend on this node)
-    let mut dependents: Vec<&graphite_core::Node> = Vec::new();
     for node in graph.nodes.values() {
-        for targets in node.edges.values() {
-            if targets.iter().any(|t| t == id) && !dependents.iter().any(|d| d.id == node.id) {
-                dependents.push(node);
+        if node.id == id {
+            continue;
+        }
+        for (edge_kind, targets) in &node.edges {
+            if targets.iter().any(|t| t == id) {
+                node_map.entry(node.id.clone())
+                    .or_default()
+                    .push(format!("reverse:{}", edge_kind));
             }
         }
     }
 
-    // Phase-specific slicing
-    let ctx_node = |n: &graphite_core::Node| -> ContextNode {
-        ContextNode {
-            id: n.id.clone(),
-            kind: n.kind.clone(),
-            file: resolve_node_source_file(graph_dir, n),
-            body: n.body.clone(),
-        }
-    };
+    node_map.entry(id.to_string()).or_default().push("self".to_string());
 
-    match phase {
-        Some("understand") => {
-            let output: Vec<ContextNode> = std::iter::once(target)
-                .chain(deps.iter().copied())
-                .map(ctx_node)
-                .collect();
-            println!(
-                "{}",
-                serde_json::to_string_pretty(&serde_json::json!({ "nodes": output })).unwrap()
-            );
-        }
-        Some("plan") => {
-            let mut all: Vec<ContextNode> = Vec::new();
-            all.push(ctx_node(target));
-            all.extend(deps.iter().copied().map(ctx_node));
-            all.extend(dependents.iter().copied().map(ctx_node));
-            println!(
-                "{}",
-                serde_json::to_string_pretty(&serde_json::json!({ "nodes": all })).unwrap()
-            );
-        }
-        Some("implement") => {
-            let mut modify: Vec<ContextNode> = Vec::new();
-            modify.push(ctx_node(target));
-            modify.extend(deps.iter().copied().map(ctx_node));
-            println!(
-                "{}",
-                serde_json::to_string_pretty(&serde_json::json!({ "modify": modify })).unwrap()
-            );
-        }
-        Some("validate") => {
-            let output: Vec<ContextNode> = dependents
-                .iter()
-                .copied()
-                .chain(dependents.iter().copied())
-                .map(ctx_node)
-                .collect();
-            println!(
-                "{}",
-                serde_json::to_string_pretty(&serde_json::json!({ "nodes": output })).unwrap()
-            );
-        }
-        Some(other) => {
-            eprintln!(
-                "error: unknown phase '{other}'. Valid phases: understand, plan, implement, validate"
-            );
-            std::process::exit(1);
-        }
-        None => {
-            let output = ContextOutput {
-                read: deps.iter().copied().map(ctx_node).collect(),
-                modify: vec![ctx_node(target)],
-                validate: dependents
-                    .iter()
-                    .copied()
-                    .chain(dependents.iter().copied())
-                    .map(ctx_node)
-                    .collect(),
-            };
-            println!("{}", serde_json::to_string_pretty(&output).unwrap());
+    let base_dir = Path::new(graph_dir)
+        .parent()
+        .unwrap_or_else(|| Path::new("."));
+    let evidence_map = resolve_evidence(scan, base_dir);
+
+    let mut evidence_items: Vec<EvidenceItem> = Vec::new();
+    let mut seen_evidence: HashSet<String> = HashSet::new();
+    if let Some(evidence_ids) = target.edges.get("evidence") {
+        for eid in evidence_ids {
+            if !seen_evidence.insert(eid.clone()) {
+                continue;
+            }
+            if let Some(locations) = evidence_map.get(eid.as_str()) {
+                for (file_path, line) in locations {
+                    evidence_items.push(EvidenceItem {
+                        id: eid.clone(),
+                        file: file_path.to_string_lossy().to_string(),
+                        line: *line,
+                    });
+                }
+            }
         }
     }
+
+    let mut sorted_ids: Vec<String> = node_map.keys().cloned().collect();
+    sorted_ids.sort();
+    let mut nodes: Vec<ContextNode> = Vec::with_capacity(sorted_ids.len());
+    for nid in &sorted_ids {
+        let relations = node_map.remove(nid.as_str()).unwrap();
+        if let Some(n) = graph.nodes.get(nid.as_str()) {
+            nodes.push(ContextNode {
+                id: n.id.clone(),
+                category: n.category.clone(),
+                file: resolve_node_source_file(graph_dir, n),
+                body: n.body.clone(),
+                relations,
+            });
+        }
+    }
+
+    let output = ContextOutput {
+        nodes,
+        evidence: evidence_items,
+    };
+    println!("{}", serde_json::to_string_pretty(&output).unwrap());
 }
 
 // ---------------------------------------------------------------------------
@@ -973,7 +991,7 @@ struct PlanOutput {
 #[derive(serde::Serialize)]
 struct PlanTarget {
     id: String,
-    kind: String,
+    category: String,
 }
 
 #[derive(serde::Serialize)]
@@ -1021,7 +1039,7 @@ fn cmd_plan(id: &str, graph_dir: &str) {
                     .nodes
                     .get(t.as_str())
                     .map(|n| resolve_node_source_file(graph_dir, n))
-                    .unwrap_or_else(|| format!("graph/{kind}/{t}.node", kind = target.kind));
+                    .unwrap_or_else(|| format!("graph/{category}/{t}.node", category = target.category));
                 work_order.push(WorkStep {
                     order,
                     action: "read".into(),
@@ -1070,7 +1088,7 @@ fn cmd_plan(id: &str, graph_dir: &str) {
     let output = PlanOutput {
         target: PlanTarget {
             id: id.to_string(),
-            kind: target.kind.clone(),
+            category: target.category.clone(),
         },
         work_order,
     };
@@ -1104,8 +1122,7 @@ fn cmd_render(graph_dir: &str, output: &str, style_arg: &str, config: &Config) {
     let evidence = resolve_evidence(&config.scan, base_dir);
     let output_path = Path::new(output);
 
-    let repo_url = std::env::var("GRAPHITE_REPO_URL").ok();
-    let repo_url = repo_url.as_deref();
+    let repo_url = config.repo_url.as_deref();
     let css = match style_arg {
         "sci-fi" => style::SCI_FI_CSS.to_string(),
         "default" => style::DEFAULT_CSS.to_string(),
@@ -1138,8 +1155,8 @@ fn cmd_render(graph_dir: &str, output: &str, style_arg: &str, config: &Config) {
 fn resolve_node_source_file(graph_dir: &str, node: &graphite_core::Node) -> String {
     let root = Path::new(graph_dir);
     let preferred = [
-        root.join(&node.kind).join(format!("{}.node", node.id)),
-        root.join(&node.kind).join(format!("{}.index", node.id)),
+        root.join(&node.category).join(format!("{}.node", node.id)),
+        root.join(&node.category).join(format!("{}.index", node.id)),
     ];
 
     for p in preferred {
@@ -1152,7 +1169,7 @@ fn resolve_node_source_file(graph_dir: &str, node: &graphite_core::Node) -> Stri
         return found.to_string_lossy().into();
     }
 
-    format!("graph/{}/{}.node", node.kind, node.id)
+    format!("graph/{}/{}.node", node.category, node.id)
 }
 
 fn find_node_file(root: &Path, node_id: &str) -> Option<PathBuf> {
@@ -1235,7 +1252,7 @@ mod tests {
             &req_path,
             r#"---
 id: compiler-requirement
-kind: requirement
+category: requirement
 edges:
   evidence:
     - compiler-impl
@@ -1255,7 +1272,7 @@ The compiler must parse and validate [edge:compiler] and [edge:compiler-tests].
             graph_dir.join("adr/compiler-pipeline.node"),
             r#"---
 id: compiler-pipeline
-kind: adr
+category: adr
 edges:
   evidence:
     - pipeline-impl
@@ -1280,7 +1297,7 @@ Related: [edge:compiler-requirement]
             graph_dir.join("service/compiler.node"),
             r#"---
 id: compiler
-kind: service
+category: service
 edges:
   evidence:
     - compiler-impl
@@ -1296,7 +1313,7 @@ A Rust CLI that implements the graphite compiler pipeline.
             graph_dir.join("test/compiler-tests.node"),
             r#"---
 id: compiler-tests
-kind: test
+category: test
 edges:
   evidence:
     - compiler-tests-impl
@@ -1312,7 +1329,7 @@ Tests for the graphite compiler pipeline.
             graph_dir.join("compliance/traceability-policy.node"),
             r#"---
 id: traceability-policy
-kind: compliance
+category: compliance
 edges:
   evidence:
     - policy-impl
@@ -1328,7 +1345,7 @@ Requirements should be linked to implementation, tests, and evidence.
             graph_dir.join("runbook/validation-runbook.node"),
             r#"---
 id: validation-runbook
-kind: runbook
+category: runbook
 edges:
   evidence:
     - runbook-impl
@@ -1344,7 +1361,7 @@ Run graphite validate before shipping graph changes.
             graph_dir.join("infra/distribution-pipeline.node"),
             r#"---
 id: distribution-pipeline
-kind: infra
+category: infra
 edges:
   evidence:
     - distro-impl
@@ -1368,13 +1385,13 @@ The package and binary distribution path for graphite.
         );
         assert!(valid, "integration: validate should pass with valid graph");
 
-        // Call context --phase implement and plan on the requirement node.
+        // Call context and plan on the requirement node.
         // These print JSON to stdout; on error they call process::exit(1) which
         // would abort the test, so completing means success.
         cmd_context(
             "compiler-requirement",
-            Some("implement"),
             graph_dir.to_str().unwrap(),
+            &config.scan,
         );
         cmd_plan("compiler-requirement", graph_dir.to_str().unwrap());
 
@@ -1433,12 +1450,12 @@ The package and binary distribution path for graphite.
 
         fs::write(
             graph_dir.join("root/root.node"),
-            "---\nid: root\nkind: index\nmetadata:\n  of_kind: general\nedges:\n  contains:\n    - svc\n---\n# Root\n",
+            "---\nid: root\ncategory: index\nmetadata:\n  of_category: general\nedges:\n  contains:\n    - svc\n---\n# Root\n",
         )
         .expect("write root");
         fs::write(
             graph_dir.join("adr/svc.node"),
-            "---\nid: svc\nkind: adr\nedges:\n  references:\n    - root\n---\n# ADR\n",
+            "---\nid: svc\ncategory: adr\nedges:\n  references:\n    - root\n---\n# ADR\n",
         )
         .expect("write service");
 

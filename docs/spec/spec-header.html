@@ -302,7 +302,7 @@ th {
 <p>A Header MUST contain:</p>
 <ul>
 <li><code>id</code>: the Node ID (required)</li>
-<li><code>kind</code>: the Node Kind (required)</li>
+<li><code>category</code>: the Node Category (required)</li>
 </ul>
 <p>A Header MAY contain:</p>
 <ul>
@@ -313,14 +313,14 @@ th {
 <h4>Example</h4>
 <pre><code>---
 id: my-node
-kind: spec
+category: spec
 edges:
   references:
     - other-node
 ---
 </code></pre>
 
-<div class="evidence"><h3>Evidence</h3><ul><li><code>graphite-core/src/lib.rs</code> line 78</li><li><code>graphite-core/src/node_parser.rs</code> line 8</li><li><code>graphite-core/src/node_parser.rs</code> line 18</li><li><code>graphite-core/src/node_parser.rs</code> line 38</li><li><code>graphite-core/src/lib.rs</code> line 78</li><li><code>graphite-core/src/node_parser.rs</code> line 8</li><li><code>graphite-core/src/node_parser.rs</code> line 18</li><li><code>graphite-core/src/node_parser.rs</code> line 38</li></ul></div>
+<div class="evidence"><h3>Evidence</h3><ul><li><a href="https://github.com/marianditt/graphite/blob/main/graphite-core/src/lib.rs#L79"><code>graphite-core/src/lib.rs</code> line 79</a></li><li><a href="https://github.com/marianditt/graphite/blob/main/graphite-core/src/node_parser.rs#L8"><code>graphite-core/src/node_parser.rs</code> line 8</a></li><li><a href="https://github.com/marianditt/graphite/blob/main/graphite-core/src/node_parser.rs#L18"><code>graphite-core/src/node_parser.rs</code> line 18</a></li><li><a href="https://github.com/marianditt/graphite/blob/main/graphite-core/src/node_parser.rs#L38"><code>graphite-core/src/node_parser.rs</code> line 38</a></li></ul></div>
 <div class="backlinks"><h3>Referenced by</h3><ul><li><a href="/graphite/spec/spec-header.html">SPC-9 Header</a></li></ul></div>
 </body>
 </html>

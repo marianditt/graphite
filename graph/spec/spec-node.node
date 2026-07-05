@@ -1,6 +1,6 @@
 ---
 id: spec-node
-kind: spec
+category: spec
 edges:
   evidence:
     - spec-node
@@ -16,7 +16,7 @@ A Node represents one independently addressable unit of knowledge.
 A Node MUST contain:
 
 - identifier
-- kind
+- category
 - body
 
 A Node MAY define outgoing Edges.
@@ -32,7 +32,7 @@ A Node identifier SHALL remain stable when files are moved.
 ```
 ---
 id: checkout-payment
-kind: requirement
+category: requirement
 ---
 
 Users can pay during checkout.

@@ -1,6 +1,6 @@
 ---
 id: spec-schema
-kind: spec
+category: spec
 edges:
   evidence:
     - spec-schema
@@ -15,7 +15,7 @@ A Schema defines the valid structure of a Graph.
 
 A Schema SHALL define:
 
-- available Node Kinds
+- available Node Categories
 - available Edge types
 - validation rules
 
@@ -26,7 +26,7 @@ A Graph violating its Schema MUST be rejected.
 ## Example
 
 ```
-kinds:
+categories:
   requirement:
 
 edges:

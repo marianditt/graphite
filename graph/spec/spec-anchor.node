@@ -1,6 +1,6 @@
 ---
 id: spec-anchor
-kind: spec
+category: spec
 edges:
   evidence:
     - spec-anchor

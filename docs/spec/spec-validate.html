@@ -301,9 +301,6 @@ th {
 <p><code>graphite validate</code> SHALL run the full validation suite:</p>
 <ul>
 <li>reachability: every node reachable from root</li>
-<li>tree constraint: no multiple parents</li>
-<li>cycle detection: containment DAG</li>
-<li>dependency cycles: semantic edges acyclic</li>
 <li>schema conformance: edges match schema</li>
 <li>edge targets exist</li>
 <li>body-edge usage: edges referenced in body</li>
@@ -316,7 +313,7 @@ th {
 <pre><code class="language-bash">graphite validate
 </code></pre>
 
-<div class="evidence"><h3>Evidence</h3><ul><li><code>graphite-core/src/validation.rs</code> line 6</li><li><code>graphite-core/src/validation.rs</code> line 12</li><li><code>graphite-cli/src/main.rs</code> line 301</li><li><code>graphite-core/src/validation.rs</code> line 6</li><li><code>graphite-core/src/validation.rs</code> line 12</li><li><code>graphite-cli/src/main.rs</code> line 301</li></ul></div>
+<div class="evidence"><h3>Evidence</h3><ul><li><a href="https://github.com/marianditt/graphite/blob/main/graphite-cli/src/main.rs#L334"><code>graphite-cli/src/main.rs</code> line 334</a></li><li><a href="https://github.com/marianditt/graphite/blob/main/graphite-core/src/validation.rs#L6"><code>graphite-core/src/validation.rs</code> line 6</a></li><li><a href="https://github.com/marianditt/graphite/blob/main/graphite-core/src/validation.rs#L12"><code>graphite-core/src/validation.rs</code> line 12</a></li></ul></div>
 <div class="backlinks"><h3>Referenced by</h3><ul><li><a href="/graphite/spec/spec-validate.html">SPC-21 Validate</a></li></ul></div>
 </body>
 </html>

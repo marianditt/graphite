@@ -5,12 +5,12 @@ use graphite_core::*;
 /// Verify a complete valid .node file parses correctly.
 #[test]
 fn test_valid_node_parses() {
-    let source = "---\nid: my-node\nkind: service\nedges:\n  references:\n    - other-node\nmetadata:\n  key: value\n---\n# My Node\n\nBody content here.\n";
+    let source = "---\nid: my-node\ncategory: service\nedges:\n  references:\n    - other-node\nmetadata:\n  key: value\n---\n# My Node\n\nBody content here.\n";
 
     let node = node_parser::NodeParser::parse(source).expect("valid node should parse");
 
     assert_eq!(node.id, "my-node");
-    assert_eq!(node.kind, "service");
+    assert_eq!(node.category, "service");
     assert_eq!(node.body, "# My Node\n\nBody content here.\n");
 
     let mut expected_edges: HashMap<String, Vec<String>> = HashMap::new();
@@ -42,7 +42,7 @@ fn test_no_frontmatter_error() {
 /// A file with YAML frontmatter but missing the `id` field must return an error.
 #[test]
 fn test_missing_id_error() {
-    let source = "---\nkind: index\nmetadata:\n  of_kind: service\n---\n# Body\n";
+    let source = "---\ncategory: index\nmetadata:\n  of_category: service\n---\n# Body\n";
 
     let err = node_parser::NodeParser::parse(source).expect_err("should fail when id is missing");
     assert_eq!(err.rule, "node-parse-error");
@@ -57,7 +57,7 @@ fn test_missing_id_error() {
 #[test]
 fn test_knowledge_node_contains_rejected() {
     let source =
-        "---\nid: my-node\nkind: service\nedges:\n  contains:\n    - other-node\n---\n# Body\n";
+        "---\nid: my-node\ncategory: service\nedges:\n  contains:\n    - other-node\n---\n# Body\n";
 
     let err = node_parser::NodeParser::parse(source)
         .expect_err("knowledge node with contains edge should be rejected");
@@ -69,15 +69,15 @@ fn test_knowledge_node_contains_rejected() {
     );
 }
 
-/// An index node with valid `of_kind` metadata and `contains` edges must parse.
+/// An index node with valid `of_category` metadata and `contains` edges must parse.
 #[test]
 fn test_index_node_parses() {
-    let source = "---\nid: my-index\nkind: index\nedges:\n  contains:\n    - child-node\nmetadata:\n  of_kind: service\n---\n# Index Body\n";
+    let source = "---\nid: my-index\ncategory: index\nedges:\n  contains:\n    - child-node\nmetadata:\n  of_category: service\n---\n# Index Body\n";
 
     let node = node_parser::NodeParser::parse(source).expect("index node should parse");
 
     assert_eq!(node.id, "my-index");
-    assert_eq!(node.kind, "index");
+    assert_eq!(node.category, "index");
     assert_eq!(node.body, "# Index Body\n");
 
     let mut expected_edges: HashMap<String, Vec<String>> = HashMap::new();
@@ -85,9 +85,9 @@ fn test_index_node_parses() {
     assert_eq!(node.edges, expected_edges);
 
     let mut expected_metadata: HashMap<String, String> = HashMap::new();
-    expected_metadata.insert("of_kind".to_string(), "service".to_string());
+    expected_metadata.insert("of_category".to_string(), "service".to_string());
     assert_eq!(node.metadata, expected_metadata);
 
     let idx = node.index.expect("index node should have index set");
-    assert_eq!(idx.of_kind, "service");
+    assert_eq!(idx.of_category, "service");
 }

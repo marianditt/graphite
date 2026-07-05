@@ -1,6 +1,6 @@
 ---
 id: spec-index-node
-kind: spec
+category: spec
 edges:
   evidence:
     - spec-index-node
@@ -26,7 +26,7 @@ An Index Node MUST follow all normal Node validation rules.
 ```
 ---
 id: requirements
-kind: index
+category: index
 
 edges:
   contains:

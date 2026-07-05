@@ -1,6 +1,6 @@
 ---
 id: spec-edge
-kind: spec
+category: spec
 edges:
   evidence:
     - spec-edge

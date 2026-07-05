@@ -301,18 +301,18 @@ th {
 <p>A Document SHALL consist of a YAML frontmatter header followed by a Markdown body.</p>
 <p>The frontmatter SHALL be delimited by <code>---</code> on its own line, both before and after.</p>
 <p>The body SHALL follow the closing <code>---</code> delimiter.</p>
-<p>The frontmatter MUST contain at minimum an <code>id</code> and <code>kind</code> field.</p>
+<p>The frontmatter MUST contain at minimum an <code>id</code> and <code>category</code> field.</p>
 <p>The body MAY be empty.</p>
 <h4>Example</h4>
 <pre><code>---
 id: example-node
-kind: spec
+category: spec
 ---
 
 Body content.
 </code></pre>
 
-<div class="evidence"><h3>Evidence</h3><ul><li><code>graphite-core/src/lib.rs</code> line 42</li><li><code>graphite-core/src/node_parser.rs</code> line 17</li><li><code>graphite-core/src/lib.rs</code> line 42</li><li><code>graphite-core/src/node_parser.rs</code> line 17</li></ul></div>
+<div class="evidence"><h3>Evidence</h3><ul><li><a href="https://github.com/marianditt/graphite/blob/main/graphite-core/src/lib.rs#L42"><code>graphite-core/src/lib.rs</code> line 42</a></li><li><a href="https://github.com/marianditt/graphite/blob/main/graphite-core/src/node_parser.rs#L17"><code>graphite-core/src/node_parser.rs</code> line 17</a></li></ul></div>
 <div class="backlinks"><h3>Referenced by</h3><ul><li><a href="/graphite/spec/spec-document-format.html">SPC-6 Document Format</a></li></ul></div>
 </body>
 </html>

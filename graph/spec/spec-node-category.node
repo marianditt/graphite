@@ -1,0 +1,28 @@
+---
+id: spec-node-category
+category: spec
+edges:
+  evidence:
+    - spec-node-category
+---
+# Node Category
+
+## Definition
+
+A Node Category describes the semantic category of a Node.
+
+## Specification
+
+Every Node MUST declare exactly one Category.
+
+The declared Category MUST exist in the Schema.
+
+The Category determines which Edge types are valid for the Node.
+
+A Category SHOULD describe the purpose of the knowledge, not its storage location.
+
+## Example
+
+```
+category: requirement
+```

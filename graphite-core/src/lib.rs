@@ -38,19 +38,19 @@ pub struct Diagnostic {
 }
 
 // @graphite:evidence spec-schema
-// @graphite:evidence spec-node-kind
+// @graphite:evidence spec-node-category
 // @graphite:evidence spec-document-format
 /// The schema definition for a graph.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Schema {
-    pub kinds: HashMap<String, KindDef>,
+    pub categories: HashMap<String, CategoryDef>,
     pub edges: Vec<EdgeDef>,
 }
 
-// @graphite:evidence spec-node-kind
-/// The definition of a single kind in a schema.
+// @graphite:evidence spec-node-category
+/// The definition of a single category in a schema.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
-pub struct KindDef {
+pub struct CategoryDef {
     pub key: String,
 }
 
@@ -66,15 +66,16 @@ pub struct EdgeDef {
 }
 
 // @graphite:evidence spec-index-node
-/// An index indicating a node belongs to a specific kind.
+/// An index indicating a node belongs to a specific category.
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Index {
-    pub of_kind: String,
+    #[serde(alias = "of_kind")]
+    pub of_category: String,
 }
 
 // @graphite:evidence spec-node
 // @graphite:evidence spec-node-id
-// @graphite:evidence spec-node-kind
+// @graphite:evidence spec-node-category
 // @graphite:evidence spec-header
 // @graphite:evidence spec-body
 // @graphite:evidence spec-markdown-extension
@@ -82,7 +83,8 @@ pub struct Index {
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Node {
     pub id: String,
-    pub kind: String,
+    #[serde(alias = "kind")]
+    pub category: String,
     pub body: String,
     pub edges: HashMap<String, Vec<String>>,
     pub metadata: HashMap<String, String>,
@@ -109,8 +111,10 @@ impl Graph {
     }
 
     // @graphite:evidence spec-graph
-    pub fn add_node(&mut self, node: Node) {
-        self.nodes.insert(node.id.clone(), node);
+    /// Add a node to the graph. Returns the previous node if one with the same
+    /// ID already existed (i.e. a duplicate).
+    pub fn add_node(&mut self, node: Node) -> Option<Node> {
+        self.nodes.insert(node.id.clone(), node)
     }
 }
 

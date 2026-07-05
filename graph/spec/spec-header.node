@@ -1,6 +1,6 @@
 ---
 id: spec-header
-kind: spec
+category: spec
 edges:
   evidence:
     - spec-header
@@ -17,7 +17,7 @@ A Header SHALL be valid YAML placed between `---` delimiters.
 
 A Header MUST contain:
 - `id`: the Node ID (required)
-- `kind`: the Node Kind (required)
+- `category`: the Node Category (required)
 
 A Header MAY contain:
 - `edges`: outgoing edge declarations
@@ -30,7 +30,7 @@ Invalid YAML in the Header MUST produce a parse error.
 ```
 ---
 id: my-node
-kind: spec
+category: spec
 edges:
   references:
     - other-node

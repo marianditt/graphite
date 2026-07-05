@@ -11,12 +11,12 @@ fn test_node_serde_roundtrip() {
     metadata.insert("source".to_string(), "test".to_string());
 
     let index = Index {
-        of_kind: "function".to_string(),
+        of_category: "function".to_string(),
     };
 
     let node = Node {
         id: "node_a".to_string(),
-        kind: "function".to_string(),
+        category: "function".to_string(),
         body: "pub fn hello() {}".to_string(),
         edges,
         metadata,

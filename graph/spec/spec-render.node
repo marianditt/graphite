@@ -1,6 +1,6 @@
 ---
 id: spec-render
-kind: spec
+category: spec
 edges:
   evidence:
     - spec-render
@@ -15,7 +15,7 @@ The `render` command generates static HTML documentation from the Graph.
 
 `graphite render` SHALL traverse the Graph and generate HTML pages.
 
-It SHALL produce one page per Node and one index page per Node Kind.
+It SHALL produce one page per Node and one index page per Node Category.
 
 Pages SHALL include: the Node body rendered as HTML, evidence anchor links, edge navigation, and breadcrumb trails.
 

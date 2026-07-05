@@ -5,6 +5,11 @@ scan:
   - graphite-core
   - graphite-cli
 
+# Repository URL for evidence anchor links (e.g. GitHub source links).
+# When set, evidence anchors render as clickable links pointing to the source file
+# at the exact line in the repository.
+repo_url: https://github.com/marianditt/graphite
+
 # Base URL prefix for rendered links.
 # Set to /graphite/ for GitHub Pages project site at /graphite/
 base_url: /graphite/

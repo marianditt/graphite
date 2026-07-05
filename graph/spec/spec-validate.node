@@ -1,6 +1,6 @@
 ---
 id: spec-validate
-kind: spec
+category: spec
 edges:
   evidence:
     - spec-validate
@@ -16,9 +16,6 @@ The `validate` command checks a Graph for structural and semantic correctness.
 `graphite validate` SHALL run the full validation suite:
 
 - reachability: every node reachable from root
-- tree constraint: no multiple parents
-- cycle detection: containment DAG
-- dependency cycles: semantic edges acyclic
 - schema conformance: edges match schema
 - edge targets exist
 - body-edge usage: edges referenced in body

@@ -1,12 +1,12 @@
 ---
 id: spec-graph
-kind: spec
+category: spec
 edges:
   references:
     - spec-node
     - spec-index-node
     - spec-node-id
-    - spec-node-kind
+    - spec-node-category
     - spec-edge
     - spec-schema
     - spec-anchor
@@ -16,7 +16,7 @@ edges:
 ---
 # Graph
 
-This specification introduces [edge:spec-node], [edge:spec-index-node], [edge:spec-node-id], [edge:spec-node-kind], [edge:spec-edge], [edge:spec-schema], [edge:spec-anchor], and [edge:spec-sidecar].
+This specification introduces [edge:spec-node], [edge:spec-index-node], [edge:spec-node-id], [edge:spec-node-category], [edge:spec-edge], [edge:spec-schema], [edge:spec-anchor], and [edge:spec-sidecar].
 
 ## Definition
 

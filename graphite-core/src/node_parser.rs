@@ -9,7 +9,7 @@ use crate::{Diagnostic, Index, Node, Severity};
 #[derive(Deserialize)]
 struct Frontmatter {
     id: Option<String>,
-    kind: Option<String>,
+    category: Option<String>,
     edges: Option<HashMap<String, Vec<String>>>,
     metadata: Option<HashMap<String, String>>,
 }
@@ -86,15 +86,15 @@ impl NodeParser {
             Self::missing_field_diagnostic(
                 "id",
                 "Every .node file must declare an `id` field in its frontmatter. \
-                 For example:\n\n---\nid: my-unique-node\nkind: service\n---",
+                 For example:\n\n---\nid: my-unique-node\ncategory: service\n---",
             )
         })?;
 
-        let kind = frontmatter.kind.ok_or_else(|| {
+        let category = frontmatter.category.ok_or_else(|| {
             Self::missing_field_diagnostic(
-                "kind",
-                "Every .node file must declare a `kind` field in its frontmatter. \
-                 For example:\n\n---\nid: my-node\nkind: service\n---",
+                "category",
+                "Every .node file must declare a `category` field in its frontmatter. \
+                 For example:\n\n---\nid: my-node\ncategory: service\n---",
             )
         })?;
 
@@ -102,10 +102,10 @@ impl NodeParser {
         let metadata = frontmatter.metadata.unwrap_or_default();
 
         // -- index-specific validation ----------------------------------------------
-        let index = if kind == "index" {
-            let of_kind = metadata
-                .get("of_kind")
-                .ok_or_else(Self::missing_of_kind_diagnostic)?;
+        let index = if category == "index" {
+            let of_category = metadata
+                .get("of_category")
+                .ok_or_else(Self::missing_of_category_diagnostic)?;
 
             // Ensure "contains" is the only allowed edge type.
             for edge_kind in edges.keys() {
@@ -114,15 +114,15 @@ impl NodeParser {
                         edge_kind,
                         "index",
                         "Index nodes must use only `contains` edges. \
-                         For example:\n\n---\nid: my-index\nkind: index\n\
+                         For example:\n\n---\nid: my-index\ncategory: index\n\
                          edges:\n  contains:\n    - child-node\n\
-                         metadata:\n  of_kind: service\n---",
+                         metadata:\n  of_category: service\n---",
                     ));
                 }
             }
 
             Some(Index {
-                of_kind: of_kind.clone(),
+                of_category: of_category.clone(),
             })
         } else {
             // Knowledge nodes must NOT have a "contains" edge.
@@ -131,7 +131,7 @@ impl NodeParser {
                     "contains",
                     "knowledge",
                     "The `contains` edge is reserved for index nodes. Remove it from this node. \
-                     For example:\n\n---\nid: my-node\nkind: service\n\
+                     For example:\n\n---\nid: my-node\ncategory: service\n\
                      edges:\n  references:\n    - other-node\n---",
                 ));
             }
@@ -140,7 +140,7 @@ impl NodeParser {
 
         Ok(Node {
             id,
-            kind,
+            category,
             body,
             edges,
             metadata,
@@ -159,7 +159,7 @@ impl NodeParser {
             Ok(f) => Ok(f),
             Err(_) if yaml_str.trim().is_empty() => Ok(Frontmatter {
                 id: None,
-                kind: None,
+                category: None,
                 edges: None,
                 metadata: None,
             }),
@@ -189,7 +189,7 @@ impl NodeParser {
             "File does not contain YAML frontmatter. A valid .node file must start with `---` on the first line.",
             "Add `---` as the first line, followed by YAML frontmatter, then a closing `---`.",
             "A .node file has two sections separated by `---` delimiters. \
-             Example:\n\n---\nid: my-node\nkind: service\n---\n\n# Body content",
+              Example:\n\n---\nid: my-node\ncategory: service\n---\n\n# Body content",
         )
     }
 
@@ -198,7 +198,7 @@ impl NodeParser {
             "Frontmatter is not properly closed. A valid .node file must have a closing `---` delimiter after the YAML frontmatter.",
             "Add a closing `---` line after the YAML frontmatter and before the body content.",
             "The frontmatter section must be delimited by `---` on both sides:\n\n\
-             ---\nid: my-node\nkind: service\n---\n\n# Body content",
+              ---\nid: my-node\ncategory: service\n---\n\n# Body content",
         )
     }
 
@@ -207,7 +207,7 @@ impl NodeParser {
             &format!("Failed to parse YAML frontmatter: {err}"),
             "Fix the syntax error in the YAML frontmatter between the `---` delimiters.",
             "YAML frontmatter must be valid YAML. Ensure proper indentation and quoting. \
-             Example:\n\n---\nid: my-node\nkind: service\nmetadata:\n  key: value\n---",
+              Example:\n\n---\nid: my-node\ncategory: service\nmetadata:\n  key: value\n---",
         )
     }
 
@@ -219,12 +219,12 @@ impl NodeParser {
         )
     }
 
-    fn missing_of_kind_diagnostic() -> Diagnostic {
+    fn missing_of_category_diagnostic() -> Diagnostic {
         Self::diagnostic(
-            "Index node is missing `of_kind` in metadata. Index nodes require `of_kind` to specify what kind of nodes they index.",
-            "Add `of_kind` to the metadata section, for example:\n\n\
-             ---\nid: my-index\nkind: index\nmetadata:\n  of_kind: service\n---",
-            "Index nodes must declare `of_kind` in their metadata so the graph knows which node kind this index targets.",
+            "Index node is missing `of_category` in metadata. Index nodes require `of_category` to specify what category of nodes they index.",
+            "Add `of_category` to the metadata section, for example:\n\n\
+             ---\nid: my-index\ncategory: index\nmetadata:\n  of_category: service\n---",
+            "Index nodes must declare `of_category` in their metadata so the graph knows which node category this index targets.",
         )
     }
 
@@ -246,7 +246,7 @@ mod tests {
         let source = "\
 ---\n\
 id: my-node\n\
-kind: service\n\
+category: service\n\
 edges:\n  references:\n    - other-node\n\
 metadata:\n  key: value\n\
 ---\n\
@@ -256,7 +256,7 @@ Body content here.\n";
         let node = NodeParser::parse(source).expect("valid node should parse");
 
         assert_eq!(node.id, "my-node");
-        assert_eq!(node.kind, "service");
+        assert_eq!(node.category, "service");
         assert_eq!(node.body, "# My Node\n\nBody content here.\n");
 
         let mut expected_edges: HashMap<String, Vec<String>> = HashMap::new();
@@ -286,7 +286,7 @@ Body content here.\n";
 
     #[test]
     fn test_missing_id_error() {
-        let source = "---\nkind: service\n---\n# Body";
+        let source = "---\ncategory: service\n---\n# Body";
 
         let err = NodeParser::parse(source).expect_err("should fail when id is missing");
         assert_eq!(err.rule, "node-parse-error");
@@ -301,11 +301,11 @@ Body content here.\n";
     fn test_missing_kind_error() {
         let source = "---\nid: my-node\n---\n# Body";
 
-        let err = NodeParser::parse(source).expect_err("should fail when kind is missing");
+        let err = NodeParser::parse(source).expect_err("should fail when category is missing");
         assert_eq!(err.rule, "node-parse-error");
         assert!(
-            err.detail.contains("kind"),
-            "error should mention kind: {}",
+            err.detail.contains("category"),
+            "error should mention category: {}",
             err.detail
         );
     }
@@ -313,7 +313,7 @@ Body content here.\n";
     #[test]
     fn test_knowledge_node_contains_rejected() {
         let source =
-            "---\nid: my-node\nkind: service\nedges:\n  contains:\n    - other-node\n---\n# Body";
+            "---\nid: my-node\ncategory: service\nedges:\n  contains:\n    - other-node\n---\n# Body";
 
         let err = NodeParser::parse(source)
             .expect_err("knowledge node with contains edge should be rejected");
@@ -330,16 +330,16 @@ Body content here.\n";
         let source = "\
 ---\n\
 id: my-index\n\
-kind: index\n\
+category: index\n\
 edges:\n  contains:\n    - child-node\n\
-metadata:\n  of_kind: service\n\
+metadata:\n  of_category: service\n\
 ---\n\
 # Index Body\n";
 
         let node = NodeParser::parse(source).expect("index node should parse");
 
         assert_eq!(node.id, "my-index");
-        assert_eq!(node.kind, "index");
+        assert_eq!(node.category, "index");
         assert_eq!(node.body, "# Index Body\n");
 
         let mut expected_edges: HashMap<String, Vec<String>> = HashMap::new();
@@ -347,31 +347,31 @@ metadata:\n  of_kind: service\n\
         assert_eq!(node.edges, expected_edges);
 
         let mut expected_metadata: HashMap<String, String> = HashMap::new();
-        expected_metadata.insert("of_kind".to_string(), "service".to_string());
+        expected_metadata.insert("of_category".to_string(), "service".to_string());
         assert_eq!(node.metadata, expected_metadata);
 
         let idx = node.index.expect("index node should have index set");
-        assert_eq!(idx.of_kind, "service");
+        assert_eq!(idx.of_category, "service");
     }
 
     #[test]
     fn test_index_node_without_of_kind_rejected() {
         let source =
-            "---\nid: my-index\nkind: index\nedges:\n  contains:\n    - child-node\n---\n# Body";
+            "---\nid: my-index\ncategory: index\nedges:\n  contains:\n    - child-node\n---\n# Body";
 
         let err =
-            NodeParser::parse(source).expect_err("index node without of_kind should be rejected");
+            NodeParser::parse(source).expect_err("index node without of_category should be rejected");
         assert_eq!(err.rule, "node-parse-error");
         assert!(
-            err.detail.contains("of_kind"),
-            "error should mention of_kind: {}",
+            err.detail.contains("of_category"),
+            "error should mention of_category: {}",
             err.detail
         );
     }
 
     #[test]
     fn test_missing_closing_delimiter_error() {
-        let source = "---\nid: my-node\nkind: service\n";
+        let source = "---\nid: my-node\ncategory: service\n";
 
         let err = NodeParser::parse(source).expect_err("should fail without closing ---");
         assert_eq!(err.rule, "node-parse-error");
@@ -384,17 +384,17 @@ metadata:\n  of_kind: service\n\
 
     #[test]
     fn test_empty_body_is_allowed() {
-        let source = "---\nid: my-node\nkind: service\n---";
+        let source = "---\nid: my-node\ncategory: service\n---";
 
         let node = NodeParser::parse(source).expect("node with empty body should parse");
         assert_eq!(node.id, "my-node");
-        assert_eq!(node.kind, "service");
+        assert_eq!(node.category, "service");
         assert_eq!(node.body, "");
     }
 
     #[test]
     fn test_edges_optional() {
-        let source = "---\nid: my-node\nkind: service\n---\n# Body";
+        let source = "---\nid: my-node\ncategory: service\n---\n# Body";
 
         let node = NodeParser::parse(source).expect("node without edges should parse");
         assert_eq!(node.id, "my-node");
@@ -403,7 +403,7 @@ metadata:\n  of_kind: service\n\
 
     #[test]
     fn test_metadata_optional() {
-        let source = "---\nid: my-node\nkind: service\n---\n# Body";
+        let source = "---\nid: my-node\ncategory: service\n---\n# Body";
 
         let node = NodeParser::parse(source).expect("node without metadata should parse");
         assert_eq!(node.id, "my-node");
@@ -412,7 +412,7 @@ metadata:\n  of_kind: service\n\
 
     #[test]
     fn test_invalid_yaml_error() {
-        let source = "---\nid: my-node\nkind: [invalid\n---\n# Body";
+        let source = "---\nid: my-node\ncategory: [invalid\n---\n# Body";
 
         let err = NodeParser::parse(source).expect_err("invalid YAML should fail");
         assert_eq!(err.rule, "node-parse-error");

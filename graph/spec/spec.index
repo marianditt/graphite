@@ -1,15 +1,15 @@
 ---
 id: spec
-kind: index
+category: index
 metadata:
-  of_kind: spec
+  of_category: spec
 edges:
   contains:
     - spec-graph
     - spec-node
     - spec-index-node
     - spec-node-id
-    - spec-node-kind
+    - spec-node-category
     - spec-edge
     - spec-schema
     - spec-anchor

@@ -1,6 +1,6 @@
 ---
 id: spec-document-format
-kind: spec
+category: spec
 edges:
   evidence:
     - spec-document-format
@@ -19,7 +19,7 @@ The frontmatter SHALL be delimited by `---` on its own line, both before and aft
 
 The body SHALL follow the closing `---` delimiter.
 
-The frontmatter MUST contain at minimum an `id` and `kind` field.
+The frontmatter MUST contain at minimum an `id` and `category` field.
 
 The body MAY be empty.
 
@@ -28,7 +28,7 @@ The body MAY be empty.
 ```
 ---
 id: example-node
-kind: spec
+category: spec
 ---
 
 Body content.

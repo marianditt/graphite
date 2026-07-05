@@ -1,6 +1,6 @@
 ---
 id: spec-sidecar
-kind: spec
+category: spec
 edges:
   evidence:
     - spec-sidecar

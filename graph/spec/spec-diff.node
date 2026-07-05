@@ -1,6 +1,6 @@
 ---
 id: spec-diff
-kind: spec
+category: spec
 edges:
   evidence:
     - spec-diff

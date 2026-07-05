@@ -2,15 +2,15 @@ use std::collections::{HashMap, HashSet};
 
 use serde::Deserialize;
 
-use crate::{Diagnostic, EdgeDef, KindDef, Schema, Severity};
+use crate::{CategoryDef, Diagnostic, EdgeDef, Schema, Severity};
 
-const BUILT_IN_KINDS: [&str; 3] = ["any", "index", "evidence"];
+const BUILT_IN_CATEGORIES: [&str; 3] = ["any", "index", "evidence"];
 
 // @graphite:evidence spec-schema
 pub struct SchemaParser;
 
 #[derive(Deserialize)]
-struct RawKindDef {
+struct RawCategoryDef {
     key: String,
 }
 
@@ -22,7 +22,8 @@ struct RawEdge {
 
 #[derive(Deserialize)]
 struct RawSchema {
-    kinds: HashMap<String, RawKindDef>,
+    #[serde(alias = "kinds")]
+    categories: HashMap<String, RawCategoryDef>,
     edges: HashMap<String, RawEdge>,
 }
 
@@ -31,7 +32,7 @@ impl SchemaParser {
     /// Returns a tutored [`Diagnostic`] on any parse or validation failure.
     #[allow(clippy::result_large_err)]
     pub fn parse(yaml: &str) -> Result<Schema, Diagnostic> {
-        check_yaml_section_duplicates(yaml, "kinds")?;
+        check_yaml_section_duplicates(yaml, "categories")?;
         check_yaml_section_duplicates(yaml, "edges")?;
 
         let raw: RawSchema = serde_yaml::from_str(yaml).map_err(|e| Diagnostic {
@@ -46,15 +47,15 @@ impl SchemaParser {
             hint: "Check the YAML syntax and field names.".to_string(),
         })?;
 
-        let builtin_set: HashSet<&str> = BUILT_IN_KINDS.iter().copied().collect();
+        let builtin_set: HashSet<&str> = BUILT_IN_CATEGORIES.iter().copied().collect();
         let mut edges = Vec::with_capacity(raw.edges.len());
 
         for (name, edge) in raw.edges {
-            if !is_valid_kind_ref(&edge.from, &raw.kinds, &builtin_set) {
-                return Err(make_undefined_kind_error(&name, "from", &edge.from));
+            if !is_valid_category_ref(&edge.from, &raw.categories, &builtin_set) {
+                return Err(make_undefined_category_error(&name, "from", &edge.from));
             }
-            if !is_valid_kind_ref(&edge.to, &raw.kinds, &builtin_set) {
-                return Err(make_undefined_kind_error(&name, "to", &edge.to));
+            if !is_valid_category_ref(&edge.to, &raw.categories, &builtin_set) {
+                return Err(make_undefined_category_error(&name, "to", &edge.to));
             }
 
             edges.push(EdgeDef {
@@ -64,57 +65,57 @@ impl SchemaParser {
             });
         }
 
-        let kinds: HashMap<String, KindDef> = raw
-            .kinds
+        let categories: HashMap<String, CategoryDef> = raw
+            .categories
             .into_iter()
-            .map(|(name, kd)| (name, KindDef { key: kd.key }))
+            .map(|(name, kd)| (name, CategoryDef { key: kd.key }))
             .collect();
 
-        Ok(Schema { kinds, edges })
+        Ok(Schema { categories, edges })
     }
 
     pub fn default_schema() -> Schema {
         Schema {
-            kinds: HashMap::from([
+            categories: HashMap::from([
                 (
                     "requirement".to_string(),
-                    KindDef {
+                    CategoryDef {
                         key: "REQ".to_string(),
                     },
                 ),
                 (
                     "adr".to_string(),
-                    KindDef {
+                    CategoryDef {
                         key: "ADR".to_string(),
                     },
                 ),
                 (
                     "service".to_string(),
-                    KindDef {
+                    CategoryDef {
                         key: "SVC".to_string(),
                     },
                 ),
                 (
                     "test".to_string(),
-                    KindDef {
+                    CategoryDef {
                         key: "TST".to_string(),
                     },
                 ),
                 (
                     "compliance".to_string(),
-                    KindDef {
+                    CategoryDef {
                         key: "CPL".to_string(),
                     },
                 ),
                 (
                     "runbook".to_string(),
-                    KindDef {
+                    CategoryDef {
                         key: "RBK".to_string(),
                     },
                 ),
                 (
                     "infra".to_string(),
-                    KindDef {
+                    CategoryDef {
                         key: "INF".to_string(),
                     },
                 ),
@@ -155,42 +156,42 @@ impl SchemaParser {
     }
 }
 
-fn is_valid_kind_ref(
-    kind: &str,
-    kinds: &HashMap<String, RawKindDef>,
+fn is_valid_category_ref(
+    category: &str,
+    categories: &HashMap<String, RawCategoryDef>,
     builtin: &HashSet<&str>,
 ) -> bool {
-    kind == "any" || builtin.contains(kind) || kinds.contains_key(kind)
+    category == "any" || builtin.contains(category) || categories.contains_key(category)
 }
 
-fn make_undefined_kind_error(edge_name: &str, field: &str, kind: &str) -> Diagnostic {
+fn make_undefined_category_error(edge_name: &str, field: &str, category: &str) -> Diagnostic {
     Diagnostic {
         rule: "schema-parse-error".to_string(),
         severity: Severity::Error,
         node_id: None,
         file: None,
         detail: format!(
-            "Edge '{}' references undefined kind '{}' in '{}'",
-            edge_name, kind, field
+            "Edge '{}' references undefined category '{}' in '{}'",
+            edge_name, category, field
         ),
         fix: format!(
-            "Define kind '{}' in the 'kinds' section, use 'any' for a wildcard, \
-             or use a built-in kind ('index', 'evidence').",
-            kind
+            "Define category '{}' in the 'categories' section, use 'any' for a wildcard, \
+             or use a built-in category ('index', 'evidence').",
+            category
         ),
         example: Some(format!(
-            "  kinds:\n    {}:\n      key: {}\n",
-            kind,
-            kind.to_uppercase()
+            "  categories:\n    {}:\n      key: {}\n",
+            category,
+            category.to_uppercase()
         )),
-        hint: "All kinds referenced in edges must be defined in the 'kinds' section \
-               or be built-in kinds (index, evidence, any)."
+        hint: "All categories referenced in edges must be defined in the 'categories' section \
+               or be built-in categories (index, evidence, any)."
             .to_string(),
     }
 }
 
 /// Scan raw YAML text for duplicate mapping keys in a top-level section
-/// (`kinds` or `edges`). serde_yaml silently deduplicates `HashMap` keys
+/// (`categories` or `edges`). serde_yaml silently deduplicates `HashMap` keys
 /// on deserialization, so we inspect the text ourselves.
 #[allow(clippy::result_large_err)]
 fn check_yaml_section_duplicates(yaml: &str, section: &str) -> Result<(), Diagnostic> {
@@ -255,7 +256,7 @@ fn check_yaml_section_duplicates(yaml: &str, section: &str) -> Result<(), Diagno
 
 /// The YAML text of the default schema.
 pub const DEFAULT_SCHEMA_YAML: &str = "\
-kinds:
+categories:
   requirement: { key: REQ }
   adr: { key: ADR }
   service: { key: SVC }
@@ -279,30 +280,30 @@ mod tests {
     #[test]
     fn parse_default_schema_yaml() {
         let schema = SchemaParser::parse(DEFAULT_SCHEMA_YAML).expect("default schema should parse");
-        assert_eq!(schema.kinds.len(), 7, "should have 7 kinds");
+        assert_eq!(schema.categories.len(), 7, "should have 7 categories");
         assert_eq!(schema.edges.len(), 6, "should have 6 edges");
     }
 
     #[test]
     fn default_schema_struct_matches() {
         let schema = SchemaParser::default_schema();
-        assert_eq!(schema.kinds.len(), 7);
+        assert_eq!(schema.categories.len(), 7);
         assert_eq!(schema.edges.len(), 6);
     }
 
     #[test]
-    fn invalid_undefined_kind_rejected() {
+    fn invalid_undefined_category_rejected() {
         let yaml = "\
-kinds:
+categories:
   requirement: { key: REQ }
 edges:
   bad_edge: { from: requirement, to: nonexistent }
 ";
-        let err = SchemaParser::parse(yaml).expect_err("undefined kind should produce error");
+        let err = SchemaParser::parse(yaml).expect_err("undefined category should produce error");
         assert_eq!(err.rule, "schema-parse-error");
         assert!(
             err.detail.contains("nonexistent"),
-            "detail should mention the missing kind"
+            "detail should mention the missing category"
         );
         assert!(
             err.detail.contains("bad_edge"),
@@ -311,15 +312,15 @@ edges:
     }
 
     #[test]
-    fn duplicate_kind_rejected() {
+    fn duplicate_category_rejected() {
         let yaml = "\
-kinds:
+categories:
   requirement: { key: REQ }
   requirement: { key: REQ2 }
 edges:
   test_edge: { from: requirement, to: requirement }
 ";
-        let err = SchemaParser::parse(yaml).expect_err("duplicate kind should produce error");
+        let err = SchemaParser::parse(yaml).expect_err("duplicate category should produce error");
         assert_eq!(err.rule, "schema-parse-error");
         assert!(
             err.detail.contains("Duplicate"),
@@ -334,7 +335,7 @@ edges:
     #[test]
     fn duplicate_edge_rejected() {
         let yaml = "\
-kinds:
+categories:
   a: { key: A }
   b: { key: B }
 edges:
@@ -350,9 +351,9 @@ edges:
     }
 
     #[test]
-    fn builtin_kinds_allowed() {
+    fn builtin_categories_allowed() {
         let yaml = "\
-kinds:
+categories:
   requirement: { key: REQ }
 edges:
   test_edge: { from: requirement, to: evidence }
@@ -360,22 +361,22 @@ edges:
   wild_edge: { from: any, to: any }
 ";
         let schema = SchemaParser::parse(yaml)
-            .expect("built-in kinds (evidence, index, any) should be valid");
-        assert_eq!(schema.kinds.len(), 1);
+            .expect("built-in categories (evidence, index, any) should be valid");
+        assert_eq!(schema.categories.len(), 1);
         assert_eq!(schema.edges.len(), 3);
     }
 
     #[test]
     fn contains_edge_not_in_schema_is_builtin() {
         let yaml = "\
-kinds:
+categories:
   index: { key: IDX }
   service: { key: SVC }
 edges:
   contains: { from: index, to: service }
 ";
         let schema =
-            SchemaParser::parse(yaml).expect("edge named 'contains' with valid kinds should parse");
+            SchemaParser::parse(yaml).expect("edge named 'contains' with valid categories should parse");
         assert!(schema.edges.iter().any(|e| e.name == "contains"));
     }
 

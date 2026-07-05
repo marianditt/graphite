@@ -3,23 +3,23 @@ use graphite_core::schema::{DEFAULT_SCHEMA_YAML, SchemaParser};
 #[test]
 fn test_default_schema_parses() {
     let schema = SchemaParser::parse(DEFAULT_SCHEMA_YAML).expect("default schema should parse");
-    assert_eq!(schema.kinds.len(), 7, "default schema should have 7 kinds");
+    assert_eq!(schema.categories.len(), 7, "default schema should have 7 categories");
     assert_eq!(schema.edges.len(), 6, "default schema should have 6 edges");
 }
 
 #[test]
-fn test_invalid_schema_undefined_kind() {
+fn test_invalid_schema_undefined_category() {
     let yaml = "\
-kinds:
+categories:
   requirement: { key: REQ }
 edges:
   bad_edge: { from: requirement, to: nonexistent }
 ";
-    let err = SchemaParser::parse(yaml).expect_err("undefined kind should produce error");
+    let err = SchemaParser::parse(yaml).expect_err("undefined category should produce error");
     assert_eq!(err.rule, "schema-parse-error");
     assert!(
         err.detail.contains("nonexistent"),
-        "detail should mention the missing kind: {}",
+        "detail should mention the missing category: {}",
         err.detail
     );
     assert!(
@@ -30,15 +30,15 @@ edges:
 }
 
 #[test]
-fn test_duplicate_kind_rejected() {
+fn test_duplicate_category_rejected() {
     let yaml = "\
-kinds:
+categories:
   requirement: { key: REQ }
   requirement: { key: REQ2 }
 edges:
   test_edge: { from: requirement, to: requirement }
 ";
-    let err = SchemaParser::parse(yaml).expect_err("duplicate kind should produce error");
+    let err = SchemaParser::parse(yaml).expect_err("duplicate category should produce error");
     assert_eq!(err.rule, "schema-parse-error");
     assert!(
         err.detail.contains("Duplicate"),
@@ -53,7 +53,7 @@ edges:
 #[test]
 fn test_duplicate_edge_rejected() {
     let yaml = "\
-kinds:
+categories:
   a: { key: A }
   b: { key: B }
 edges:
@@ -96,10 +96,10 @@ fn test_default_schema_contains_expected_edges() {
 }
 
 #[test]
-fn test_builtin_kinds_allowed() {
+fn test_builtin_categories_allowed() {
     // "evidence", "index", and "any" are always valid even without declaration
     let yaml = "\
-kinds:
+categories:
   requirement: { key: REQ }
 edges:
   to_evidence: { from: requirement, to: evidence }
@@ -107,7 +107,7 @@ edges:
   wildcard: { from: any, to: any }
 ";
     let schema = SchemaParser::parse(yaml).expect("built-ins evidence, index, any should be valid");
-    assert_eq!(schema.kinds.len(), 1, "only requirement should be in kinds");
+    assert_eq!(schema.categories.len(), 1, "only requirement should be in categories");
     assert_eq!(schema.edges.len(), 3, "all 3 edges should parse");
 }
 
@@ -115,13 +115,13 @@ edges:
 fn test_contains_edge_kind_handled() {
     // "contains" is a valid edge kind name even if not declared in schema YAML
     let yaml = "\
-kinds:
+categories:
   index: { key: IDX }
   service: { key: SVC }
 edges:
   contains: { from: index, to: service }
 ";
     let schema =
-        SchemaParser::parse(yaml).expect("edge named 'contains' with valid kinds should parse");
+        SchemaParser::parse(yaml).expect("edge named 'contains' with valid categories should parse");
     assert!(schema.edges.iter().any(|e| e.name == "contains"));
 }
